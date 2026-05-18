@@ -5,6 +5,46 @@ import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { ArrowLeft, ArrowRight, Star, Trash2, UploadCloud } from 'lucide-react';
 
+const SUPABASE_SUPPORTED_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+]);
+
+async function normalizeToJpeg(file: File): Promise<{ blob: Blob; ext: string }> {
+  if (SUPABASE_SUPPORTED_TYPES.has(file.type)) {
+    return { blob: file, ext: file.name.split('.').pop() || 'jpg' };
+  }
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('Canvas unavailable'));
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return reject(new Error('Conversion échouée'));
+          resolve({ blob, ext: 'jpg' });
+        },
+        'image/jpeg',
+        0.92,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Impossible de lire l\'image'));
+    };
+    img.src = objectUrl;
+  });
+}
+
 export interface ProductImageInput {
   url: string;
   alt_text?: string | null;
@@ -32,12 +72,12 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
 
       for (const file of Array.from(files)) {
         try {
-          const ext = file.name.split('.').pop() || 'jpg';
+          const { blob, ext } = await normalizeToJpeg(file);
           const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${ext}`;
           const { error: uploadError } = await supabase.storage
             .from('product-images')
-            .upload(fileName, file, {
-              contentType: file.type || 'image/jpeg',
+            .upload(fileName, blob, {
+              contentType: blob.type || 'image/jpeg',
               cacheControl: '31536000',
             });
 
@@ -162,7 +202,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
               : 'Cliquez ou glissez des images ici'}
           </span>
           <span className="text-xs text-gray-400">
-            JPG, PNG — plusieurs fichiers acceptés
+            JPG, PNG, WEBP, AVIF — plusieurs fichiers acceptés
           </span>
         </div>
       </label>
