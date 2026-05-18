@@ -1,0 +1,182 @@
+{
+  "metadata": {
+    "title": "Online Shop - Home Delivery",
+    "description": "Discover our products with free delivery and cash on delivery all over Morocco."
+  },
+  "navigation": {
+    "home": "Home",
+    "products": "Products",
+    "categories": "Categories",
+    "about": "About",
+    "contact": "Contact",
+    "admin": "Admin",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "localeSwitcher": {
+    "label": "Language",
+    "fr": "Français",
+    "en": "English",
+    "ar": "العربية"
+  },
+  "home": {
+    "heroEyebrow": "Limited Edition · Handmade in Fez",
+    "heroTitleAccent": "Berber leather",
+    "heroTitleMain": ", delivered to your door in 48 hours",
+    "heroSubtitle": "Free Delivery & Cash on Delivery",
+    "featuredEyebrow": "Our Selection",
+    "featuredTitle": "Workshop Highlights",
+    "featuredSubtitle": "",
+    "featuredProducts": "Featured Products",
+    "categories": "Categories",
+    "shopNow": "Shop Now",
+    "viewAll": "View All",
+    "trust1Title": "Fast Delivery 24-48h",
+    "trust1Subtitle": "All over Morocco, tracking included",
+    "trust2Title": "Cash on Delivery",
+    "trust2Subtitle": "Pay when you receive your order",
+    "trust3Title": "Satisfied or Refunded",
+    "trust3Subtitle": "7 days to change your mind",
+    "whyUsEyebrow": "Why choose us",
+    "whyUsTitle": "Why choose us?",
+    "whyUsSubtitle": "Passionate Moroccan artisans, delivered to your door",
+    "seeProducts": "See our products",
+    "lowStockOverlay": "Only {count} left in stock",
+    "noFeaturedProducts": "No featured products"
+  },
+  "product": {
+    "price": "Price",
+    "originalPrice": "Original Price",
+    "addToCart": "Order Now",
+    "inStock": "In Stock",
+    "outOfStock": "Out of Stock",
+    "description": "Description",
+    "relatedProducts": "Related Products",
+    "codBadge": "Cash on Delivery",
+    "freeDelivery": "Free Delivery",
+    "warranty": "Satisfaction Guaranteed",
+    "save": "Save",
+    "lowStock": "Only {count} left in stock",
+    "features": "Features"
+  },
+  "reservation": {
+    "title": "Confirm My Order",
+    "fullName": "Full Name",
+    "phone": "Phone",
+    "phonePlaceholder": "06 12 34 56 78",
+    "city": "City",
+    "selectCity": "Select your city",
+    "address": "Address (optional)",
+    "notes": "Notes (optional)",
+    "submit": "Confirm My Order",
+    "successTitle": "Thank you for your order!",
+    "successMessage": "We will call you shortly to confirm your order.",
+    "orderNumber": "Order Number",
+    "contactWhatsApp": "Contact us on WhatsApp",
+    "defaultThankYou": "Thank you for your order! We will call you shortly to confirm.",
+    "callUs": "Call us",
+    "continueShopping": "Continue shopping",
+    "codTrustLine": "Cash on delivery — no online payment required"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "orders": "Orders",
+    "categories": "Categories",
+    "settings": "Settings",
+    "team": "Team",
+    "todayOrders": "Today's Orders",
+    "weekOrders": "This Week",
+    "monthRevenue": "Monthly Revenue",
+    "conversionRate": "Conversion Rate",
+    "recentOrders": "Recent Orders",
+    "search": "Search...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "create": "Create",
+    "status": "Status",
+    "actions": "Actions"
+  },
+  "orderStatus": {
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "shipped": "Shipped",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled",
+    "no_answer": "No Answer",
+    "fake": "Fake Order",
+    "returned": "Returned"
+  },
+  "validation": {
+    "required": "This field is required",
+    "phoneInvalid": "Invalid phone number",
+    "minLength": "Minimum {count} characters",
+    "emailInvalid": "Invalid email"
+  },
+  "footer": {
+    "description": "Free delivery and cash on delivery all over Morocco.",
+    "shop": "Shop",
+    "help": "Help",
+    "followUs": "Follow us",
+    "rights": "All rights reserved."
+  },
+  "whatsapp": {
+    "defaultMessage": "Hello, I have a question about your products"
+  },
+  "cookies": {
+    "title": "This site uses cookies",
+    "description": "We use essential cookies to run the site, and measurement cookies to understand how our campaigns perform.",
+    "learnMore": "Learn more",
+    "reject": "Decline",
+    "accept": "Accept"
+  },
+  "errors": {
+    "generic": "An error occurred. Please try again.",
+    "notFound": "Page not found",
+    "unauthorized": "Unauthorized access",
+    "ref": "Reference",
+    "actions": {
+      "retry": "Try again",
+      "home": "Back to home",
+      "browse": "Browse products",
+      "login": "Sign in",
+      "dashboard": "Dashboard",
+      "contact": "Contact us",
+      "reload": "Reload page"
+    },
+    "500": {
+      "title": "Something broke",
+      "body": "Our team has been notified and is working on a fix. Please try again in a moment."
+    },
+    "global": {
+      "title": "Service temporarily unavailable",
+      "body": "The site is experiencing a major issue. Please reload the page in a moment."
+    },
+    "404": {
+      "title": "Page not found",
+      "body": "The page you're looking for doesn't exist, has been moved, or the URL is incorrect."
+    },
+    "productNotFound": {
+      "title": "Product unavailable",
+      "body": "This product is no longer available or the URL is incorrect."
+    },
+    "401": {
+      "title": "Sign in required",
+      "body": "You need to be signed in to access this page."
+    },
+    "403": {
+      "title": "Access denied",
+      "body": "You don't have permission to view this page."
+    },
+    "429": {
+      "title": "Too many requests",
+      "body": "You've made too many requests in a short time. Please wait before trying again."
+    },
+    "admin": {
+      "title": "Admin panel error",
+      "body": "An unexpected error occurred. Share the reference below with the technical team if the problem persists."
+    }
+  }
+}

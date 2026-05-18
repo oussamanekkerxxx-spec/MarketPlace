@@ -1,0 +1,182 @@
+{
+  "metadata": {
+    "title": "Boutique en ligne - Livraison à domicile",
+    "description": "Découvrez nos produits avec livraison gratuite et paiement à la livraison partout au Maroc."
+  },
+  "navigation": {
+    "home": "Accueil",
+    "products": "Produits",
+    "categories": "Catégories",
+    "about": "À propos",
+    "contact": "Contact",
+    "admin": "Administration",
+    "login": "Connexion",
+    "logout": "Déconnexion"
+  },
+  "localeSwitcher": {
+    "label": "Langue",
+    "fr": "Français",
+    "en": "English",
+    "ar": "العربية"
+  },
+  "home": {
+    "heroEyebrow": "Édition Limitée · Fait main à Fès",
+    "heroTitleAccent": "Le cuir berbère",
+    "heroTitleMain": ", livré chez vous en 48 heures",
+    "heroSubtitle": "Livraison gratuite & Paiement à la livraison",
+    "featuredEyebrow": "Notre Sélection",
+    "featuredTitle": "Pièces phares de l'atelier",
+    "featuredSubtitle": "",
+    "featuredProducts": "Produits en vedette",
+    "categories": "Catégories",
+    "shopNow": "Acheter maintenant",
+    "viewAll": "Voir tout",
+    "trust1Title": "Livraison rapide 24-48h",
+    "trust1Subtitle": "Partout au Maroc, suivi inclus",
+    "trust2Title": "Paiement à la livraison",
+    "trust2Subtitle": "Payez quand vous recevez votre commande",
+    "trust3Title": "Satisfait ou remboursé",
+    "trust3Subtitle": "7 jours pour changer d'avis",
+    "whyUsEyebrow": "Pourquoi nous choisir",
+    "whyUsTitle": "Pourquoi nous choisir ?",
+    "whyUsSubtitle": "Des artisans marocains passionnés, directement chez vous",
+    "seeProducts": "Voir nos produits",
+    "lowStockOverlay": "Plus que {count} en stock",
+    "noFeaturedProducts": "Aucun produit en vedette"
+  },
+  "product": {
+    "price": "Prix",
+    "originalPrice": "Prix original",
+    "addToCart": "Commander",
+    "inStock": "En stock",
+    "outOfStock": "Rupture de stock",
+    "description": "Description",
+    "relatedProducts": "Produits similaires",
+    "codBadge": "Paiement à la livraison",
+    "freeDelivery": "Livraison gratuite",
+    "warranty": "Garantie satisfait ou remboursé",
+    "save": "Économisez",
+    "lowStock": "Plus que {count} en stock",
+    "features": "Caractéristiques"
+  },
+  "reservation": {
+    "title": "Confirmer ma commande",
+    "fullName": "Nom complet",
+    "phone": "Téléphone",
+    "phonePlaceholder": "06 12 34 56 78",
+    "city": "Ville",
+    "selectCity": "Sélectionnez votre ville",
+    "address": "Adresse (optionnel)",
+    "notes": "Notes (optionnel)",
+    "submit": "Confirmer ma commande",
+    "successTitle": "Merci pour votre commande !",
+    "successMessage": "Nous vous appellerons sous peu pour confirmer votre commande.",
+    "orderNumber": "Numéro de commande",
+    "contactWhatsApp": "Nous contacter sur WhatsApp",
+    "defaultThankYou": "Merci pour votre commande ! Nous vous appellerons sous peu pour confirmer.",
+    "callUs": "Nous appeler",
+    "continueShopping": "Continuer mes achats",
+    "codTrustLine": "Paiement à la livraison — aucun paiement en ligne requis"
+  },
+  "admin": {
+    "dashboard": "Tableau de bord",
+    "products": "Produits",
+    "orders": "Commandes",
+    "categories": "Catégories",
+    "settings": "Paramètres",
+    "team": "Équipe",
+    "todayOrders": "Commandes aujourd'hui",
+    "weekOrders": "Cette semaine",
+    "monthRevenue": "Revenus du mois",
+    "conversionRate": "Taux de conversion",
+    "recentOrders": "Commandes récentes",
+    "search": "Rechercher...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "create": "Créer",
+    "status": "Statut",
+    "actions": "Actions"
+  },
+  "orderStatus": {
+    "pending": "En attente",
+    "confirmed": "Confirmée",
+    "shipped": "Expédiée",
+    "delivered": "Livrée",
+    "cancelled": "Annulée",
+    "no_answer": "Pas de réponse",
+    "fake": "Fausse commande",
+    "returned": "Retournée"
+  },
+  "validation": {
+    "required": "Ce champ est requis",
+    "phoneInvalid": "Numéro de téléphone invalide",
+    "minLength": "Minimum {count} caractères",
+    "emailInvalid": "Email invalide"
+  },
+  "footer": {
+    "description": "Livraison gratuite et paiement à la livraison partout au Maroc.",
+    "shop": "Boutique",
+    "help": "Aide",
+    "followUs": "Suivez-nous",
+    "rights": "Tous droits réservés."
+  },
+  "whatsapp": {
+    "defaultMessage": "Bonjour, j'ai une question sur vos produits"
+  },
+  "cookies": {
+    "title": "Ce site utilise des cookies",
+    "description": "Nous utilisons des cookies essentiels pour le fonctionnement du site, et des cookies de mesure pour comprendre les performances de nos campagnes.",
+    "learnMore": "En savoir plus",
+    "reject": "Refuser",
+    "accept": "Accepter"
+  },
+  "errors": {
+    "generic": "Une erreur s'est produite. Veuillez réessayer.",
+    "notFound": "Page non trouvée",
+    "unauthorized": "Accès non autorisé",
+    "ref": "Référence",
+    "actions": {
+      "retry": "Réessayer",
+      "home": "Retour à l'accueil",
+      "browse": "Voir les produits",
+      "login": "Se connecter",
+      "dashboard": "Tableau de bord",
+      "contact": "Nous contacter",
+      "reload": "Recharger la page"
+    },
+    "500": {
+      "title": "Oups, quelque chose s'est cassé",
+      "body": "Nos équipes ont été notifiées et travaillent à résoudre le problème. Veuillez réessayer dans un instant."
+    },
+    "global": {
+      "title": "Service temporairement indisponible",
+      "body": "Le site rencontre un problème majeur. Veuillez recharger la page dans un instant."
+    },
+    "404": {
+      "title": "Page introuvable",
+      "body": "La page que vous recherchez n'existe pas, a été déplacée, ou l'URL est incorrecte."
+    },
+    "productNotFound": {
+      "title": "Produit indisponible",
+      "body": "Ce produit n'est plus disponible ou l'URL est incorrecte."
+    },
+    "401": {
+      "title": "Connexion requise",
+      "body": "Vous devez être connecté pour accéder à cette page."
+    },
+    "403": {
+      "title": "Accès interdit",
+      "body": "Vous n'avez pas les droits nécessaires pour voir cette page."
+    },
+    "429": {
+      "title": "Trop de tentatives",
+      "body": "Vous avez fait trop de requêtes en peu de temps. Veuillez patienter avant de réessayer."
+    },
+    "admin": {
+      "title": "Erreur dans le panneau d'administration",
+      "body": "Une erreur inattendue est survenue. Communiquez la référence ci-dessous à l'équipe technique si le problème persiste."
+    }
+  }
+}
