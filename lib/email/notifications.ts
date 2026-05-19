@@ -76,7 +76,11 @@ export async function sendOrderNotificationEmail(
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    return { success: false, error: 'Resend API key not configured' };
+    return {
+      success: false,
+      error: 'Resend API key not configured',
+      details: 'Add RESEND_API_KEY in Vercel Dashboard → Settings → Environment Variables → Production, then redeploy.',
+    };
   }
 
   const publicProductUrl = product_slug

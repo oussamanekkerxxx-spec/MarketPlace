@@ -589,6 +589,11 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
             hasError={hasAnyError('notification_email')}
             badge={isAnyDirty('notification_email') && <ModifiedDot />}
           >
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              💡 <strong>Important :</strong> les variables d&apos;environnement (Resend, Turnstile, etc.)
+              doivent être configurées dans le tableau de bord Vercel → Settings → Environment Variables,
+              puis redéployer. Le fichier <code>.env.local</code> local n&apos;est pas envoyé sur Vercel.
+            </p>
             <div className="space-y-3 border border-gray-100 rounded-xl p-4 bg-gray-50">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

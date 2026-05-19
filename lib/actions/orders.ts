@@ -204,7 +204,14 @@ export async function createReservation(formData: ReservationServerInput) {
         content_name: productTitle,
       },
     }),
-  ]).catch(() => {});
+  ]).then((results) => {
+    const emailResult = results[1];
+    if (emailResult.status === 'rejected') {
+      console.error('[order] Email notification failed:', emailResult.reason);
+    } else if (emailResult.status === 'fulfilled' && !emailResult.value.success) {
+      console.error('[order] Email notification failed:', emailResult.value.error, emailResult.value.details);
+    }
+  }).catch(() => {});
 
   revalidatePath('/[locale]/admin', 'page');
   revalidatePath('/[locale]/admin/orders', 'page');
