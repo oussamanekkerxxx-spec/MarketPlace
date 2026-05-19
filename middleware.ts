@@ -27,7 +27,7 @@ function buildCsp(nonce: string, allowVercelPreviewTools: boolean): string {
       'https://connect.facebook.net',
       'https://challenges.cloudflare.com',
       isVercel ? 'https://*.vercel-scripts.com' : '',
-      isVercelPreview ? 'https://vercel.live' : '',
+      isVercel ? 'https://vercel.live' : '',
     ].filter(Boolean).join(' '),
     "script-src-attr 'none'",
     "style-src 'self' 'unsafe-inline'",
@@ -53,7 +53,7 @@ function buildCsp(nonce: string, allowVercelPreviewTools: boolean): string {
       'frame-src',
       'https://challenges.cloudflare.com',
       'https://www.facebook.com',
-      isVercelPreview ? 'https://vercel.live' : '',
+      isVercel ? 'https://vercel.live' : '',
     ].filter(Boolean).join(' '),
   ].join('; ');
 }

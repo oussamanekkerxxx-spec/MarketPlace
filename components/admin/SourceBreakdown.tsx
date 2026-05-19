@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface SourceItem {
@@ -9,10 +10,16 @@ interface SourceItem {
 }
 
 export function SourceBreakdown({ data }: { data: SourceItem[] }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   return (
     <div className="bg-white rounded-xl border p-6">
       <h3 className="text-base font-semibold text-gray-900 mb-6">Sources de trafic</h3>
-      <div className="h-64 w-full">
+      <div className="h-64 w-full min-w-0">
+        {!mounted ? (
+          <div className="h-full w-full animate-pulse rounded-lg bg-gray-100" />
+        ) : (
         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <BarChart
             data={data}
@@ -54,6 +61,7 @@ export function SourceBreakdown({ data }: { data: SourceItem[] }) {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

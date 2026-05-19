@@ -25,7 +25,7 @@ export function RevenueChart({ data }: { data: DataPoint[] }) {
   return (
     <div className="bg-white rounded-xl border p-6">
       <h3 className="text-base font-semibold text-gray-900 mb-6">Évolution des revenus</h3>
-      <div className="h-72 w-full">
+      <div className="h-72 w-full min-w-0">
         {!mounted ? (
           <div className="h-full w-full animate-pulse rounded-lg bg-gray-100" />
         ) : (
