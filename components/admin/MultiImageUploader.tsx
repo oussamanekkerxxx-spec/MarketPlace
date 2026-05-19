@@ -25,6 +25,14 @@ const TRANSFORMABLE_IMAGE_TYPES = new Set([
   'image/png',
   'image/webp',
   'image/avif',
+  'image/heic',
+  'image/heif',
+]);
+
+const ALWAYS_CONVERT_TYPES = new Set([
+  'image/avif',
+  'image/heic',
+  'image/heif',
 ]);
 
 const MAX_FILE_SIZE_MB = 5;
@@ -36,7 +44,7 @@ async function compressImage(file: File): Promise<File> {
   const fileType = file.type.toLowerCase();
   if (!TRANSFORMABLE_IMAGE_TYPES.has(fileType)) return file;
 
-  const mustConvertForUpload = !SUPABASE_SUPPORTED_TYPES.has(fileType);
+  const mustConvertForUpload = !SUPABASE_SUPPORTED_TYPES.has(fileType) || ALWAYS_CONVERT_TYPES.has(fileType);
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
   const targetW = Math.round(bitmap.width * scale);
@@ -47,14 +55,20 @@ async function compressImage(file: File): Promise<File> {
   canvas.height = targetH;
 
   const ctx = canvas.getContext('2d');
-  if (!ctx) return file;
+  if (!ctx) {
+    if (mustConvertForUpload) throw new Error('Conversion canvas indisponible');
+    return file;
+  }
 
   ctx.drawImage(bitmap, 0, 0, targetW, targetH);
 
   const blob: Blob | null = await new Promise((resolve) =>
     canvas.toBlob(resolve, 'image/jpeg', JPEG_QUALITY)
   );
-  if (!blob) return file;
+  if (!blob) {
+    if (mustConvertForUpload) throw new Error('Conversion JPEG echouee');
+    return file;
+  }
 
   if (!mustConvertForUpload && blob.size >= file.size) return file;
 

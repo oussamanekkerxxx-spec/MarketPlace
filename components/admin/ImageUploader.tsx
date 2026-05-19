@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useParams } from 'next/navigation';
+import { createClient, isAuthError, redirectToLogin } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { ArrowLeft, ArrowRight, Star, Trash2, UploadCloud } from 'lucide-react';
 
@@ -13,8 +14,15 @@ const SUPABASE_SUPPORTED_TYPES = new Set([
   'image/webp',
 ]);
 
+const ALWAYS_CONVERT_TYPES = new Set([
+  'image/avif',
+  'image/heic',
+  'image/heif',
+]);
+
 async function normalizeToJpeg(file: File): Promise<{ blob: Blob; ext: string }> {
-  if (SUPABASE_SUPPORTED_TYPES.has(file.type)) {
+  const fileType = file.type.toLowerCase();
+  if (SUPABASE_SUPPORTED_TYPES.has(fileType) && !ALWAYS_CONVERT_TYPES.has(fileType)) {
     return { blob: file, ext: file.name.split('.').pop() || 'jpg' };
   }
   return new Promise((resolve, reject) => {
@@ -22,6 +30,9 @@ async function normalizeToJpeg(file: File): Promise<{ blob: Blob; ext: string }>
     const img = new window.Image();
     img.onload = () => {
       URL.revokeObjectURL(objectUrl);
+      if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+        return reject(new Error('Dimensions image invalides'));
+      }
       const canvas = document.createElement('canvas');
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
@@ -31,7 +42,11 @@ async function normalizeToJpeg(file: File): Promise<{ blob: Blob; ext: string }>
       canvas.toBlob(
         (blob) => {
           if (!blob) return reject(new Error('Conversion échouée'));
-          resolve({ blob, ext: 'jpg' });
+          // Force JPEG mime type to avoid browser quirks
+          const typedBlob = blob.type === 'image/jpeg'
+            ? blob
+            : new Blob([blob], { type: 'image/jpeg' });
+          resolve({ blob: typedBlob, ext: 'jpg' });
         },
         'image/jpeg',
         0.92,
@@ -60,6 +75,9 @@ interface ImageUploaderProps {
 export function ImageUploader({ value, onChange }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const params = useParams();
+  const locale = (params?.locale as string) || 'fr';
 
   const handleFiles = useCallback(
     async (files: FileList | null) => {
@@ -73,6 +91,10 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
       for (const file of Array.from(files)) {
         try {
           const { blob, ext } = await normalizeToJpeg(file);
+          if (!SUPABASE_SUPPORTED_TYPES.has(blob.type || '')) {
+            setUploadError(`Format non supporte: ${file.name}`);
+            continue;
+          }
           const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${ext}`;
           const { error: uploadError } = await supabase.storage
             .from('product-images')
@@ -83,6 +105,10 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
 
           if (uploadError) {
             console.error('Upload failed:', uploadError);
+            if (isAuthError(uploadError)) {
+              redirectToLogin(locale);
+              return;
+            }
             setUploadError(`Échec de l'upload: ${uploadError.message}`);
             continue;
           }
@@ -99,6 +125,10 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
           });
         } catch (err) {
           console.error('Compression or upload error:', err);
+          if (isAuthError(err)) {
+            redirectToLogin(locale);
+            return;
+          }
           setUploadError("Erreur lors du traitement de l'image");
         }
       }
@@ -124,10 +154,18 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
         const bucketIndex = pathParts.findIndex((p) => p === 'product-images');
         if (bucketIndex !== -1 && bucketIndex < pathParts.length - 1) {
           const filePath = pathParts.slice(bucketIndex + 1).join('/');
-          await supabase.storage.from('product-images').remove([filePath]);
+          const { error } = await supabase.storage.from('product-images').remove([filePath]);
+          if (error && isAuthError(error)) {
+            redirectToLogin(locale);
+            return;
+          }
         }
-      } catch {
-        // Ignore storage deletion errors
+      } catch (err) {
+        if (isAuthError(err)) {
+          redirectToLogin(locale);
+          return;
+        }
+        // Ignore other storage deletion errors
       }
 
       const next = value.filter((_, i) => i !== index);
@@ -183,7 +221,21 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
       {/* Upload dropzone — bigger target, lucide icon for consistency */}
       <label
         htmlFor="image-upload"
-        className="block border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-400 transition-colors cursor-pointer"
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragging(false);
+          handleFiles(e.dataTransfer.files);
+        }}
+        className={`block border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+          isDragging
+            ? 'border-orange-400 bg-orange-50'
+            : 'border-gray-300 hover:border-orange-400'
+        }`}
       >
         <input
           type="file"
@@ -214,7 +266,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
           {value.map((image, index) => (
             <div
-              key={image.url}
+              key={`${image.url}-${index}`}
               className={`relative rounded-lg border bg-white overflow-hidden ${
                 image.is_primary ? 'ring-2 ring-orange-500' : 'border-gray-200'
               }`}

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useParams } from 'next/navigation';
+import { createClient, isAuthError, redirectToLogin } from '@/lib/supabase/client';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import {
@@ -93,9 +94,11 @@ export function NarrativeSectionsEditor({
   bucket = 'product-images',
 }: NarrativeSectionsEditorProps) {
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
-  const inputRefs = useRef<Map<number, HTMLInputElement>>(new Map());
+  const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
   const [openSectionId, setOpenSectionId] = useState<string | null>(value[0]?.id || null);
   const [isDesktop, setIsDesktop] = useState(false);
+  const params = useParams();
+  const locale = (params?.locale as string) || 'fr';
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(min-width: 1024px)');
@@ -113,11 +116,24 @@ export function NarrativeSectionsEditor({
       : value[0]?.id || null;
 
   const deleteFromStorage = useCallback(async (url: string) => {
-    const path = extractStoragePath(url, bucket);
-    if (!path) return;
-    const supabase = createClient();
-    await supabase.storage.from(bucket).remove([path]);
-  }, [bucket]);
+    try {
+      const path = extractStoragePath(url, bucket);
+      if (!path) return;
+      const supabase = createClient();
+      const { error } = await supabase.storage.from(bucket).remove([path]);
+      if (error && isAuthError(error)) {
+        redirectToLogin(locale);
+        return;
+      }
+    } catch (err) {
+      console.error('Failed to delete from storage:', err);
+      if (isAuthError(err)) {
+        redirectToLogin(locale);
+        return;
+      }
+      toast.error('Impossible de supprimer l\'ancienne image du stockage.');
+    }
+  }, [bucket, locale]);
 
   const updateSection = (index: number, patch: Partial<DetailSectionFormData>) => {
     const next = value.map((s, i) => (i === index ? { ...s, ...patch } : s));
@@ -177,7 +193,11 @@ export function NarrativeSectionsEditor({
       let processedFile = file;
       try {
         processedFile = await compressImage(file);
-      } catch {
+      } catch (err) {
+        if (isAuthError(err)) {
+          redirectToLogin(locale);
+          return null;
+        }
         if (requiresNormalization) {
           toast.error("Ce format d'image n'est pas pris en charge. Utilisez JPG, PNG, WEBP ou GIF.");
           return null;
@@ -209,6 +229,10 @@ export function NarrativeSectionsEditor({
         });
 
       if (uploadError) {
+        if (isAuthError(uploadError)) {
+          redirectToLogin(locale);
+          return null;
+        }
         toast.error(uploadError.message);
         return null;
       }
@@ -216,7 +240,7 @@ export function NarrativeSectionsEditor({
       const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
       return data.publicUrl;
     },
-    [bucket]
+    [bucket, locale]
   );
 
   const handleFileSelect = async (index: number, file: File | null) => {
@@ -324,7 +348,7 @@ export function NarrativeSectionsEditor({
               ) : (
                 <button
                   type="button"
-                  onClick={() => inputRefs.current.get(index)?.click()}
+                  onClick={() => inputRefs.current.get(section.id)?.click()}
                   disabled={uploadingIndex === index}
                   className="w-full aspect-video rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-orange-400 hover:text-orange-500 transition-colors"
                 >
@@ -340,7 +364,8 @@ export function NarrativeSectionsEditor({
               )}
               <input
                 ref={(el) => {
-                  if (el) inputRefs.current.set(index, el);
+                  if (el) inputRefs.current.set(section.id, el);
+                  else inputRefs.current.delete(section.id);
                 }}
                 type="file"
                 accept="image/*"

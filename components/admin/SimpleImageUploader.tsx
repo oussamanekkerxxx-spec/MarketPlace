@@ -28,11 +28,20 @@ const TRANSFORMABLE_IMAGE_TYPES = new Set([
   'image/png',
   'image/webp',
   'image/avif',
+  'image/heic',
+  'image/heif',
+]);
+
+const ALWAYS_CONVERT_TYPES = new Set([
+  'image/avif',
+  'image/heic',
+  'image/heif',
 ]);
 
 async function normalizeUploadImage(file: File): Promise<File> {
   const fileType = file.type.toLowerCase();
-  if (SUPABASE_SUPPORTED_TYPES.has(fileType) || !TRANSFORMABLE_IMAGE_TYPES.has(fileType)) {
+  const mustConvert = ALWAYS_CONVERT_TYPES.has(fileType);
+  if ((SUPABASE_SUPPORTED_TYPES.has(fileType) && !mustConvert) || !TRANSFORMABLE_IMAGE_TYPES.has(fileType)) {
     return file;
   }
 
@@ -42,14 +51,20 @@ async function normalizeUploadImage(file: File): Promise<File> {
   canvas.height = bitmap.height;
 
   const ctx = canvas.getContext('2d');
-  if (!ctx) return file;
+  if (!ctx) {
+    if (mustConvert) throw new Error('Conversion canvas indisponible');
+    return file;
+  }
 
   ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
 
   const blob: Blob | null = await new Promise((resolve) =>
     canvas.toBlob(resolve, 'image/png')
   );
-  if (!blob) return file;
+  if (!blob) {
+    if (mustConvert) throw new Error('Conversion PNG echouee');
+    return file;
+  }
 
   const baseName = file.name.includes('.')
     ? file.name.replace(/\.[^.]+$/, '')

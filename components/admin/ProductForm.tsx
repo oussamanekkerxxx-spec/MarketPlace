@@ -101,7 +101,9 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
       description_en: (initialData?.description_en as string) || '',
       description_ar: (initialData?.description_ar as string) || '',
       price: (initialData?.price as number) || 0,
-      compare_at_price: initialData?.compare_at_price != null ? (initialData.compare_at_price as number) : undefined,
+      compare_at_price: initialData?.compare_at_price != null && !Number.isNaN(initialData.compare_at_price)
+        ? (initialData.compare_at_price as number)
+        : undefined,
       currency: (initialData?.currency as string) || 'MAD',
       category_id: (initialData?.category_id as string) || '',
       sku: (initialData?.sku as string) || '',
@@ -281,14 +283,22 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
             label="Prix"
             type="number"
             step="0.01"
-            {...register('price', { setValueAs: v => (v === '' || v == null ? 0 : Number(v)) })}
+            {...register('price', { setValueAs: v => {
+              if (v === '' || v == null) return 0;
+              const n = Number(v);
+              return Number.isNaN(n) ? 0 : n;
+            } })}
             error={errors.price?.message}
           />
           <FormInput
             label="Prix barré"
             type="number"
             step="0.01"
-            {...register('compare_at_price', { setValueAs: v => (v === '' || v == null ? undefined : Number(v)) })}
+            {...register('compare_at_price', { setValueAs: v => {
+              if (v === '' || v == null) return undefined;
+              const n = Number(v);
+              return Number.isNaN(n) ? undefined : n;
+            } })}
             error={errors.compare_at_price?.message}
           />
           <FormInput label="Devise" {...register('currency')} />
@@ -305,13 +315,21 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
           <FormInput
             label="Quantité en stock"
             type="number"
-            {...register('stock_quantity', { setValueAs: v => (v === '' || v == null ? undefined : Number(v)) })}
+            {...register('stock_quantity', { setValueAs: v => {
+              if (v === '' || v == null) return undefined;
+              const n = Number(v);
+              return Number.isNaN(n) ? undefined : n;
+            } })}
             error={errors.stock_quantity?.message}
           />
           <FormInput
             label="Seuil stock faible"
             type="number"
-            {...register('low_stock_threshold', { setValueAs: v => (v === '' || v == null ? undefined : Number(v)) })}
+            {...register('low_stock_threshold', { setValueAs: v => {
+              if (v === '' || v == null) return undefined;
+              const n = Number(v);
+              return Number.isNaN(n) ? undefined : n;
+            } })}
             error={errors.low_stock_threshold?.message}
           />
         </div>
@@ -512,6 +530,12 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
         saving={saving}
         saveLabel={isEditing ? 'Mettre à jour' : 'Créer'}
         onSave={() => handleSubmit(onSubmit, onValidationErrors)()}
+        onDiscard={() => {
+          if (!isDirty || confirm('Modifications non sauvegardées. Quitter quand même ?')) {
+            router.push('/admin/products');
+          }
+        }}
+        discardLabel="Annuler"
       />
 
       <div className="h-20 lg:hidden" aria-hidden="true" />
