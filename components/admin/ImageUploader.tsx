@@ -20,44 +20,60 @@ const ALWAYS_CONVERT_TYPES = new Set([
   'image/heif',
 ]);
 
+const MAX_IMAGE_DIMENSION = 2048;
+const JPEG_QUALITY = 0.92;
+
 async function normalizeToJpeg(file: File): Promise<{ blob: Blob; ext: string }> {
   const fileType = file.type.toLowerCase();
-  if (SUPABASE_SUPPORTED_TYPES.has(fileType) && !ALWAYS_CONVERT_TYPES.has(fileType)) {
-    return { blob: file, ext: file.name.split('.').pop() || 'jpg' };
+  const extFromName = file.name.split('.').pop()?.toLowerCase() || '';
+  const isAvifLike = ALWAYS_CONVERT_TYPES.has(fileType) || ALWAYS_CONVERT_TYPES.has(`image/${extFromName}`);
+
+  if (SUPABASE_SUPPORTED_TYPES.has(fileType) && !isAvifLike) {
+    return { blob: file, ext: extFromName || 'jpg' };
   }
-  return new Promise((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file);
-    const img = new window.Image();
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      if (img.naturalWidth === 0 || img.naturalHeight === 0) {
-        return reject(new Error('Dimensions image invalides'));
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return reject(new Error('Canvas unavailable'));
-      ctx.drawImage(img, 0, 0);
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) return reject(new Error('Conversion échouée'));
-          // Force JPEG mime type to avoid browser quirks
-          const typedBlob = blob.type === 'image/jpeg'
-            ? blob
-            : new Blob([blob], { type: 'image/jpeg' });
-          resolve({ blob: typedBlob, ext: 'jpg' });
-        },
-        'image/jpeg',
-        0.92,
-      );
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error('Impossible de lire l\'image'));
-    };
-    img.src = objectUrl;
-  });
+
+  // Use createImageBitmap for robust decoding (better AVIF support than new Image())
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch (e) {
+    throw new Error('Impossible de decoder l\'image (format non supporte par le navigateur)');
+  }
+
+  if (bitmap.width === 0 || bitmap.height === 0) {
+    bitmap.close();
+    throw new Error('Dimensions image invalides');
+  }
+
+  // Resize if too large (prevents canvas memory issues)
+  const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height));
+  const targetW = Math.round(bitmap.width * scale);
+  const targetH = Math.round(bitmap.height * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = targetW;
+  canvas.height = targetH;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    bitmap.close();
+    throw new Error('Canvas unavailable');
+  }
+
+  ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+  bitmap.close();
+
+  const blob: Blob | null = await new Promise((resolve) =>
+    canvas.toBlob(resolve, 'image/jpeg', JPEG_QUALITY)
+  );
+
+  if (!blob) {
+    throw new Error('Conversion JPEG echouee');
+  }
+
+  // Guarantee the MIME type is image/jpeg using slice (more reliable than new Blob([blob]))
+  const safeBlob = blob.type === 'image/jpeg' ? blob : blob.slice(0, blob.size, 'image/jpeg');
+  return { blob: safeBlob, ext: 'jpg' };
 }
 
 export interface ProductImageInput {
@@ -129,7 +145,8 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
             redirectToLogin(locale);
             return;
           }
-          setUploadError("Erreur lors du traitement de l'image");
+          const msg = err instanceof Error ? err.message : "Erreur lors du traitement de l'image";
+          setUploadError(msg);
         }
       }
 
