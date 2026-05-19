@@ -72,7 +72,9 @@ export function WhyUsItemForm() {
         <FormInput
           label="Ordre d'affichage"
           type="number"
-          {...register('display_order', { valueAsNumber: true })}
+          {...register('display_order', {
+            setValueAs: (value) => (value === '' || value == null ? undefined : Number(value)),
+          })}
         />
       </div>
 

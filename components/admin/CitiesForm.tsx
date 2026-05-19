@@ -54,13 +54,17 @@ export function CitiesForm() {
           label="Frais de livraison"
           type="number"
           step="0.01"
-          {...register('shipping_fee', { valueAsNumber: true })}
+          {...register('shipping_fee', {
+            setValueAs: (value) => (value === '' || value == null ? undefined : Number(value)),
+          })}
           error={errors.shipping_fee?.message}
         />
         <FormInput
           label="Jours estimés"
           type="number"
-          {...register('estimated_days', { valueAsNumber: true })}
+          {...register('estimated_days', {
+            setValueAs: (value) => (value === '' || value == null ? undefined : Number(value)),
+          })}
           error={errors.estimated_days?.message}
         />
       </div>
@@ -68,7 +72,9 @@ export function CitiesForm() {
       <FormInput
         label="Ordre d'affichage"
         type="number"
-        {...register('display_order', { valueAsNumber: true })}
+        {...register('display_order', {
+          setValueAs: (value) => (value === '' || value == null ? undefined : Number(value)),
+        })}
       />
 
       <label className="flex items-center gap-2">

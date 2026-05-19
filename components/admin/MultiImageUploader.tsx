@@ -11,15 +11,32 @@ interface MultiImageUploaderProps {
   bucket?: string;
 }
 
+const SUPABASE_SUPPORTED_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+]);
+
+const TRANSFORMABLE_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+]);
+
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MAX_DIMENSION = 1600;
 const JPEG_QUALITY = 0.82;
 
 async function compressImage(file: File): Promise<File> {
-  // Only compress raster formats; skip SVG/GIF
-  if (!/^image\/(jpeg|jpg|png|webp)$/i.test(file.type)) return file;
+  const fileType = file.type.toLowerCase();
+  if (!TRANSFORMABLE_IMAGE_TYPES.has(fileType)) return file;
 
+  const mustConvertForUpload = !SUPABASE_SUPPORTED_TYPES.has(fileType);
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
   const targetW = Math.round(bitmap.width * scale);
@@ -28,8 +45,10 @@ async function compressImage(file: File): Promise<File> {
   const canvas = document.createElement('canvas');
   canvas.width = targetW;
   canvas.height = targetH;
+
   const ctx = canvas.getContext('2d');
   if (!ctx) return file;
+
   ctx.drawImage(bitmap, 0, 0, targetW, targetH);
 
   const blob: Blob | null = await new Promise((resolve) =>
@@ -37,10 +56,13 @@ async function compressImage(file: File): Promise<File> {
   );
   if (!blob) return file;
 
-  // Only use compressed version if it's actually smaller
-  if (blob.size >= file.size) return file;
+  if (!mustConvertForUpload && blob.size >= file.size) return file;
 
-  return new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
+  const baseName = file.name.includes('.')
+    ? file.name.replace(/\.[^.]+$/, '')
+    : file.name;
+
+  return new File([blob], `${baseName}.jpg`, {
     type: 'image/jpeg',
     lastModified: Date.now(),
   });
@@ -59,15 +81,25 @@ export function MultiImageUploader({
   const uploadFile = useCallback(
     async (file: File): Promise<string | null> => {
       if (!file.type.startsWith('image/')) {
-        setError('Veuillez sélectionner une image');
+        setError('Veuillez selectionner une image');
         return null;
       }
 
+      const requiresNormalization = !SUPABASE_SUPPORTED_TYPES.has(file.type.toLowerCase());
       let processedFile = file;
+
       try {
         processedFile = await compressImage(file);
       } catch {
-        // If compression fails, fall back to original — size check below will catch oversized files
+        if (requiresNormalization) {
+          setError("Ce format d'image n'est pas pris en charge. Utilisez JPG, PNG, WEBP ou GIF.");
+          return null;
+        }
+      }
+
+      if (!SUPABASE_SUPPORTED_TYPES.has(processedFile.type.toLowerCase())) {
+        setError("Ce format d'image n'est pas pris en charge. Utilisez JPG, PNG, WEBP ou GIF.");
+        return null;
       }
 
       if (processedFile.size > MAX_FILE_SIZE_BYTES) {
@@ -86,15 +118,13 @@ export function MultiImageUploader({
         .upload(fileName, processedFile, {
           upsert: false,
           contentType: processedFile.type,
-          // Filename includes a timestamp so old URLs never collide with new ones.
-          // Safe to cache for a year on browsers + CDN.
           cacheControl: '31536000',
         });
 
       if (uploadError) {
         const msg =
           uploadError.message.includes('exceeded') || uploadError.message.includes('timeout')
-            ? `Téléchargement trop long — essayez une image plus petite (< ${MAX_FILE_SIZE_MB} Mo).`
+            ? `Telechargement trop long - essayez une image plus petite (< ${MAX_FILE_SIZE_MB} Mo).`
             : uploadError.message;
         setError(msg);
         return null;
@@ -110,15 +140,21 @@ export function MultiImageUploader({
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files || []);
       if (files.length === 0) return;
+
       setUploading(true);
       setError('');
+
       const newUrls: string[] = [];
       for (let i = 0; i < files.length; i++) {
         setProgress({ current: i + 1, total: files.length });
         const url = await uploadFile(files[i]);
         if (url) newUrls.push(url);
       }
-      if (newUrls.length > 0) onChange([...value, ...newUrls]);
+
+      if (newUrls.length > 0) {
+        onChange([...value, ...newUrls]);
+      }
+
       setUploading(false);
       setProgress(null);
       e.target.value = '';
@@ -141,39 +177,39 @@ export function MultiImageUploader({
       {value.length > 0 && (
         <div className="space-y-2">
           {value.map((url, i) => (
-            <div key={url + i} className="flex items-center gap-3 p-2 border rounded-lg bg-gray-50">
-              <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded overflow-hidden shrink-0 bg-gray-100">
+            <div key={url + i} className="flex items-center gap-3 rounded-lg border bg-gray-50 p-2">
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded bg-gray-100 sm:h-16 sm:w-16">
                 <Image src={url} alt="" fill sizes="64px" className="object-cover" />
               </div>
-              <p className="flex-1 min-w-0 text-xs text-gray-400 truncate">
+              <p className="min-w-0 flex-1 truncate text-xs text-gray-400">
                 {url.split('/').pop()}
               </p>
-              <div className="flex items-center gap-0.5 shrink-0">
+              <div className="flex shrink-0 items-center gap-0.5">
                 <button
                   type="button"
                   onClick={() => move(i, -1)}
                   disabled={i === 0}
                   aria-label="Monter"
-                  className="w-10 h-10 inline-flex items-center justify-center rounded-md text-gray-500 hover:bg-white hover:text-gray-800 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-white hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-25"
                 >
-                  <ArrowUp className="w-4 h-4" />
+                  <ArrowUp className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => move(i, 1)}
                   disabled={i === value.length - 1}
                   aria-label="Descendre"
-                  className="w-10 h-10 inline-flex items-center justify-center rounded-md text-gray-500 hover:bg-white hover:text-gray-800 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-white hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-25"
                 >
-                  <ArrowDown className="w-4 h-4" />
+                  <ArrowDown className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => remove(i)}
                   aria-label="Supprimer"
-                  className="w-10 h-10 inline-flex items-center justify-center rounded-md text-red-500 hover:bg-red-50 transition-colors"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-md text-red-500 transition-colors hover:bg-red-50"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -185,18 +221,18 @@ export function MultiImageUploader({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="inline-flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-orange-400 hover:text-orange-500 transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-2.5 text-sm text-gray-500 transition-colors hover:border-orange-400 hover:text-orange-500 disabled:opacity-50"
       >
         {uploading ? (
           <>
-            <span className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
             {progress
-              ? `Téléchargement ${progress.current}/${progress.total}...`
-              : 'Téléchargement...'}
+              ? `Telechargement ${progress.current}/${progress.total}...`
+              : 'Telechargement...'}
           </>
         ) : (
           <>
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
             Ajouter une photo
           </>
         )}
@@ -211,7 +247,7 @@ export function MultiImageUploader({
       />
       {error && <p className="text-xs text-red-600">{error}</p>}
       <p className="text-[11px] text-gray-400">
-        Images compressées automatiquement (max {MAX_DIMENSION}px, {MAX_FILE_SIZE_MB} Mo).
+        Images compressees automatiquement (max {MAX_DIMENSION}px, {MAX_FILE_SIZE_MB} Mo).
       </p>
     </div>
   );

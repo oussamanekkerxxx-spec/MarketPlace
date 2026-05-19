@@ -11,6 +11,56 @@ interface SimpleImageUploaderProps {
   label?: string;
 }
 
+const SUPABASE_SUPPORTED_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+  'image/x-icon',
+  'image/vnd.microsoft.icon',
+]);
+
+const TRANSFORMABLE_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+]);
+
+async function normalizeUploadImage(file: File): Promise<File> {
+  const fileType = file.type.toLowerCase();
+  if (SUPABASE_SUPPORTED_TYPES.has(fileType) || !TRANSFORMABLE_IMAGE_TYPES.has(fileType)) {
+    return file;
+  }
+
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement('canvas');
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return file;
+
+  ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
+
+  const blob: Blob | null = await new Promise((resolve) =>
+    canvas.toBlob(resolve, 'image/png')
+  );
+  if (!blob) return file;
+
+  const baseName = file.name.includes('.')
+    ? file.name.replace(/\.[^.]+$/, '')
+    : file.name;
+
+  return new File([blob], `${baseName}.png`, {
+    type: 'image/png',
+    lastModified: Date.now(),
+  });
+}
+
 export function SimpleImageUploader({ bucket, value, onChange, label }: SimpleImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -26,15 +76,21 @@ export function SimpleImageUploader({ bucket, value, onChange, label }: SimpleIm
       setError('');
 
       try {
+        const uploadFile = await normalizeUploadImage(file);
+        if (!SUPABASE_SUPPORTED_TYPES.has(uploadFile.type.toLowerCase())) {
+          setError("Ce format d'image n'est pas pris en charge. Utilisez JPG, PNG, WEBP, GIF, SVG ou ICO.");
+          return;
+        }
+
         const supabase = createClient();
-        const ext = file.name.split('.').pop() || 'png';
+        const ext = uploadFile.name.split('.').pop() || 'png';
         const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
         const { error: uploadError } = await supabase.storage
           .from(bucket)
-          .upload(fileName, file, {
+          .upload(fileName, uploadFile, {
             upsert: false,
-            contentType: file.type || 'image/png',
+            contentType: uploadFile.type || 'image/png',
             cacheControl: '31536000',
           });
 

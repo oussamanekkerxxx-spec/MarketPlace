@@ -99,7 +99,6 @@ export default async function PublicLayout({
                     src={logoUrl}
                     alt={siteName}
                     className="h-full w-auto object-contain"
-                    fetchPriority="high"
                   />
                 </div>
               ) : (

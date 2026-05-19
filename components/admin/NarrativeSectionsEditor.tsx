@@ -26,13 +26,32 @@ interface NarrativeSectionsEditorProps {
   bucket?: string;
 }
 
+const SUPABASE_SUPPORTED_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+]);
+
+const TRANSFORMABLE_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+]);
+
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MAX_DIMENSION = 1600;
 const JPEG_QUALITY = 0.82;
 
 async function compressImage(file: File): Promise<File> {
-  if (!/^image\/(jpeg|jpg|png|webp)$/i.test(file.type)) return file;
+  const fileType = file.type.toLowerCase();
+  if (!TRANSFORMABLE_IMAGE_TYPES.has(fileType)) return file;
+
+  const mustConvertForUpload = !SUPABASE_SUPPORTED_TYPES.has(fileType);
 
   const bitmap = await createImageBitmap(file);
   const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
@@ -50,9 +69,13 @@ async function compressImage(file: File): Promise<File> {
     canvas.toBlob(resolve, 'image/jpeg', JPEG_QUALITY)
   );
   if (!blob) return file;
-  if (blob.size >= file.size) return file;
+  if (!mustConvertForUpload && blob.size >= file.size) return file;
 
-  return new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
+  const baseName = file.name.includes('.')
+    ? file.name.replace(/\.[^.]+$/, '')
+    : file.name;
+
+  return new File([blob], `${baseName}.jpg`, {
     type: 'image/jpeg',
     lastModified: Date.now(),
   });
@@ -150,11 +173,20 @@ export function NarrativeSectionsEditor({
     async (file: File): Promise<string | null> => {
       if (!file.type.startsWith('image/')) return null;
 
+      const requiresNormalization = !SUPABASE_SUPPORTED_TYPES.has(file.type.toLowerCase());
       let processedFile = file;
       try {
         processedFile = await compressImage(file);
       } catch {
-        /* fall through to size check */
+        if (requiresNormalization) {
+          toast.error("Ce format d'image n'est pas pris en charge. Utilisez JPG, PNG, WEBP ou GIF.");
+          return null;
+        }
+      }
+
+      if (!SUPABASE_SUPPORTED_TYPES.has(processedFile.type.toLowerCase())) {
+        toast.error("Ce format d'image n'est pas pris en charge. Utilisez JPG, PNG, WEBP ou GIF.");
+        return null;
       }
 
       if (processedFile.size > MAX_FILE_SIZE_BYTES) {
