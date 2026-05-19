@@ -27,6 +27,7 @@ export const settingsSchema = z.object({
   meta_dataset_id: z.string().optional(),
   google_analytics_id: z.string().optional(),
   google_ads_id: z.string().optional(),
+  google_ads_conversion_label: z.string().optional(),
   tiktok_pixel_id: z.string().optional(),
   default_currency: z.string().optional(),
   default_locale: z.enum(['fr', 'en', 'ar']).optional(),

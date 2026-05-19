@@ -2,6 +2,7 @@ import { Link } from '@/lib/i18n/navigation';
 import { getSiteSettings } from '@/lib/cache/queries';
 import { createClient } from '@/lib/supabase/server';
 import { PixelEvent } from '@/components/public/PixelEvent';
+import { GooglePurchaseConversion } from '@/components/public/GooglePurchaseConversion';
 import { AnimatedCheckmark } from '@/components/public/AnimatedCheckmark';
 import { getTranslations } from 'next-intl/server';
 import { Phone, MessageCircle, ShoppingBag, ChevronRight } from 'lucide-react';
@@ -41,6 +42,8 @@ export default async function ReservationSuccessPage({
     : { data: null };
 
   const settings = settingsRaw as Record<string, unknown> | null;
+  const adsId = settings?.google_ads_id as string | null;
+  const adsConversionLabel = settings?.google_ads_conversion_label as string | null;
   const thankYouMessage =
     (settings?.[`thank_you_message_${locale}` as keyof typeof settings] as string | undefined) ||
     (settings?.thank_you_message_fr as string) ||
@@ -88,6 +91,15 @@ export default async function ReservationSuccessPage({
           eventName="Purchase"
           eventId={orderNumber ? `purchase-${orderNumber}` : undefined}
           eventData={purchaseData as Record<string, unknown>}
+        />
+      )}
+      {order && (
+        <GooglePurchaseConversion
+          adsId={adsId}
+          adsConversionLabel={adsConversionLabel}
+          value={order.total}
+          currency={order.currency}
+          transactionId={orderNumber || order.id}
         />
       )}
 

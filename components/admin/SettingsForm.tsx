@@ -111,6 +111,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
       meta_dataset_id: (initialData?.meta_dataset_id as string) || '',
       google_analytics_id: (initialData?.google_analytics_id as string) || '',
       google_ads_id: (initialData?.google_ads_id as string) || '',
+      google_ads_conversion_label: (initialData?.google_ads_conversion_label as string) || '',
       tiktok_pixel_id: (initialData?.tiktok_pixel_id as string) || '',
       default_currency: (initialData?.default_currency as string) || 'MAD',
       default_locale: (initialData?.default_locale as 'fr' | 'en' | 'ar') || 'fr',
@@ -629,7 +630,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
             badge={
               isAnyDirty(
                 'meta_pixel_id', 'meta_capi_access_token', 'meta_dataset_id',
-                'google_analytics_id', 'google_ads_id', 'tiktok_pixel_id',
+                'google_analytics_id', 'google_ads_id', 'google_ads_conversion_label',
               ) && <ModifiedDot />
             }
           >
@@ -647,7 +648,11 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
             <FormInput label="Meta Dataset ID" {...register('meta_dataset_id')} />
             <FormInput label="Google Analytics ID" {...register('google_analytics_id')} />
             <FormInput label="Google Ads ID" {...register('google_ads_id')} />
-            <FormInput label="TikTok Pixel ID" {...register('tiktok_pixel_id')} />
+            <FormInput
+              label="Google Ads Conversion Label"
+              {...register('google_ads_conversion_label')}
+              helperText="Ex: abcdef1234567890 (trouvé dans Google Ads → Conversions → Tag)"
+            />
           </AdminAccordion>
         </div>
       )}

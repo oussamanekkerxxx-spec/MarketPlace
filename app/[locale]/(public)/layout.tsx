@@ -50,6 +50,9 @@ export default async function PublicLayout({
   const whatsappNumber = settings?.whatsapp_number as string | null;
   const primaryColor = (settings?.primary_color as string) || '#FF6B35';
   const pixelId = settings?.meta_pixel_id as string | null;
+  const gaId = settings?.google_analytics_id as string | null;
+  const adsId = settings?.google_ads_id as string | null;
+  const adsConversionLabel = settings?.google_ads_conversion_label as string | null;
 
   const contactPhone = settings?.contact_phone as string | undefined;
   const contactEmail = settings?.contact_email as string | undefined;
@@ -76,7 +79,13 @@ export default async function PublicLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <MarketingConsentWrapper pixelId={pixelId} nonce={nonce} />
+      <MarketingConsentWrapper
+        pixelId={pixelId}
+        gaId={gaId}
+        adsId={adsId}
+        adsConversionLabel={adsConversionLabel}
+        nonce={nonce}
+      />
       <ScrollRevealHeader />
 
       {/* Announcement Bar — only renders if enabled AND text is non-empty */}

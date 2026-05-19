@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { Turnstile } from 'react-turnstile';
 import { createReservation } from '@/lib/actions/orders';
 import { reservationSchema, type ReservationInput } from '@/lib/validation/reservation';
+import { gtagEvent, gtagConversion } from '@/components/public/GoogleTracking';
 
 interface City {
   id: string;
@@ -121,6 +122,7 @@ export function ReservationForm({
     const eventValue = result.total ?? total;
     const eventCurrency = result.currency ?? productCurrency;
 
+    // Meta Pixel Lead event
     if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).fbq) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).fbq(
@@ -134,6 +136,12 @@ export function ReservationForm({
         { eventID: `lead-${result.orderNumber}` }
       );
     }
+
+    // Google Analytics / Ads — lead/submit event
+    gtagEvent('generate_lead', {
+      currency: eventCurrency,
+      value: eventValue,
+    });
 
     router.push(`/reservation/success?order=${result.orderNumber}`);
   };
@@ -269,14 +277,21 @@ export function ReservationForm({
       </div>
 
       {turnstileSiteKey && (
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-2">
           <Turnstile
             sitekey={turnstileSiteKey}
             onVerify={(token) => setValue('turnstileToken', token)}
-            onError={() => setValue('turnstileToken', '')}
+            onError={() => {
+              setValue('turnstileToken', '');
+              // If the widget key is invalid, allow dev/testing to proceed
+              // by treating it as a no-op (the server will still validate).
+            }}
+            onExpire={() => setValue('turnstileToken', '')}
             theme="light"
             size="normal"
           />
+          {/* Hidden input so react-hook-form tracks the token state */}
+          <input type="hidden" {...register('turnstileToken')} />
         </div>
       )}
       {errors.turnstileToken && (

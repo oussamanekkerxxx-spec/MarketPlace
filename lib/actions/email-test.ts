@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { sendOrderNotificationEmail } from '@/lib/email/notifications';
 
 /**
  * Server action — called from the admin settings form "Test email" button.
@@ -43,13 +44,6 @@ export async function testEmailNotification(): Promise<{ success: boolean; error
     return { success: false, error: `Aucun email de notification configuré. ${debug}` };
   }
 
-  const apiSecret = process.env.INTERNAL_API_SECRET;
-  if (!apiSecret) {
-    return { success: false, error: 'INTERNAL_API_SECRET non configuré côté serveur.' };
-  }
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-
   const testPayload = {
     order_id: '00000000-0000-0000-0000-000000000000',
     order_number: 'TEST-001',
@@ -71,27 +65,19 @@ export async function testEmailNotification(): Promise<{ success: boolean; error
   };
 
   try {
-    const res = await fetch(`${siteUrl}/api/email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiSecret}`,
-      },
-      body: JSON.stringify(testPayload),
-    });
+    const result = await sendOrderNotificationEmail(testPayload);
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      const message = data.details
-        ? `${data.error}: ${data.details}`
-        : data.error || `Erreur HTTP ${res.status}`;
-      console.error('[email-test] route error:', res.status, data);
+    if (!result.success) {
+      console.error('[email-test] send error:', result.error, result.details);
+      const message = result.details
+        ? `${result.error}: ${result.details}`
+        : result.error || "Erreur lors de l'envoi de l'email";
       return { success: false, error: message };
     }
 
     return { success: true };
   } catch (err) {
-    console.error('[email-test] fetch error:', err);
+    console.error('[email-test] unexpected error:', err);
     return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }

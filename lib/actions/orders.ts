@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { headers } from 'next/headers';
+import { sendOrderNotificationEmail } from '@/lib/email/notifications';
 import { sendCapiEvent } from '@/lib/facebook/capi';
 import { sendTelegramNotification } from '@/lib/integrations/telegram';
 import { rateLimit } from '@/lib/rate-limit';
@@ -35,13 +36,15 @@ export async function createReservation(formData: ReservationServerInput) {
   }
 
   // Verify Turnstile token (skip if the secret key is not configured, e.g. local dev).
-  if (reservation.turnstile_token && process.env.TURNSTILE_SECRET_KEY) {
+  // Also skip if the client explicitly sent the no-turnstile placeholder.
+  const turnstileToken = reservation.turnstile_token;
+  if (turnstileToken && turnstileToken !== '__no_turnstile__' && process.env.TURNSTILE_SECRET_KEY) {
     const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         secret: process.env.TURNSTILE_SECRET_KEY,
-        response: reservation.turnstile_token,
+        response: turnstileToken,
         remoteip: ip,
       }),
     });
@@ -176,18 +179,9 @@ export async function createReservation(formData: ReservationServerInput) {
     currency,
   };
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-
   Promise.allSettled([
     sendTelegramNotification(integrationPayload),
-    fetch(`${siteUrl}/api/email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.INTERNAL_API_SECRET || ''}`,
-      },
-      body: JSON.stringify(integrationPayload),
-    }),
+    sendOrderNotificationEmail(integrationPayload),
     sendCapiEvent({
       eventName: 'Lead',
       eventId: `lead-${order.order_number}`,

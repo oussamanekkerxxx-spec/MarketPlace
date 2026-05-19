@@ -7,6 +7,7 @@ import { ProductGallery } from '@/components/public/ProductGallery';
 import { ScrollReveal } from '@/components/public/ScrollReveal';
 import { MobileStickyOrderBar } from '@/components/public/MobileStickyOrderBar';
 import { ProductSwipeNav } from '@/components/public/ProductSwipeNav';
+import { GoogleProductView } from '@/components/public/GoogleProductView';
 import { ProductNarrative } from '@/components/public/ProductNarrative';
 import { sendCapiEvent } from '@/lib/facebook/capi';
 import type { DetailSectionFormData } from '@/lib/validation/product';
@@ -226,6 +227,12 @@ export default async function ProductPage({
         }}
       />
 
+      <GoogleProductView
+        productId={product.id as string}
+        productName={title}
+        price={price}
+        currency={currency}
+      />
       <div className="bg-background min-h-screen">
         {/* ============================================
             BREADCRUMB

@@ -10,20 +10,32 @@ const MetaPixel = dynamic(() => import('./MetaPixel').then((m) => m.MetaPixel), 
   ssr: false,
 });
 
+const GoogleTracking = dynamic(() => import('./GoogleTracking').then((m) => m.GoogleTracking), {
+  ssr: false,
+});
+
 export function MarketingConsentWrapper({
   pixelId,
+  gaId,
+  adsId,
+  adsConversionLabel,
   nonce,
 }: {
   pixelId: string | null;
+  gaId: string | null;
+  adsId: string | null;
+  adsConversionLabel: string | null;
   nonce?: string | null;
 }) {
   const { hasMarketingConsent } = useCookieConsent();
   const [idle, setIdle] = useState(false);
 
+  const hasTracking = Boolean(pixelId || gaId || adsId);
+
   // Defer mounting until browser is idle so the initial paint isn't blocked.
   // Falls back to setTimeout for browsers without requestIdleCallback (Safari).
   useEffect(() => {
-    if (!pixelId || !hasMarketingConsent) return;
+    if (!hasTracking || !hasMarketingConsent) return;
 
     const win = window as Window & {
       requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
@@ -41,9 +53,16 @@ export function MarketingConsentWrapper({
 
     const fallback = setTimeout(() => setIdle(true), 1500);
     return () => clearTimeout(fallback);
-  }, [pixelId, hasMarketingConsent]);
+  }, [hasTracking, hasMarketingConsent]);
 
-  if (!hasMarketingConsent || !pixelId || !idle) return null;
+  if (!hasMarketingConsent || !hasTracking || !idle) return null;
 
-  return <MetaPixel pixelId={pixelId} nonce={nonce} />;
+  return (
+    <>
+      {pixelId && <MetaPixel pixelId={pixelId} nonce={nonce} />}
+      {(gaId || adsId) && (
+        <GoogleTracking gaId={gaId} adsId={adsId} adsConversionLabel={adsConversionLabel} nonce={nonce} />
+      )}
+    </>
+  );
 }
