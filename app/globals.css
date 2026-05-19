@@ -79,6 +79,8 @@ body {
 .rich-text-editor .ProseMirror {
   color: var(--color-text-muted);
   line-height: 1.75;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .rich-text-content > :first-child,

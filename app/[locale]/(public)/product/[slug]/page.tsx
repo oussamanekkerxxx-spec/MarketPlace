@@ -6,6 +6,7 @@ import { PixelEvent } from '@/components/public/PixelEvent';
 import { ProductGallery } from '@/components/public/ProductGallery';
 import { ScrollReveal } from '@/components/public/ScrollReveal';
 import { MobileStickyOrderBar } from '@/components/public/MobileStickyOrderBar';
+import { ProductSwipeNav } from '@/components/public/ProductSwipeNav';
 import { ProductNarrative } from '@/components/public/ProductNarrative';
 import { sendCapiEvent } from '@/lib/facebook/capi';
 import type { DetailSectionFormData } from '@/lib/validation/product';
@@ -15,6 +16,7 @@ import {
   getRelatedProducts,
   getCities,
   getSiteSettings,
+  getAdjacentProducts,
 } from '@/lib/cache/queries';
 import { sanitizeHtml } from '@/lib/utils/sanitize-html';
 import Image from 'next/image';
@@ -107,9 +109,10 @@ export default async function ProductPage({
 
   // Related products with their primary image (single joined query — no N+1)
   const categoryId = product.category_id as string | null;
-  const relatedProducts = categoryId
-    ? await getRelatedProducts(categoryId, product.id as string, 4)
-    : [];
+  const [relatedProducts, adjacentProducts] = await Promise.all([
+    categoryId ? getRelatedProducts(categoryId, product.id as string, 4) : Promise.resolve([]),
+    getAdjacentProducts(product.id as string, product.created_at as string, categoryId),
+  ]);
 
   type RelatedImage = { url: string; is_primary: boolean };
   const relatedImageMap = new Map<string, string>();
@@ -178,8 +181,11 @@ export default async function ProductPage({
     },
   }).catch(() => {});
 
+  const prevProduct = adjacentProducts.prev as { slug: string; title_fr: string; title_en: string; title_ar: string } | null;
+  const nextProduct = adjacentProducts.next as { slug: string; title_fr: string; title_en: string; title_ar: string } | null;
+
   return (
-    <>
+    <ProductSwipeNav locale={locale} prevProduct={prevProduct} nextProduct={nextProduct}>
       <PixelEvent
         eventName="ViewContent"
         eventId={viewContentEventId}
@@ -377,12 +383,12 @@ export default async function ProductPage({
             <>
               <div className="my-12 lg:my-16 border-t border-border-warm" />
               <ScrollReveal>
-                <div>
+                <div className="min-w-0">
                   <h2 className="text-xl lg:text-2xl font-bold text-secondary mb-4">
                     {t('description')}
                   </h2>
                   <div
-                    className="rich-text-content max-w-none"
+                    className="rich-text-content max-w-none min-w-0"
                     dangerouslySetInnerHTML={{ __html: safeDescription }}
                   />
                 </div>
@@ -506,6 +512,6 @@ export default async function ProductPage({
         whatsappNumber={whatsappNumber}
         whatsappMessage={whatsappMessage}
       />
-    </>
+    </ProductSwipeNav>
   );
 }

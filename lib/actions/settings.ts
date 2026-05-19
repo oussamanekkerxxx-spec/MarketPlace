@@ -59,11 +59,15 @@ export async function updateSettings(formData: FormData) {
 
   // Use admin client to bypass RLS — role was already verified above
   const adminSupabase = createAdminClient();
-  const { error } = await adminSupabase
+  console.log('[updateSettings] upserting:', { id: 1, ...updateData });
+
+  const { error, data: upserted } = await adminSupabase
     .from('site_settings')
     .upsert({ id: 1, ...updateData })
     .select()
     .single();
+
+  console.log('[updateSettings] result:', { error, upserted });
 
   if (error) {
     return { error: error.message };

@@ -157,6 +157,49 @@ export const getRelatedProducts = unstable_cache(
   { revalidate: 120, tags: ['products', 'product-images'] }
 );
 
+export const getAdjacentProducts = unstable_cache(
+  async (currentProductId: string, createdAt: string, categoryId: string | null) => {
+    const supabase = createStaticClient();
+
+    // Previous product (older / earlier created_at)
+    let prevQuery = supabase
+      .from('products')
+      .select('slug, title_fr, title_en, title_ar')
+      .eq('is_active', true)
+      .lte('created_at', createdAt)
+      .neq('id', currentProductId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (categoryId) {
+      prevQuery = prevQuery.eq('category_id', categoryId);
+    }
+
+    // Next product (newer / later created_at)
+    let nextQuery = supabase
+      .from('products')
+      .select('slug, title_fr, title_en, title_ar')
+      .eq('is_active', true)
+      .gte('created_at', createdAt)
+      .neq('id', currentProductId)
+      .order('created_at', { ascending: true })
+      .limit(1);
+
+    if (categoryId) {
+      nextQuery = nextQuery.eq('category_id', categoryId);
+    }
+
+    const [{ data: prev }, { data: next }] = await Promise.all([prevQuery, nextQuery]);
+
+    return {
+      prev: prev?.[0] || null,
+      next: next?.[0] || null,
+    };
+  },
+  ['adjacent-products'],
+  { revalidate: 120, tags: ['products'] }
+);
+
 export const getCategoryBySlug = unstable_cache(
   async (slug: string) => {
     const supabase = createStaticClient();

@@ -9,6 +9,7 @@ import { Store, Phone, Home, Bell, MessageCircle } from 'lucide-react';
 import { settingsSchema, type SettingsFormData } from '@/lib/validation/settings';
 import { updateSettings } from '@/lib/actions/settings';
 import { testTelegramNotification } from '@/lib/integrations/telegram';
+import { testEmailNotification } from '@/lib/actions/email-test';
 import { FormInput } from '@/components/ui/FormInput';
 import { FormTextarea } from '@/components/ui/FormTextarea';
 import { SimpleImageUploader } from '@/components/admin/SimpleImageUploader';
@@ -56,7 +57,7 @@ const TABS = [
   { key: 'brand', label: 'Marque', icon: Store, multilingual: true },
   { key: 'contact', label: 'Contact', icon: Phone, multilingual: false },
   { key: 'homepage', label: 'Accueil', icon: Home, multilingual: true },
-  { key: 'integrations', label: 'Notifs', icon: Bell, multilingual: false },
+  { key: 'integrations', label: 'Intégrations', icon: Bell, multilingual: false },
   { key: 'messages', label: 'Messages', icon: MessageCircle, multilingual: true },
 ] as const;
 
@@ -76,6 +77,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('brand');
   const [tgTesting, setTgTesting] = useState(false);
+  const [emailTesting, setEmailTesting] = useState(false);
   const [langTab, setLangTab] = useState<'fr' | 'en' | 'ar'>('fr');
 
   const {
@@ -643,6 +645,23 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
               {...register('notification_email')}
               error={errors.notification_email?.message}
             />
+            <button
+              type="button"
+              disabled={emailTesting}
+              onClick={async () => {
+                setEmailTesting(true);
+                const result = await testEmailNotification();
+                setEmailTesting(false);
+                if (result.success) {
+                  toast.success('Email de test envoyé — vérifiez votre boîte de réception');
+                } else {
+                  toast.error(result.error ?? "Échec de l'envoi de l'email de test");
+                }
+              }}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg border border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100 disabled:opacity-50 transition-colors"
+            >
+              {emailTesting ? 'Envoi...' : "Tester l'email"}
+            </button>
           </AdminAccordion>
 
           <AdminAccordion
