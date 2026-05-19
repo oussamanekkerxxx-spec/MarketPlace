@@ -80,36 +80,44 @@ export function MobileFooter({
     >
       {/* Brand block */}
       <div className="px-5 pt-8 pb-5">
-        <div className="flex items-center gap-2.5 mb-3">
+        {/* Logo + name stacked vertically for mobile */}
+        <div className="flex flex-col items-center text-center mb-4">
           {logoUrl ? (
             <Image
               src={logoUrl}
               alt={siteName}
               width={120}
               height={36}
-              className="rounded-lg object-contain"
-              style={{ width: 'auto', height: '36px' }}
+              className="rounded-lg object-contain mb-2"
+              style={{ width: 'auto', height: '40px' }}
             />
           ) : (
             <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-base mb-2"
               style={{ backgroundColor: 'var(--color-primary)' }}
             >
               {siteName.charAt(0)}
             </div>
           )}
-          <span className="text-xl font-bold tracking-tight" style={{ color: '#0c0818' }}>
-            {siteTagline ? `(${siteTagline}) ${siteName}` : siteName}
-          </span>
+
+          <h3 className="text-lg font-bold leading-tight" style={{ color: '#0c0818' }}>
+            {siteName}
+          </h3>
+
+          {siteTagline && (
+            <p className="text-sm font-medium mt-1" style={{ color: '#6B7280' }}>
+              {siteTagline}
+            </p>
+          )}
         </div>
 
-        <p className="text-sm leading-relaxed mb-4" style={{ color: '#6B7280' }}>
+        <p className="text-sm leading-relaxed text-center mb-4" style={{ color: '#6B7280' }}>
           {footerDescription}
         </p>
 
-        {/* Social icons */}
+        {/* Social icons — centered */}
         {(facebookUrl || instagramUrl || tiktokUrl || telegramUrl || youtubeUrl) && (
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center justify-center gap-2 flex-wrap">
             {facebookUrl && <SocialBtn href={facebookUrl} label="Facebook" Icon={FacebookIcon} />}
             {instagramUrl && <SocialBtn href={instagramUrl} label="Instagram" Icon={InstagramIcon} />}
             {tiktokUrl && <SocialBtn href={tiktokUrl} label="TikTok" Icon={TiktokIcon} />}

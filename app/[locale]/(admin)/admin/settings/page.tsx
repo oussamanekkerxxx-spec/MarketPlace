@@ -53,7 +53,6 @@ export default async function SettingsPage({
       }
     : null;
   const secretStatus = {
-    hasTelegramBotToken: Boolean(settingsRecord?.telegram_bot_token),
     hasMetaCapiAccessToken: Boolean(settingsRecord?.meta_capi_access_token),
   };
 

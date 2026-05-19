@@ -8,7 +8,6 @@ import { Store, Phone, Home, Bell, MessageCircle } from 'lucide-react';
 
 import { settingsSchema, type SettingsFormData } from '@/lib/validation/settings';
 import { updateSettings } from '@/lib/actions/settings';
-import { testTelegramNotification } from '@/lib/integrations/telegram';
 import { testEmailNotification } from '@/lib/actions/email-test';
 import { FormInput } from '@/components/ui/FormInput';
 import { FormTextarea } from '@/components/ui/FormTextarea';
@@ -64,7 +63,6 @@ const TABS = [
 type TabKey = (typeof TABS)[number]['key'];
 
 interface SettingsSecretStatus {
-  hasTelegramBotToken: boolean;
   hasMetaCapiAccessToken: boolean;
 }
 
@@ -76,7 +74,6 @@ interface SettingsFormProps {
 export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('brand');
-  const [tgTesting, setTgTesting] = useState(false);
   const [emailTesting, setEmailTesting] = useState(false);
   const [langTab, setLangTab] = useState<'fr' | 'en' | 'ar'>('fr');
 
@@ -108,8 +105,6 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
       tiktok_url: (initialData?.tiktok_url as string) || '',
       telegram_url: (initialData?.telegram_url as string) || '',
       youtube_url: (initialData?.youtube_url as string) || '',
-      telegram_bot_token: (initialData?.telegram_bot_token as string) || '',
-      telegram_chat_id: (initialData?.telegram_chat_id as string) || '',
       notification_email: (initialData?.notification_email as string) || '',
       meta_pixel_id: (initialData?.meta_pixel_id as string) || '',
       meta_capi_access_token: (initialData?.meta_capi_access_token as string) || '',
@@ -587,81 +582,44 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
         <div className="space-y-3 lg:space-y-5">
           <AdminAccordion
             title="Notifications"
-            description="Telegram et e-mail pour les nouvelles commandes"
+            description="E-mail pour les nouvelles commandes"
             icon={<span className="text-base">🔔</span>}
             defaultOpen
             hasError={hasAnyError('notification_email')}
-            badge={isAnyDirty('telegram_bot_token', 'telegram_chat_id', 'notification_email') && <ModifiedDot />}
+            badge={isAnyDirty('notification_email') && <ModifiedDot />}
           >
             <div className="space-y-3 border border-gray-100 rounded-xl p-4 bg-gray-50">
               <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-sky-500" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.737 13.647l-2.963-.924c-.644-.204-.657-.644.136-.953l11.57-4.461c.537-.194 1.006.131.834.912h-.42z"/>
+                <svg className="w-5 h-5 text-orange-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="20" height="16" x="2" y="4" rx="2"/>
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
                 </svg>
-                <span className="text-sm font-semibold text-gray-800">Telegram</span>
+                <span className="text-sm font-semibold text-gray-800">E-mail</span>
               </div>
               <FormInput
-                label="Bot Token"
-                type="password"
-                placeholder="1234567890:ABCdef..."
-                {...register('telegram_bot_token')}
-                helperText={
-                  secretStatus.hasTelegramBotToken
-                    ? 'Un token est deja enregistre cote serveur. Laissez vide pour le conserver, renseignez une nouvelle valeur pour le remplacer.'
-                    : 'Aucun token enregistre pour le moment.'
-                }
+                label="Email de notification"
+                type="email"
+                {...register('notification_email')}
+                error={errors.notification_email?.message}
               />
-              <FormInput
-                label="Chat ID"
-                placeholder="-100123456789 ou @channel"
-                {...register('telegram_chat_id')}
-              />
-              <p className="text-xs text-gray-400">
-                Créez un bot via <span className="font-mono">@BotFather</span> → copiez le token. Chat ID via{' '}
-                <span className="font-mono">getUpdates</span>.
-              </p>
               <button
                 type="button"
-                disabled={tgTesting}
+                disabled={emailTesting}
                 onClick={async () => {
-                  setTgTesting(true);
-                  const result = await testTelegramNotification();
-                  setTgTesting(false);
+                  setEmailTesting(true);
+                  const result = await testEmailNotification();
+                  setEmailTesting(false);
                   if (result.success) {
-                    toast.success('Message Telegram envoyé');
+                    toast.success('Email de test envoyé — vérifiez votre boîte de réception');
                   } else {
-                    toast.error(result.error ?? 'Échec de l\'envoi Telegram');
+                    toast.error(result.error ?? "Échec de l'envoi de l'email de test");
                   }
                 }}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-sky-300 text-sky-700 bg-sky-50 hover:bg-sky-100 disabled:opacity-50 transition-colors"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100 disabled:opacity-50 transition-colors"
               >
-                {tgTesting ? 'Envoi...' : 'Tester Telegram'}
+                {emailTesting ? 'Envoi...' : "Tester l'email"}
               </button>
             </div>
-
-            <FormInput
-              label="Email de notification"
-              type="email"
-              {...register('notification_email')}
-              error={errors.notification_email?.message}
-            />
-            <button
-              type="button"
-              disabled={emailTesting}
-              onClick={async () => {
-                setEmailTesting(true);
-                const result = await testEmailNotification();
-                setEmailTesting(false);
-                if (result.success) {
-                  toast.success('Email de test envoyé — vérifiez votre boîte de réception');
-                } else {
-                  toast.error(result.error ?? "Échec de l'envoi de l'email de test");
-                }
-              }}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg border border-orange-300 text-orange-700 bg-orange-50 hover:bg-orange-100 disabled:opacity-50 transition-colors"
-            >
-              {emailTesting ? 'Envoi...' : "Tester l'email"}
-            </button>
           </AdminAccordion>
 
           <AdminAccordion
