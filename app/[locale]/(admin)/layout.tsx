@@ -2,7 +2,10 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { ToastProvider } from '@/components/admin/ToastProvider';
+import { BuildInfo } from '@/components/admin/BuildInfo';
 import type { Metadata } from 'next';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: {
@@ -46,6 +49,7 @@ export default async function AdminLayout({
       <AdminSidebar locale={locale} role={userProfile.role} />
       <div className="flex-1 min-w-0 flex flex-col lg:ml-64">
         <main className="flex-1 min-w-0 p-4 pt-16 lg:p-6 lg:pt-6 overflow-x-clip">{children}</main>
+        <BuildInfo />
       </div>
       <ToastProvider />
     </div>
