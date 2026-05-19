@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from '@/lib/i18n/navigation';
 import { useForm, useWatch, Controller, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
@@ -16,7 +16,6 @@ import { NarrativeSectionsEditor } from '@/components/admin/NarrativeSectionsEdi
 import { FeaturesEditor } from '@/components/admin/FeaturesEditor';
 import { AdminAccordion } from '@/components/admin/AdminAccordion';
 import { StickySaveBar } from '@/components/admin/StickySaveBar';
-import { Link } from '@/lib/i18n/navigation';
 import {
   Tag,
   DollarSign,
@@ -36,6 +35,47 @@ interface ProductFormProps {
   productId?: string;
 }
 
+const FIELD_LABELS: Partial<Record<keyof ProductFormData, string>> = {
+  title_fr: 'Titre (FR)',
+  title_en: 'Titre (EN)',
+  title_ar: 'Titre (AR)',
+  slug: 'Slug',
+  sku: 'SKU',
+  category_id: 'Catégorie',
+  price: 'Prix',
+  compare_at_price: 'Prix barré',
+  currency: 'Devise',
+  stock_quantity: 'Quantité en stock',
+  low_stock_threshold: 'Seuil stock faible',
+  track_inventory: 'Suivi inventaire',
+  short_description_fr: 'Description courte (FR)',
+  short_description_en: 'Description courte (EN)',
+  short_description_ar: 'Description courte (AR)',
+  description_fr: 'Description longue (FR)',
+  description_en: 'Description longue (EN)',
+  description_ar: 'Description longue (AR)',
+  attributes: 'Caractéristiques',
+  images: 'Images',
+  detail_sections: 'Sections narratives',
+  meta_title_fr: 'Meta titre (FR)',
+  meta_title_en: 'Meta titre (EN)',
+  meta_title_ar: 'Meta titre (AR)',
+  meta_description_fr: 'Meta description (FR)',
+  meta_description_en: 'Meta description (EN)',
+  meta_description_ar: 'Meta description (AR)',
+  is_active: 'Actif',
+  is_featured: 'En vedette',
+};
+
+function generateSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export function ProductForm({ categories, initialData, productId }: ProductFormProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -45,6 +85,7 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -60,7 +101,7 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
       description_en: (initialData?.description_en as string) || '',
       description_ar: (initialData?.description_ar as string) || '',
       price: (initialData?.price as number) || 0,
-      compare_at_price: (initialData?.compare_at_price as number) || undefined,
+      compare_at_price: initialData?.compare_at_price != null ? (initialData.compare_at_price as number) : undefined,
       currency: (initialData?.currency as string) || 'MAD',
       category_id: (initialData?.category_id as string) || '',
       sku: (initialData?.sku as string) || '',
@@ -87,21 +128,38 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
   });
 
   const titleFr = useWatch({ control, name: 'title_fr' }) || '';
+  const currentSlug = useWatch({ control, name: 'slug' }) || '';
+  const autoSlugRef = useRef('');
+
+  // Auto-fill slug from title_fr on create, unless user manually edited it
+  useEffect(() => {
+    if (isEditing || !titleFr) return;
+    const generated = generateSlug(titleFr);
+    if (!currentSlug || currentSlug === autoSlugRef.current) {
+      setValue('slug', generated, { shouldDirty: currentSlug !== '' });
+      autoSlugRef.current = generated;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [titleFr, isEditing]);
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
 
   const sectionHasError = (...fields: (keyof ProductFormData)[]): boolean =>
     fields.some((field) => Boolean(errors[field]));
 
-  const generateSlug = (text: string) => {
-    return text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  };
-
   const onValidationErrors = (formErrors: FieldErrors<ProductFormData>) => {
-    const fieldList = Object.keys(formErrors).join(', ');
+    const fieldList = (Object.keys(formErrors) as (keyof ProductFormData)[])
+      .map(k => FIELD_LABELS[k] ?? k)
+      .join(', ');
 
     toast.error(`Champs invalides : ${fieldList}`, { duration: 5000 });
 
@@ -117,24 +175,40 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
 
   const onSubmit = async (data: ProductFormData) => {
     setSaving(true);
-    const result = isEditing ? await updateProduct(productId!, data) : await createProduct(data);
-    setSaving(false);
+    try {
+      const result = isEditing ? await updateProduct(productId!, data) : await createProduct(data);
 
-    if (result.error) {
-      toast.error(result.error);
-      return;
+      if (result.error) {
+        type ActionIssue = { path: PropertyKey[]; message: string };
+        const issues = (result as { issues?: ActionIssue[] }).issues;
+        if (issues && issues.length > 0) {
+          const details = issues
+            .map((issue) => {
+              const field = issue.path[0] as keyof ProductFormData | undefined;
+              const label = field ? (FIELD_LABELS[field] ?? String(field)) : '';
+              return label ? `${label} — ${issue.message}` : issue.message;
+            })
+            .join('\n');
+          toast.error(details, { duration: 7000 });
+        } else {
+          toast.error(result.error);
+        }
+        return;
+      }
+
+      if (!isEditing) {
+        toast.success('Produit créé');
+        router.push('/admin/products');
+        return;
+      }
+
+      toast.success('Produit mis à jour');
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Une erreur inattendue est survenue');
+    } finally {
+      setSaving(false);
     }
-
-    if (!isEditing) {
-      toast.success('Produit créé');
-      setTimeout(() => {
-        window.location.href = '/fr/admin/products';
-      }, 800);
-      return;
-    }
-
-    toast.success('Produit mis à jour');
-    router.refresh();
   };
 
   return (
@@ -148,6 +222,9 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
       >
         <TrilingualField
           label="Titre"
+          frHasError={!!errors.title_fr}
+          enHasError={!!errors.title_en}
+          arHasError={!!errors.title_ar}
           fr={
             <FormInput
               label=""
@@ -171,7 +248,7 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
           label="Slug"
           {...register('slug')}
           error={errors.slug?.message}
-          helperText={titleFr ? `Suggestion: ${generateSlug(titleFr)}` : ''}
+          helperText={!isEditing && titleFr ? `Suggestion: ${generateSlug(titleFr)}` : ''}
         />
 
         <input
@@ -204,14 +281,15 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
             label="Prix"
             type="number"
             step="0.01"
-            {...register('price', { valueAsNumber: true })}
+            {...register('price', { setValueAs: v => (v === '' || v == null ? 0 : Number(v)) })}
             error={errors.price?.message}
           />
           <FormInput
             label="Prix barré"
             type="number"
             step="0.01"
-            {...register('compare_at_price', { valueAsNumber: true })}
+            {...register('compare_at_price', { setValueAs: v => (v === '' || v == null ? undefined : Number(v)) })}
+            error={errors.compare_at_price?.message}
           />
           <FormInput label="Devise" {...register('currency')} />
         </div>
@@ -227,12 +305,14 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
           <FormInput
             label="Quantité en stock"
             type="number"
-            {...register('stock_quantity', { valueAsNumber: true })}
+            {...register('stock_quantity', { setValueAs: v => (v === '' || v == null ? undefined : Number(v)) })}
+            error={errors.stock_quantity?.message}
           />
           <FormInput
             label="Seuil stock faible"
             type="number"
-            {...register('low_stock_threshold', { valueAsNumber: true })}
+            {...register('low_stock_threshold', { setValueAs: v => (v === '' || v == null ? undefined : Number(v)) })}
+            error={errors.low_stock_threshold?.message}
           />
         </div>
         <label className="flex items-center gap-2">
@@ -248,6 +328,9 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
         hasError={sectionHasError('short_description_fr', 'short_description_en', 'short_description_ar')}
       >
         <TrilingualField
+          frHasError={!!errors.short_description_fr}
+          enHasError={!!errors.short_description_en}
+          arHasError={!!errors.short_description_ar}
           fr={<FormTextarea label="" {...register('short_description_fr')} />}
           en={<FormTextarea label="" {...register('short_description_en')} />}
           ar={<FormTextarea label="" {...register('short_description_ar')} />}
@@ -262,6 +345,9 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
       >
         <TrilingualField
           label=""
+          frHasError={!!errors.description_fr}
+          enHasError={!!errors.description_en}
+          arHasError={!!errors.description_ar}
           fr={
             <Controller
               name="description_fr"
@@ -364,12 +450,18 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
       >
         <TrilingualField
           label="Meta titre"
+          frHasError={!!errors.meta_title_fr}
+          enHasError={!!errors.meta_title_en}
+          arHasError={!!errors.meta_title_ar}
           fr={<FormInput label="" {...register('meta_title_fr')} />}
           en={<FormInput label="" {...register('meta_title_en')} />}
           ar={<FormInput label="" {...register('meta_title_ar')} />}
         />
         <TrilingualField
           label="Meta description"
+          frHasError={!!errors.meta_description_fr}
+          enHasError={!!errors.meta_description_en}
+          arHasError={!!errors.meta_description_ar}
           fr={<FormTextarea label="" {...register('meta_description_fr')} />}
           en={<FormTextarea label="" {...register('meta_description_en')} />}
           ar={<FormTextarea label="" {...register('meta_description_ar')} />}
@@ -402,12 +494,17 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
         >
           {saving ? 'Enregistrement...' : isEditing ? 'Mettre à jour' : 'Créer le produit'}
         </button>
-        <Link
-          href="/admin/products"
+        <button
+          type="button"
+          onClick={() => {
+            if (!isDirty || confirm('Modifications non sauvegardées. Quitter quand même ?')) {
+              router.push('/admin/products');
+            }
+          }}
           className="rounded-lg border px-6 py-2.5 font-medium transition-colors hover:bg-gray-50"
         >
           Annuler
-        </Link>
+        </button>
       </div>
 
       <StickySaveBar

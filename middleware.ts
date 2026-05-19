@@ -7,6 +7,10 @@ const intlMiddleware = createMiddleware(routing);
 
 function buildCsp(nonce: string): string {
   const isDev = process.env.NODE_ENV === 'development';
+  // Speed Insights runs on all Vercel environments (preview + production).
+  const isVercel = process.env.VERCEL === '1';
+  // Live toolbar (feedback widget) is injected only on preview deployments.
+  const isVercelPreview = process.env.VERCEL_ENV === 'preview';
 
   return [
     "default-src 'self'",
@@ -14,15 +18,42 @@ function buildCsp(nonce: string): string {
     "form-action 'self'",
     "frame-ancestors 'none'",
     "object-src 'none'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''} https://connect.facebook.net https://challenges.cloudflare.com`,
+    [
+      "script-src 'self'",
+      `'nonce-${nonce}'`,
+      "'strict-dynamic'",
+      isDev ? "'unsafe-eval'" : '',
+      'https://connect.facebook.net',
+      'https://challenges.cloudflare.com',
+      isVercel ? 'https://*.vercel-scripts.com' : '',
+      isVercelPreview ? 'https://vercel.live' : '',
+    ].filter(Boolean).join(' '),
     "script-src-attr 'none'",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' blob: data: https://*.supabase.co https://www.facebook.com",
+    [
+      "img-src 'self' blob: data:",
+      'https://*.supabase.co',
+      'https://www.facebook.com',
+      isVercelPreview ? 'https://vercel.live https://vercel.com' : '',
+    ].filter(Boolean).join(' '),
     "font-src 'self'",
-    "connect-src 'self' https://*.supabase.co https://graph.facebook.com https://www.facebook.com https://challenges.cloudflare.com",
+    [
+      "connect-src 'self'",
+      'https://*.supabase.co',
+      'https://graph.facebook.com',
+      'https://www.facebook.com',
+      'https://challenges.cloudflare.com',
+      isVercel ? 'https://*.vercel-scripts.com' : '',
+      isVercelPreview ? 'https://vercel.live wss://ws-us3.pusher.com' : '',
+    ].filter(Boolean).join(' '),
     "manifest-src 'self'",
     "worker-src 'self' blob:",
-    "frame-src https://challenges.cloudflare.com https://www.facebook.com",
+    [
+      'frame-src',
+      'https://challenges.cloudflare.com',
+      'https://www.facebook.com',
+      isVercelPreview ? 'https://vercel.live' : '',
+    ].filter(Boolean).join(' '),
   ].join('; ');
 }
 

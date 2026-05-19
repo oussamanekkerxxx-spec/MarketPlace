@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
 import {
   X,
   ArrowUp,
@@ -57,6 +58,12 @@ async function compressImage(file: File): Promise<File> {
   });
 }
 
+function extractStoragePath(url: string, bucket: string): string | null {
+  const marker = `/object/public/${bucket}/`;
+  const idx = url.indexOf(marker);
+  return idx >= 0 ? decodeURIComponent(url.slice(idx + marker.length)) : null;
+}
+
 export function NarrativeSectionsEditor({
   value,
   onChange,
@@ -82,9 +89,22 @@ export function NarrativeSectionsEditor({
       ? openSectionId
       : value[0]?.id || null;
 
+  const deleteFromStorage = useCallback(async (url: string) => {
+    const path = extractStoragePath(url, bucket);
+    if (!path) return;
+    const supabase = createClient();
+    await supabase.storage.from(bucket).remove([path]);
+  }, [bucket]);
+
   const updateSection = (index: number, patch: Partial<DetailSectionFormData>) => {
     const next = value.map((s, i) => (i === index ? { ...s, ...patch } : s));
     onChange(next);
+  };
+
+  const clearSectionImage = (index: number) => {
+    const url = value[index]?.image;
+    updateSection(index, { image: '' });
+    if (url) deleteFromStorage(url);
   };
 
   const addSection = () => {
@@ -101,21 +121,21 @@ export function NarrativeSectionsEditor({
       theme: 'light' as const,
     };
 
-    onChange([
-      ...value,
-      nextSection,
-    ]);
+    onChange([...value, nextSection]);
     setOpenSectionId(nextSection.id);
   };
 
   const removeSection = (index: number) => {
-    const removedSectionId = value[index]?.id;
+    const section = value[index];
+    const removedSectionId = section?.id;
     const next = value.filter((_, i) => i !== index);
     onChange(next);
 
     if (removedSectionId && removedSectionId === openSectionId) {
       setOpenSectionId(next[index]?.id || next[index - 1]?.id || null);
     }
+
+    if (section?.image) deleteFromStorage(section.image);
   };
 
   const moveSection = (index: number, dir: -1 | 1) => {
@@ -138,7 +158,7 @@ export function NarrativeSectionsEditor({
       }
 
       if (processedFile.size > MAX_FILE_SIZE_BYTES) {
-        alert(
+        toast.error(
           `L'image est trop volumineuse (${(processedFile.size / 1024 / 1024).toFixed(1)} Mo). Max: ${MAX_FILE_SIZE_MB} Mo.`
         );
         return null;
@@ -157,7 +177,7 @@ export function NarrativeSectionsEditor({
         });
 
       if (uploadError) {
-        alert(uploadError.message);
+        toast.error(uploadError.message);
         return null;
       }
 
@@ -263,7 +283,7 @@ export function NarrativeSectionsEditor({
                   />
                   <button
                     type="button"
-                    onClick={() => updateSection(index, { image: '' })}
+                    onClick={() => clearSectionImage(index)}
                     className="absolute top-2 right-2 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center text-red-500 hover:bg-white shadow-sm"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -307,7 +327,7 @@ export function NarrativeSectionsEditor({
               fr={
                 <input
                   type="text"
-                  value={section.headline_fr}
+                  value={section.headline_fr ?? ''}
                   onChange={(e) => updateSection(index, { headline_fr: e.target.value })}
                   placeholder="Titre en français..."
                   className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
@@ -316,7 +336,7 @@ export function NarrativeSectionsEditor({
               en={
                 <input
                   type="text"
-                  value={section.headline_en}
+                  value={section.headline_en ?? ''}
                   onChange={(e) => updateSection(index, { headline_en: e.target.value })}
                   placeholder="Headline in English..."
                   className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
@@ -325,7 +345,7 @@ export function NarrativeSectionsEditor({
               ar={
                 <input
                   type="text"
-                  value={section.headline_ar}
+                  value={section.headline_ar ?? ''}
                   onChange={(e) => updateSection(index, { headline_ar: e.target.value })}
                   placeholder="العنوان بالعربية..."
                   className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
@@ -339,7 +359,7 @@ export function NarrativeSectionsEditor({
               label="Description"
               fr={
                 <textarea
-                  value={section.body_fr}
+                  value={section.body_fr ?? ''}
                   onChange={(e) => updateSection(index, { body_fr: e.target.value })}
                   placeholder="Description en français..."
                   rows={2}
@@ -348,7 +368,7 @@ export function NarrativeSectionsEditor({
               }
               en={
                 <textarea
-                  value={section.body_en}
+                  value={section.body_en ?? ''}
                   onChange={(e) => updateSection(index, { body_en: e.target.value })}
                   placeholder="Description in English..."
                   rows={2}
@@ -357,7 +377,7 @@ export function NarrativeSectionsEditor({
               }
               ar={
                 <textarea
-                  value={section.body_ar}
+                  value={section.body_ar ?? ''}
                   onChange={(e) => updateSection(index, { body_ar: e.target.value })}
                   placeholder="الوصف بالعربية..."
                   rows={2}

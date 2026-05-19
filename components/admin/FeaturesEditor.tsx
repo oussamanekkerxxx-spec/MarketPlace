@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface FeaturesValue {
   features_fr?: string[];
@@ -90,6 +90,7 @@ export function FeaturesEditor({ value, onChange }: FeaturesEditorProps) {
               onChange={(e) => updateBullet(activeLocale, i, e.target.value)}
               placeholder={`Point ${i + 1}`}
               className="flex-1 px-3 py-2 border rounded-lg text-sm"
+              dir={activeLocale === 'ar' ? 'rtl' : 'ltr'}
             />
             <div className="flex items-center gap-1">
               <button

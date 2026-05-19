@@ -34,7 +34,7 @@ export const productSchema = z.object({
   description_en: z.string().optional(),
   description_ar: z.string().optional(),
   price: z.number().min(0, 'Le prix doit être positif'),
-  compare_at_price: z.number().min(0).optional().or(z.literal(undefined)),
+  compare_at_price: z.number().min(0).optional(),
   currency: z.string().optional(),
   category_id: z.string().uuid().optional().or(z.literal('')),
   sku: z.string().optional(),

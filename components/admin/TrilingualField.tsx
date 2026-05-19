@@ -8,6 +8,9 @@ interface TrilingualFieldProps {
   en: ReactNode;
   ar: ReactNode;
   label?: string;
+  frHasError?: boolean;
+  enHasError?: boolean;
+  arHasError?: boolean;
 }
 
 type Lang = 'fr' | 'en' | 'ar';
@@ -26,8 +29,8 @@ const LANG_ABBREV: Record<Lang, string> = {
 
 const DESKTOP_QUERY = '(min-width: 1024px)';
 
-export function TrilingualField({ fr, en, ar, label }: TrilingualFieldProps) {
-  const [openLang, setOpenLang] = useState<Lang>('fr');
+export function TrilingualField({ fr, en, ar, label, frHasError, enHasError, arHasError }: TrilingualFieldProps) {
+  const [userOpenLang, setUserOpenLang] = useState<Lang>('fr');
   const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
@@ -47,8 +50,14 @@ export function TrilingualField({ fr, en, ar, label }: TrilingualFieldProps) {
     return () => mediaQuery.removeListener(legacyHandleChange);
   }, []);
 
+  // Errored tab takes priority so users can see invalid fields hidden in collapsed tabs.
+  // When all errors clear, falls back to the user's last selection.
+  const errorLang: Lang | undefined = frHasError ? 'fr' : enHasError ? 'en' : arHasError ? 'ar' : undefined;
+  const openLang: Lang = errorLang ?? userOpenLang;
+
   const fields: Record<Lang, ReactNode> = { fr, en, ar };
   const order: Lang[] = ['fr', 'en', 'ar'];
+  const hasErrorPerLang: Record<Lang, boolean | undefined> = { fr: frHasError, en: enHasError, ar: arHasError };
 
   return (
     <div className="space-y-3">
@@ -69,12 +78,13 @@ export function TrilingualField({ fr, en, ar, label }: TrilingualFieldProps) {
         <div className="divide-y overflow-hidden rounded-lg border border-gray-200 bg-white">
           {order.map((lang) => {
             const isOpen = openLang === lang;
+            const hasError = hasErrorPerLang[lang];
 
             return (
               <div key={lang}>
                 <button
                   type="button"
-                  onClick={() => setOpenLang(lang)}
+                  onClick={() => setUserOpenLang(lang)}
                   className="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors active:bg-gray-50"
                   aria-expanded={isOpen}
                 >
@@ -89,6 +99,9 @@ export function TrilingualField({ fr, en, ar, label }: TrilingualFieldProps) {
                     <span className={`text-sm ${isOpen ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>
                       {LANG_LABELS[lang]}
                     </span>
+                    {hasError && !isOpen && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                    )}
                   </span>
                   <ChevronDown
                     className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${

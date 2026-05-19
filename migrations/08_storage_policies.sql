@@ -1,0 +1,147 @@
+-- =============================================================================
+--  MIGRATION 08: Storage buckets + RLS policies
+--  =============================================================================
+--  Versions the manual dashboard steps described (but left commented-out) in
+--  migration 01, Section 15.  Safe to run on an existing project — all
+--  statements are idempotent.
+--
+--  Buckets
+--  -------
+--  product-images   public read | staff write
+--  category-images  public read | staff write
+--  brand-assets     public read | admin write
+--
+--  Run this in the Supabase SQL editor (service-role / postgres user).
+-- =============================================================================
+
+
+-- =============================================================================
+--  SECTION 1: Buckets
+-- =============================================================================
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values
+  (
+    'product-images',
+    'product-images',
+    true,
+    10485760,   -- 10 MB per file
+    array['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
+  ),
+  (
+    'category-images',
+    'category-images',
+    true,
+    10485760,
+    array['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
+  ),
+  (
+    'brand-assets',
+    'brand-assets',
+    true,
+    5242880,    -- 5 MB per file (logos / favicons are small)
+    array['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/svg+xml', 'image/x-icon']
+  )
+on conflict (id) do update set
+  public             = excluded.public,
+  file_size_limit    = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+
+-- =============================================================================
+--  SECTION 2: product-images policies
+-- =============================================================================
+
+drop policy if exists "product-images: public read"  on storage.objects;
+drop policy if exists "product-images: staff write"  on storage.objects;
+drop policy if exists "product-images: staff update" on storage.objects;
+drop policy if exists "product-images: staff delete" on storage.objects;
+
+-- Anyone (including anonymous customers) can view product images.
+create policy "product-images: public read"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'product-images');
+
+-- Authenticated staff can upload new images.
+create policy "product-images: staff write"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'product-images' and public.is_staff());
+
+-- Authenticated staff can replace / update image metadata.
+create policy "product-images: staff update"
+  on storage.objects for update
+  to authenticated
+  using  (bucket_id = 'product-images' and public.is_staff())
+  with check (bucket_id = 'product-images' and public.is_staff());
+
+-- Authenticated staff can delete images (e.g. when removing from a product).
+create policy "product-images: staff delete"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'product-images' and public.is_staff());
+
+
+-- =============================================================================
+--  SECTION 3: category-images policies
+-- =============================================================================
+
+drop policy if exists "category-images: public read"  on storage.objects;
+drop policy if exists "category-images: staff write"  on storage.objects;
+drop policy if exists "category-images: staff update" on storage.objects;
+drop policy if exists "category-images: staff delete" on storage.objects;
+
+create policy "category-images: public read"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'category-images');
+
+create policy "category-images: staff write"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'category-images' and public.is_staff());
+
+create policy "category-images: staff update"
+  on storage.objects for update
+  to authenticated
+  using  (bucket_id = 'category-images' and public.is_staff())
+  with check (bucket_id = 'category-images' and public.is_staff());
+
+create policy "category-images: staff delete"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'category-images' and public.is_staff());
+
+
+-- =============================================================================
+--  SECTION 4: brand-assets policies
+-- =============================================================================
+--  Logo, favicon, OG images are higher-trust assets — only admins can change
+--  them, not managers.
+
+drop policy if exists "brand-assets: public read"  on storage.objects;
+drop policy if exists "brand-assets: admin write"  on storage.objects;
+drop policy if exists "brand-assets: admin update" on storage.objects;
+drop policy if exists "brand-assets: admin delete" on storage.objects;
+
+create policy "brand-assets: public read"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'brand-assets');
+
+create policy "brand-assets: admin write"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'brand-assets' and public.is_admin());
+
+create policy "brand-assets: admin update"
+  on storage.objects for update
+  to authenticated
+  using  (bucket_id = 'brand-assets' and public.is_admin())
+  with check (bucket_id = 'brand-assets' and public.is_admin());
+
+create policy "brand-assets: admin delete"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'brand-assets' and public.is_admin());

@@ -37,14 +37,22 @@ function normalizeDetailSections(sections: ProductFormData['detail_sections']) {
 
 function isMissingDetailSectionsColumn(message: string | undefined) {
   if (!message) return false;
-
   return /detail_sections/i.test(message) && /(column|schema cache)/i.test(message);
 }
 
-async function checkStaff() {
+function parseDbError(message: string): string {
+  if (/duplicate key value violates unique constraint/i.test(message)) {
+    if (/slug/.test(message)) return 'Ce slug est déjà utilisé par un autre produit.';
+    if (/sku/.test(message)) return 'Ce SKU est déjà utilisé par un autre produit.';
+    return 'Une valeur unique est déjà utilisée par un autre produit.';
+  }
+  return message;
+}
+
+async function checkStaff(): Promise<{ error: string } | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Non authentifié');
+  if (!user) return { error: 'Non authentifié' };
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -56,12 +64,15 @@ async function checkStaff() {
   const userProfile = profile as ProfileRow | null;
 
   if (!userProfile || !['admin', 'manager'].includes(userProfile.role)) {
-    throw new Error('Accès non autorisé');
+    return { error: 'Accès non autorisé' };
   }
+  return null;
 }
 
 export async function createProduct(data: ProductFormData) {
-  await checkStaff();
+  const authError = await checkStaff();
+  if (authError) return authError;
+
   const supabase = await createClient();
 
   const result = productSchema.safeParse(data);
@@ -75,7 +86,7 @@ export async function createProduct(data: ProductFormData) {
   const insertData = {
     ...productData,
     category_id: productData.category_id || null,
-    compare_at_price: productData.compare_at_price || null,
+    compare_at_price: productData.compare_at_price ?? null,
     sku: productData.sku || null,
     description_fr: DOMPurify.sanitize(productData.description_fr || ''),
     description_en: DOMPurify.sanitize(productData.description_en || ''),
@@ -91,11 +102,9 @@ export async function createProduct(data: ProductFormData) {
           "La base ne connait pas encore le champ detail_sections. Appliquez la migration 07_add_detail_sections.sql puis reessayez.",
       };
     }
-
-    return { error: error.message };
+    return { error: parseDbError(error.message) };
   }
 
-  // Insert product images
   if (images && images.length > 0 && created) {
     const imageRows = images.map((img, i) => ({
       product_id: created.id,
@@ -117,7 +126,9 @@ export async function createProduct(data: ProductFormData) {
 }
 
 export async function updateProduct(id: string, data: ProductFormData) {
-  await checkStaff();
+  const authError = await checkStaff();
+  if (authError) return authError;
+
   const supabase = await createClient();
 
   const result = productSchema.safeParse(data);
@@ -131,7 +142,7 @@ export async function updateProduct(id: string, data: ProductFormData) {
   const updateData = {
     ...productData,
     category_id: productData.category_id || null,
-    compare_at_price: productData.compare_at_price || null,
+    compare_at_price: productData.compare_at_price ?? null,
     sku: productData.sku || null,
     description_fr: DOMPurify.sanitize(productData.description_fr || ''),
     description_en: DOMPurify.sanitize(productData.description_en || ''),
@@ -147,11 +158,9 @@ export async function updateProduct(id: string, data: ProductFormData) {
           "La base ne connait pas encore le champ detail_sections. Appliquez la migration 07_add_detail_sections.sql puis reessayez.",
       };
     }
-
-    return { error: error.message };
+    return { error: parseDbError(error.message) };
   }
 
-  // Sync product images: delete existing, insert new set
   const { error: deleteError } = await supabase.from('product_images').delete().eq('product_id', id);
   if (deleteError) {
     console.error('Failed to delete old product images:', deleteError);
@@ -179,7 +188,9 @@ export async function updateProduct(id: string, data: ProductFormData) {
 }
 
 export async function toggleProductActive(id: string, isActive: boolean) {
-  await checkStaff();
+  const authError = await checkStaff();
+  if (authError) return authError;
+
   const supabase = await createClient();
 
   const { error } = await supabase.from('products').update({ is_active: isActive }).eq('id', id);
@@ -192,7 +203,9 @@ export async function toggleProductActive(id: string, isActive: boolean) {
 }
 
 export async function toggleProductFeatured(id: string, isFeatured: boolean) {
-  await checkStaff();
+  const authError = await checkStaff();
+  if (authError) return authError;
+
   const supabase = await createClient();
 
   const { error } = await supabase.from('products').update({ is_featured: isFeatured }).eq('id', id);
@@ -205,7 +218,9 @@ export async function toggleProductFeatured(id: string, isFeatured: boolean) {
 }
 
 export async function deleteProduct(id: string) {
-  await checkStaff();
+  const authError = await checkStaff();
+  if (authError) return authError;
+
   const supabase = await createClient();
 
   const { error } = await supabase.from('products').delete().eq('id', id);
