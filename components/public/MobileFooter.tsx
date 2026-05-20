@@ -351,6 +351,9 @@ export function MobileFooter({
         <p className="text-[11px] text-center" style={{ color: '#9CA3AF' }}>
           © {new Date().getFullYear()} {siteName}. {rightsLabel}
         </p>
+        <p className="text-[10px] text-center mt-1" style={{ color: '#9CA3AF' }}>
+          Made by [Your Name]
+        </p>
       </div>
     </footer>
   );

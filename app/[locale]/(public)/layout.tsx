@@ -355,6 +355,7 @@ export default async function PublicLayout({
 
           <div className="border-t border-border-warm mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-text-muted">
             <span>© {new Date().getFullYear()} {siteName}. {tFooter('rights')}</span>
+            <span className="text-xs opacity-70">Made by [Your Name]</span>
           </div>
         </div>
       </footer>
