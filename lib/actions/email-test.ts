@@ -14,18 +14,7 @@ export async function testEmailNotification(): Promise<{ success: boolean; error
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Non authentifié' };
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  type ProfileRow = { role: 'admin' | 'manager' };
-  const userProfile = profile as ProfileRow | null;
-
-  if (userProfile?.role !== 'admin') {
-    return { success: false, error: 'Accès réservé aux administrateurs' };
-  }
+  // Any authenticated user can test email (team/roles removed).
 
   const { data: settings, error: settingsError } = await supabase
     .from('site_settings')

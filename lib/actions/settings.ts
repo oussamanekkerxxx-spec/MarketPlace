@@ -13,20 +13,7 @@ export async function updateSettings(formData: FormData) {
     return { error: 'Non authentifié' };
   }
 
-  // Verify admin
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  type ProfileRow = { role: 'admin' | 'manager' };
-  const userProfile = profile as ProfileRow | null;
-
-  // Settings include API tokens and critical config — restrict to admin only.
-  if (!userProfile || userProfile.role !== 'admin') {
-    return { error: 'Accès non autorisé' };
-  }
+  // Any authenticated user can manage settings (team/roles removed).
 
   // Parse form data
   const rawData = Object.fromEntries(formData.entries());

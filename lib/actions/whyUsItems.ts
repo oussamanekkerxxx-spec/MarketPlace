@@ -4,27 +4,14 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { whyUsItemSchema, type WhyUsItemFormData } from '@/lib/validation/whyUsItem';
 
-async function checkStaff() {
+async function checkAuth() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Non authentifié');
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  type ProfileRow = { role: 'admin' | 'manager' };
-  const userProfile = profile as ProfileRow | null;
-
-  if (!userProfile || !['admin', 'manager'].includes(userProfile.role)) {
-    throw new Error('Accès non autorisé');
-  }
 }
 
 export async function createWhyUsItem(data: WhyUsItemFormData) {
-  await checkStaff();
+  await checkAuth();
   const supabase = await createClient();
 
   const result = whyUsItemSchema.safeParse(data);
@@ -42,7 +29,7 @@ export async function createWhyUsItem(data: WhyUsItemFormData) {
 }
 
 export async function updateWhyUsItem(id: string, data: WhyUsItemFormData) {
-  await checkStaff();
+  await checkAuth();
   const supabase = await createClient();
 
   const result = whyUsItemSchema.safeParse(data);
@@ -60,7 +47,7 @@ export async function updateWhyUsItem(id: string, data: WhyUsItemFormData) {
 }
 
 export async function deleteWhyUsItem(id: string) {
-  await checkStaff();
+  await checkAuth();
   const supabase = await createClient();
 
   const { error } = await supabase.from('why_us_items').delete().eq('id', id);
@@ -73,7 +60,7 @@ export async function deleteWhyUsItem(id: string) {
 }
 
 export async function toggleWhyUsItemActive(id: string, isActive: boolean) {
-  await checkStaff();
+  await checkAuth();
   const supabase = await createClient();
 
   const { error } = await supabase.from('why_us_items').update({ is_active: isActive }).eq('id', id);

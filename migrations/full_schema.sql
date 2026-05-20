@@ -980,3 +980,578 @@ create policy "Staff can manage product images"
 --        Site URL = https://your-domain.com  (or http://localhost:3000 in dev)
 --   5. Configure SMTP for password reset emails (recommended: Resend)
 -- =============================================================================
+-- =============================================================================
+--  MIGRATION: Add announcement bar + hero content fields to site_settings
+--  =============================================================================
+--  Run this in the Supabase SQL Editor after the initial schema is already
+--  applied. All columns use IF NOT EXISTS for idempotency.
+-- =============================================================================
+
+-- ---------------------------------------------------------------------------
+-- 1. Announcement bar
+-- ---------------------------------------------------------------------------
+alter table public.site_settings
+  add column if not exists announcement_enabled boolean not null default false,
+  add column if not exists announcement_text_fr text,
+  add column if not exists announcement_text_en text,
+  add column if not exists announcement_text_ar text;
+
+-- ---------------------------------------------------------------------------
+-- 2. Hero section content (trilingual)
+-- ---------------------------------------------------------------------------
+alter table public.site_settings
+  add column if not exists hero_eyebrow_fr text,
+  add column if not exists hero_eyebrow_en text,
+  add column if not exists hero_eyebrow_ar text,
+  add column if not exists hero_title_accent_fr text,
+  add column if not exists hero_title_accent_en text,
+  add column if not exists hero_title_accent_ar text,
+  add column if not exists hero_title_main_fr text,
+  add column if not exists hero_title_main_en text,
+  add column if not exists hero_title_main_ar text,
+  add column if not exists hero_subtitle_fr text,
+  add column if not exists hero_subtitle_en text,
+  add column if not exists hero_subtitle_ar text,
+  add column if not exists hero_image_url text;
+
+-- ---------------------------------------------------------------------------
+-- 3. Recreate the public view to expose new client-safe columns
+-- ---------------------------------------------------------------------------
+create or replace view public.site_settings_public as
+select
+  id,
+  site_name,
+  site_tagline_fr, site_tagline_en, site_tagline_ar,
+  logo_url, favicon_url,
+  primary_color, secondary_color, accent_color,
+  contact_email, contact_phone, whatsapp_number, business_address,
+  facebook_url, instagram_url, tiktok_url, telegram_url, youtube_url,
+  meta_pixel_id, google_analytics_id, tiktok_pixel_id,
+  default_currency, default_locale,
+  thank_you_message_fr, thank_you_message_en, thank_you_message_ar,
+  cod_badge_fr, cod_badge_en, cod_badge_ar,
+  announcement_enabled,
+  announcement_text_fr, announcement_text_en, announcement_text_ar,
+  hero_eyebrow_fr, hero_eyebrow_en, hero_eyebrow_ar,
+  hero_title_accent_fr, hero_title_accent_en, hero_title_accent_ar,
+  hero_title_main_fr, hero_title_main_en, hero_title_main_ar,
+  hero_subtitle_fr, hero_subtitle_en, hero_subtitle_ar,
+  hero_image_url
+from public.site_settings;
+
+grant select on public.site_settings_public to anon, authenticated;
+-- Migration: Add trust strip and featured section editable fields
+-- Trust strip: 3 items × (title + subtitle) × 3 locales = 18 columns
+-- Featured section: (title + subtitle) × 3 locales = 6 columns
+
+alter table public.site_settings
+  -- Trust item 1
+  add column if not exists trust_1_title_fr text,
+  add column if not exists trust_1_title_en text,
+  add column if not exists trust_1_title_ar text,
+  add column if not exists trust_1_sub_fr text,
+  add column if not exists trust_1_sub_en text,
+  add column if not exists trust_1_sub_ar text,
+  -- Trust item 2
+  add column if not exists trust_2_title_fr text,
+  add column if not exists trust_2_title_en text,
+  add column if not exists trust_2_title_ar text,
+  add column if not exists trust_2_sub_fr text,
+  add column if not exists trust_2_sub_en text,
+  add column if not exists trust_2_sub_ar text,
+  -- Trust item 3
+  add column if not exists trust_3_title_fr text,
+  add column if not exists trust_3_title_en text,
+  add column if not exists trust_3_title_ar text,
+  add column if not exists trust_3_sub_fr text,
+  add column if not exists trust_3_sub_en text,
+  add column if not exists trust_3_sub_ar text,
+  -- Featured products section
+  add column if not exists featured_section_title_fr text,
+  add column if not exists featured_section_title_en text,
+  add column if not exists featured_section_title_ar text,
+  add column if not exists featured_section_subtitle_fr text,
+  add column if not exists featured_section_subtitle_en text,
+  add column if not exists featured_section_subtitle_ar text;
+
+-- Recreate public view with all new columns
+-- NOTE: sensitive token columns (telegram_bot_token, meta_capi_access_token, etc.)
+-- are intentionally omitted from this public view. Only append new columns at the
+-- end; never insert in the middle, or CREATE OR REPLACE VIEW will fail.
+create or replace view public.site_settings_public as
+select
+  id,
+  site_name,
+  site_tagline_fr, site_tagline_en, site_tagline_ar,
+  logo_url, favicon_url,
+  primary_color, secondary_color, accent_color,
+  contact_email, contact_phone, whatsapp_number, business_address,
+  facebook_url, instagram_url, tiktok_url, telegram_url, youtube_url,
+  meta_pixel_id, google_analytics_id, tiktok_pixel_id,
+  default_currency, default_locale,
+  thank_you_message_fr, thank_you_message_en, thank_you_message_ar,
+  cod_badge_fr, cod_badge_en, cod_badge_ar,
+  announcement_enabled,
+  announcement_text_fr, announcement_text_en, announcement_text_ar,
+  hero_eyebrow_fr, hero_eyebrow_en, hero_eyebrow_ar,
+  hero_title_accent_fr, hero_title_accent_en, hero_title_accent_ar,
+  hero_title_main_fr, hero_title_main_en, hero_title_main_ar,
+  hero_subtitle_fr, hero_subtitle_en, hero_subtitle_ar,
+  hero_image_url,
+  -- Trust strip
+  trust_1_title_fr, trust_1_title_en, trust_1_title_ar,
+  trust_1_sub_fr, trust_1_sub_en, trust_1_sub_ar,
+  trust_2_title_fr, trust_2_title_en, trust_2_title_ar,
+  trust_2_sub_fr, trust_2_sub_en, trust_2_sub_ar,
+  trust_3_title_fr, trust_3_title_en, trust_3_title_ar,
+  trust_3_sub_fr, trust_3_sub_en, trust_3_sub_ar,
+  -- Featured section
+  featured_section_title_fr, featured_section_title_en, featured_section_title_ar,
+  featured_section_subtitle_fr, featured_section_subtitle_en, featured_section_subtitle_ar,
+  updated_at
+from public.site_settings;
+-- Migration: Add why_us_items table + footer_description + whatsapp_default_message
+
+-- ============================================================
+-- 1. why_us_items table
+-- ============================================================
+create table if not exists public.why_us_items (
+  id uuid primary key default gen_random_uuid(),
+  display_order int not null default 0,
+  number_label_fr text not null,
+  number_label_en text,
+  number_label_ar text,
+  title_fr text not null,
+  title_en text,
+  title_ar text,
+  text_fr text not null,
+  text_en text,
+  text_ar text,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Index for public listing (active items in order)
+create index if not exists idx_why_us_items_active_order
+  on public.why_us_items(is_active, display_order);
+
+-- RLS
+alter table public.why_us_items enable row level security;
+
+create policy "why_us_items_select_public"
+  on public.why_us_items
+  for select to anon, authenticated
+  using (is_active = true);
+
+create policy "why_us_items_all_staff"
+  on public.why_us_items
+  for all to authenticated
+  using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role in ('admin', 'manager')
+    )
+  );
+
+-- ============================================================
+-- 2. New site_settings columns
+-- ============================================================
+alter table public.site_settings
+  add column if not exists footer_description_fr text,
+  add column if not exists footer_description_en text,
+  add column if not exists footer_description_ar text,
+  add column if not exists whatsapp_default_message_fr text,
+  add column if not exists whatsapp_default_message_en text,
+  add column if not exists whatsapp_default_message_ar text;
+
+-- ============================================================
+-- 3. Recreate public view
+-- ============================================================
+-- NOTE: sensitive token columns (telegram_bot_token, meta_capi_access_token, etc.)
+-- are intentionally omitted from this public view. Only append new columns at the
+-- end; never insert in the middle, or CREATE OR REPLACE VIEW will fail.
+drop view if exists public.site_settings_public;
+create view public.site_settings_public as
+select
+  id,
+  site_name,
+  site_tagline_fr, site_tagline_en, site_tagline_ar,
+  logo_url, favicon_url,
+  primary_color, secondary_color, accent_color,
+  contact_email, contact_phone, whatsapp_number, business_address,
+  facebook_url, instagram_url, tiktok_url, telegram_url, youtube_url,
+  meta_pixel_id, google_analytics_id, tiktok_pixel_id,
+  default_currency, default_locale,
+  thank_you_message_fr, thank_you_message_en, thank_you_message_ar,
+  cod_badge_fr, cod_badge_en, cod_badge_ar,
+  announcement_enabled,
+  announcement_text_fr, announcement_text_en, announcement_text_ar,
+  hero_eyebrow_fr, hero_eyebrow_en, hero_eyebrow_ar,
+  hero_title_accent_fr, hero_title_accent_en, hero_title_accent_ar,
+  hero_title_main_fr, hero_title_main_en, hero_title_main_ar,
+  hero_subtitle_fr, hero_subtitle_en, hero_subtitle_ar,
+  hero_image_url,
+  trust_1_title_fr, trust_1_title_en, trust_1_title_ar,
+  trust_1_sub_fr, trust_1_sub_en, trust_1_sub_ar,
+  trust_2_title_fr, trust_2_title_en, trust_2_title_ar,
+  trust_2_sub_fr, trust_2_sub_en, trust_2_sub_ar,
+  trust_3_title_fr, trust_3_title_en, trust_3_title_ar,
+  trust_3_sub_fr, trust_3_sub_en, trust_3_sub_ar,
+  featured_section_title_fr, featured_section_title_en, featured_section_title_ar,
+  featured_section_subtitle_fr, featured_section_subtitle_en, featured_section_subtitle_ar,
+  footer_description_fr, footer_description_en, footer_description_ar,
+  whatsapp_default_message_fr, whatsapp_default_message_en, whatsapp_default_message_ar,
+  updated_at
+from public.site_settings;
+
+grant select on public.site_settings_public to anon, authenticated;
+-- Migration: Add Why Us section title/subtitle fields to site_settings
+
+alter table public.site_settings
+  add column if not exists why_us_title_fr text,
+  add column if not exists why_us_title_en text,
+  add column if not exists why_us_title_ar text,
+  add column if not exists why_us_sub_fr text,
+  add column if not exists why_us_sub_en text,
+  add column if not exists why_us_sub_ar text;
+
+-- Recreate public view
+-- NOTE: sensitive token columns (telegram_bot_token, meta_capi_access_token, etc.)
+-- are intentionally omitted from this public view. Only append new columns at the
+-- end; never insert in the middle, or CREATE OR REPLACE VIEW will fail.
+drop view if exists public.site_settings_public;
+create view public.site_settings_public as
+select
+  id,
+  site_name,
+  site_tagline_fr, site_tagline_en, site_tagline_ar,
+  logo_url, favicon_url,
+  primary_color, secondary_color, accent_color,
+  contact_email, contact_phone, whatsapp_number, business_address,
+  facebook_url, instagram_url, tiktok_url, telegram_url, youtube_url,
+  meta_pixel_id, google_analytics_id, tiktok_pixel_id,
+  default_currency, default_locale,
+  thank_you_message_fr, thank_you_message_en, thank_you_message_ar,
+  cod_badge_fr, cod_badge_en, cod_badge_ar,
+  announcement_enabled,
+  announcement_text_fr, announcement_text_en, announcement_text_ar,
+  hero_eyebrow_fr, hero_eyebrow_en, hero_eyebrow_ar,
+  hero_title_accent_fr, hero_title_accent_en, hero_title_accent_ar,
+  hero_title_main_fr, hero_title_main_en, hero_title_main_ar,
+  hero_subtitle_fr, hero_subtitle_en, hero_subtitle_ar,
+  hero_image_url,
+  trust_1_title_fr, trust_1_title_en, trust_1_title_ar,
+  trust_1_sub_fr, trust_1_sub_en, trust_1_sub_ar,
+  trust_2_title_fr, trust_2_title_en, trust_2_title_ar,
+  trust_2_sub_fr, trust_2_sub_en, trust_2_sub_ar,
+  trust_3_title_fr, trust_3_title_en, trust_3_title_ar,
+  trust_3_sub_fr, trust_3_sub_en, trust_3_sub_ar,
+  featured_section_title_fr, featured_section_title_en, featured_section_title_ar,
+  featured_section_subtitle_fr, featured_section_subtitle_en, featured_section_subtitle_ar,
+  footer_description_fr, footer_description_en, footer_description_ar,
+  whatsapp_default_message_fr, whatsapp_default_message_en, whatsapp_default_message_ar,
+  why_us_title_fr, why_us_title_en, why_us_title_ar,
+  why_us_sub_fr, why_us_sub_en, why_us_sub_ar,
+  updated_at
+from public.site_settings;
+
+grant select on public.site_settings_public to anon, authenticated;
+-- Migration: Add trust strip icon columns to site_settings
+
+alter table public.site_settings
+  add column if not exists trust_1_icon text default 'Truck',
+  add column if not exists trust_2_icon text default 'Banknote',
+  add column if not exists trust_3_icon text default 'ShieldCheck';
+
+-- Recreate public view
+-- NOTE: sensitive token columns are intentionally omitted.
+-- Only append new columns at the end; never insert in the middle.
+drop view if exists public.site_settings_public;
+create view public.site_settings_public as
+select
+  id,
+  site_name,
+  site_tagline_fr, site_tagline_en, site_tagline_ar,
+  logo_url, favicon_url,
+  primary_color, secondary_color, accent_color,
+  contact_email, contact_phone, whatsapp_number, business_address,
+  facebook_url, instagram_url, tiktok_url, telegram_url, youtube_url,
+  meta_pixel_id, google_analytics_id, tiktok_pixel_id,
+  default_currency, default_locale,
+  thank_you_message_fr, thank_you_message_en, thank_you_message_ar,
+  cod_badge_fr, cod_badge_en, cod_badge_ar,
+  announcement_enabled,
+  announcement_text_fr, announcement_text_en, announcement_text_ar,
+  hero_eyebrow_fr, hero_eyebrow_en, hero_eyebrow_ar,
+  hero_title_accent_fr, hero_title_accent_en, hero_title_accent_ar,
+  hero_title_main_fr, hero_title_main_en, hero_title_main_ar,
+  hero_subtitle_fr, hero_subtitle_en, hero_subtitle_ar,
+  hero_image_url,
+  trust_1_title_fr, trust_1_title_en, trust_1_title_ar,
+  trust_1_sub_fr, trust_1_sub_en, trust_1_sub_ar,
+  trust_2_title_fr, trust_2_title_en, trust_2_title_ar,
+  trust_2_sub_fr, trust_2_sub_en, trust_2_sub_ar,
+  trust_3_title_fr, trust_3_title_en, trust_3_title_ar,
+  trust_3_sub_fr, trust_3_sub_en, trust_3_sub_ar,
+  trust_1_icon, trust_2_icon, trust_3_icon,
+  featured_section_title_fr, featured_section_title_en, featured_section_title_ar,
+  featured_section_subtitle_fr, featured_section_subtitle_en, featured_section_subtitle_ar,
+  footer_description_fr, footer_description_en, footer_description_ar,
+  whatsapp_default_message_fr, whatsapp_default_message_en, whatsapp_default_message_ar,
+  why_us_title_fr, why_us_title_en, why_us_title_ar,
+  why_us_sub_fr, why_us_sub_en, why_us_sub_ar,
+  updated_at
+from public.site_settings;
+
+grant select on public.site_settings_public to anon, authenticated;
+-- =============================================================================
+--  MIGRATION 07: Add detail_sections JSONB column to products
+--  =============================================================================
+--  Replaces the flat detail_images text[] array with a rich JSONB structure
+--  that supports scroll-driven narrative sections (image + headline + body).
+--
+--  Old detail_images column is preserved for rollback safety.
+-- =============================================================================
+
+alter table public.products
+  add column if not exists detail_sections jsonb default '[]'::jsonb;
+
+comment on column public.products.detail_sections is
+  'Array of narrative sections for Apple-style scroll storytelling. Each item: {id, image, headline_fr/en/ar, body_fr/en/ar, position, theme}';
+-- =============================================================================
+--  MIGRATION 08: Storage buckets + RLS policies
+--  =============================================================================
+--  Versions the manual dashboard steps described (but left commented-out) in
+--  migration 01, Section 15.  Safe to run on an existing project — all
+--  statements are idempotent.
+--
+--  Buckets
+--  -------
+--  product-images   public read | staff write
+--  category-images  public read | staff write
+--  brand-assets     public read | admin write
+--
+--  Run this in the Supabase SQL editor (service-role / postgres user).
+-- =============================================================================
+
+
+-- =============================================================================
+--  SECTION 1: Buckets
+-- =============================================================================
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values
+  (
+    'product-images',
+    'product-images',
+    true,
+    10485760,   -- 10 MB per file
+    array['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
+  ),
+  (
+    'category-images',
+    'category-images',
+    true,
+    10485760,
+    array['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
+  ),
+  (
+    'brand-assets',
+    'brand-assets',
+    true,
+    5242880,    -- 5 MB per file (logos / favicons are small)
+    array['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/svg+xml', 'image/x-icon']
+  ),
+  (
+    'site-assets',
+    'site-assets',
+    true,
+    10485760,   -- 10 MB per file
+    array['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
+  )
+on conflict (id) do update set
+  public             = excluded.public,
+  file_size_limit    = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+
+-- =============================================================================
+--  SECTION 2: product-images policies
+-- =============================================================================
+
+drop policy if exists "product-images: public read"  on storage.objects;
+drop policy if exists "product-images: staff write"  on storage.objects;
+drop policy if exists "product-images: staff update" on storage.objects;
+drop policy if exists "product-images: staff delete" on storage.objects;
+
+-- Anyone (including anonymous customers) can view product images.
+create policy "product-images: public read"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'product-images');
+
+-- Authenticated staff can upload new images.
+create policy "product-images: staff write"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'product-images' and public.is_staff());
+
+-- Authenticated staff can replace / update image metadata.
+create policy "product-images: staff update"
+  on storage.objects for update
+  to authenticated
+  using  (bucket_id = 'product-images' and public.is_staff())
+  with check (bucket_id = 'product-images' and public.is_staff());
+
+-- Authenticated staff can delete images (e.g. when removing from a product).
+create policy "product-images: staff delete"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'product-images' and public.is_staff());
+
+
+-- =============================================================================
+--  SECTION 3: category-images policies
+-- =============================================================================
+
+drop policy if exists "category-images: public read"  on storage.objects;
+drop policy if exists "category-images: staff write"  on storage.objects;
+drop policy if exists "category-images: staff update" on storage.objects;
+drop policy if exists "category-images: staff delete" on storage.objects;
+
+create policy "category-images: public read"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'category-images');
+
+create policy "category-images: staff write"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'category-images' and public.is_staff());
+
+create policy "category-images: staff update"
+  on storage.objects for update
+  to authenticated
+  using  (bucket_id = 'category-images' and public.is_staff())
+  with check (bucket_id = 'category-images' and public.is_staff());
+
+create policy "category-images: staff delete"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'category-images' and public.is_staff());
+
+
+-- =============================================================================
+--  SECTION 4: brand-assets policies
+-- =============================================================================
+--  Logo, favicon, OG images are higher-trust assets — only admins can change
+--  them, not managers.
+
+drop policy if exists "brand-assets: public read"  on storage.objects;
+drop policy if exists "brand-assets: admin write"  on storage.objects;
+drop policy if exists "brand-assets: admin update" on storage.objects;
+drop policy if exists "brand-assets: admin delete" on storage.objects;
+
+create policy "brand-assets: public read"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'brand-assets');
+
+create policy "brand-assets: admin write"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'brand-assets' and public.is_admin());
+
+create policy "brand-assets: admin update"
+  on storage.objects for update
+  to authenticated
+  using  (bucket_id = 'brand-assets' and public.is_admin())
+  with check (bucket_id = 'brand-assets' and public.is_admin());
+
+create policy "brand-assets: admin delete"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'brand-assets' and public.is_admin());
+
+
+-- =============================================================================
+--  SECTION 5: site-assets policies
+-- =============================================================================
+--  Hero images and other site-wide assets.
+
+drop policy if exists "site-assets: public read"  on storage.objects;
+drop policy if exists "site-assets: staff write"  on storage.objects;
+drop policy if exists "site-assets: staff update" on storage.objects;
+drop policy if exists "site-assets: staff delete" on storage.objects;
+
+create policy "site-assets: public read"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'site-assets');
+
+create policy "site-assets: staff write"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'site-assets' and public.is_staff());
+
+create policy "site-assets: staff update"
+  on storage.objects for update
+  to authenticated
+  using  (bucket_id = 'site-assets' and public.is_staff())
+  with check (bucket_id = 'site-assets' and public.is_staff());
+
+create policy "site-assets: staff delete"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'site-assets' and public.is_staff());
+-- =============================================================================
+--  MIGRATION 09: Add google_ads_conversion_label to site_settings
+--  =============================================================================
+--  Adds the conversion label column needed for Google Ads conversion tracking.
+--  Safe to run on an existing project — uses IF NOT EXISTS.
+-- =============================================================================
+
+alter table public.site_settings
+  add column if not exists google_ads_conversion_label text;
+
+-- Recreate public view to expose the new column
+-- (sensitive token columns are intentionally omitted)
+drop view if exists public.site_settings_public;
+
+create view public.site_settings_public as
+select
+  id,
+  site_name,
+  site_tagline_fr, site_tagline_en, site_tagline_ar,
+  logo_url, favicon_url,
+  primary_color, secondary_color, accent_color,
+  contact_email, contact_phone, whatsapp_number, business_address,
+  facebook_url, instagram_url, tiktok_url, telegram_url, youtube_url,
+  meta_pixel_id, google_analytics_id, google_ads_id, google_ads_conversion_label, tiktok_pixel_id,
+  default_currency, default_locale,
+  thank_you_message_fr, thank_you_message_en, thank_you_message_ar,
+  cod_badge_fr, cod_badge_en, cod_badge_ar,
+  announcement_enabled,
+  announcement_text_fr, announcement_text_en, announcement_text_ar,
+  hero_eyebrow_fr, hero_eyebrow_en, hero_eyebrow_ar,
+  hero_title_accent_fr, hero_title_accent_en, hero_title_accent_ar,
+  hero_title_main_fr, hero_title_main_en, hero_title_main_ar,
+  hero_subtitle_fr, hero_subtitle_en, hero_subtitle_ar,
+  hero_image_url,
+  trust_1_title_fr, trust_1_title_en, trust_1_title_ar,
+  trust_1_sub_fr, trust_1_sub_en, trust_1_sub_ar,
+  trust_2_title_fr, trust_2_title_en, trust_2_title_ar,
+  trust_2_sub_fr, trust_2_sub_en, trust_2_sub_ar,
+  trust_3_title_fr, trust_3_title_en, trust_3_title_ar,
+  trust_3_sub_fr, trust_3_sub_en, trust_3_sub_ar,
+  trust_1_icon, trust_2_icon, trust_3_icon,
+  featured_section_title_fr, featured_section_title_en, featured_section_title_ar,
+  featured_section_subtitle_fr, featured_section_subtitle_en, featured_section_subtitle_ar,
+  why_us_title_fr, why_us_title_en, why_us_title_ar,
+  why_us_sub_fr, why_us_sub_en, why_us_sub_ar,
+  footer_description_fr, footer_description_en, footer_description_ar,
+  whatsapp_default_message_fr, whatsapp_default_message_en, whatsapp_default_message_ar
+from public.site_settings;
+
+grant select on public.site_settings_public to anon, authenticated;

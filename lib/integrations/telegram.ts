@@ -153,18 +153,7 @@ export async function testTelegramNotification(): Promise<{ success: boolean; er
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Non authentifié' };
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  type ProfileRow = { role: 'admin' | 'manager' };
-  const userProfile = profile as ProfileRow | null;
-
-  if (userProfile?.role !== 'admin') {
-    return { success: false, error: 'Acces reserve aux administrateurs' };
-  }
+  // Any authenticated user can test Telegram (team/roles removed).
 
   const { botToken, chatId, locale } = await getTelegramConfig();
 

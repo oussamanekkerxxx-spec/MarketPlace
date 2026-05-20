@@ -49,28 +49,15 @@ function parseDbError(message: string): string {
   return message;
 }
 
-async function checkStaff(): Promise<{ error: string } | null> {
+async function checkAuth(): Promise<{ error: string } | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Non authentifié' };
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  type ProfileRow = { role: 'admin' | 'manager' };
-  const userProfile = profile as ProfileRow | null;
-
-  if (!userProfile || !['admin', 'manager'].includes(userProfile.role)) {
-    return { error: 'Accès non autorisé' };
-  }
   return null;
 }
 
 export async function createProduct(data: ProductFormData) {
-  const authError = await checkStaff();
+  const authError = await checkAuth();
   if (authError) return authError;
 
   const supabase = await createClient();
@@ -126,7 +113,7 @@ export async function createProduct(data: ProductFormData) {
 }
 
 export async function updateProduct(id: string, data: ProductFormData) {
-  const authError = await checkStaff();
+  const authError = await checkAuth();
   if (authError) return authError;
 
   const supabase = await createClient();
@@ -188,7 +175,7 @@ export async function updateProduct(id: string, data: ProductFormData) {
 }
 
 export async function toggleProductActive(id: string, isActive: boolean) {
-  const authError = await checkStaff();
+  const authError = await checkAuth();
   if (authError) return authError;
 
   const supabase = await createClient();
@@ -203,7 +190,7 @@ export async function toggleProductActive(id: string, isActive: boolean) {
 }
 
 export async function toggleProductFeatured(id: string, isFeatured: boolean) {
-  const authError = await checkStaff();
+  const authError = await checkAuth();
   if (authError) return authError;
 
   const supabase = await createClient();
@@ -218,7 +205,7 @@ export async function toggleProductFeatured(id: string, isFeatured: boolean) {
 }
 
 export async function deleteProduct(id: string) {
-  const authError = await checkStaff();
+  const authError = await checkAuth();
   if (authError) return authError;
 
   const supabase = await createClient();

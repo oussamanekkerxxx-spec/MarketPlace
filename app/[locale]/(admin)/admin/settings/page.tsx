@@ -23,20 +23,6 @@ export default async function SettingsPage({
     redirect(`/${locale}/login`);
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  type ProfileRow = { role: 'admin' | 'manager' };
-  const userProfile = profile as ProfileRow | null;
-
-  // Settings include third-party integration secrets, so this page is admin-only.
-  if (userProfile?.role !== 'admin') {
-    redirect(`/${locale}/forbidden`);
-  }
-
   const { data: settingsRaw } = await supabase
     .from('site_settings')
     .select('*')

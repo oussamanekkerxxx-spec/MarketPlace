@@ -14,18 +14,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  type ProfileRow = { role: 'admin' | 'manager' };
-  const userProfile = profile as ProfileRow | null;
-
-  if (userProfile?.role !== 'admin') {
-    return NextResponse.json({ error: 'Admin only' }, { status: 403 });
-  }
+  // Any authenticated user can view diagnostics (team/roles removed).
 
   const check = (key: string) => {
     const val = process.env[key];

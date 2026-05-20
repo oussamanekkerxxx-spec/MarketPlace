@@ -31,14 +31,8 @@ export default async function OrderDetailPage({
 
   if (!order) notFound();
 
-  // Get current user role
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user?.id || '')
-    .single();
-  const isAdmin = (currentProfile as { role: string } | null)?.role === 'admin';
+  // All authenticated users have full access (team/roles removed).
+  const isAdmin = true;
 
   type OrderItem = {
     product_title_snapshot: string;

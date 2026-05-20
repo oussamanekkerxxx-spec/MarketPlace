@@ -4,27 +4,14 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { categorySchema, type CategoryFormData } from '@/lib/validation/category';
 
-async function checkStaff() {
+async function checkAuth() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Non authentifié');
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  type ProfileRow = { role: 'admin' | 'manager' };
-  const userProfile = profile as ProfileRow | null;
-
-  if (!userProfile || !['admin', 'manager'].includes(userProfile.role)) {
-    throw new Error('Accès non autorisé');
-  }
 }
 
 export async function createCategory(data: CategoryFormData) {
-  await checkStaff();
+  await checkAuth();
   const supabase = await createClient();
 
   const result = categorySchema.safeParse(data);
@@ -47,7 +34,7 @@ export async function createCategory(data: CategoryFormData) {
 }
 
 export async function updateCategory(id: string, data: CategoryFormData) {
-  await checkStaff();
+  await checkAuth();
   const supabase = await createClient();
 
   const result = categorySchema.safeParse(data);
@@ -70,7 +57,7 @@ export async function updateCategory(id: string, data: CategoryFormData) {
 }
 
 export async function toggleCategoryActive(id: string, isActive: boolean) {
-  await checkStaff();
+  await checkAuth();
   const supabase = await createClient();
 
   const { error } = await supabase.from('categories').update({ is_active: isActive }).eq('id', id);

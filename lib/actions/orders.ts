@@ -247,19 +247,6 @@ export async function updateOrderStatuses(orderIds: string[], newStatus: string)
   } = await supabase.auth.getUser();
   if (!user) return { error: 'Non authentifié' };
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  type ProfileRow = { role: 'admin' | 'manager' };
-  const userProfile = profile as ProfileRow | null;
-
-  if (!userProfile || !['admin', 'manager'].includes(userProfile.role)) {
-    return { error: 'Accès non autorisé' };
-  }
-
   const { error } = await supabase
     .from('orders')
     .update({ status: newStatus })
@@ -282,19 +269,6 @@ export async function updateOrderNotes(orderId: string, notes: string) {
   } = await supabase.auth.getUser();
   if (!user) return { error: 'Non authentifié' };
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  type ProfileRow = { role: 'admin' | 'manager' };
-  const userProfile = profile as ProfileRow | null;
-
-  if (!userProfile || !['admin', 'manager'].includes(userProfile.role)) {
-    return { error: 'Accès non autorisé' };
-  }
-
   const { error } = await supabase
     .from('orders')
     .update({ admin_notes: notes })
@@ -316,19 +290,6 @@ export async function assignOrder(orderId: string, managerId: string | null) {
   } = await supabase.auth.getUser();
   if (!user) return { error: 'Non authentifié' };
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  type ProfileRow = { role: 'admin' | 'manager' };
-  const userProfile = profile as ProfileRow | null;
-
-  if (!userProfile || !['admin', 'manager'].includes(userProfile.role)) {
-    return { error: 'Accès non autorisé' };
-  }
-
   const { error } = await supabase
     .from('orders')
     .update({ assigned_to: managerId })
@@ -349,19 +310,6 @@ export async function anonymizeOrder(orderId: string) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: 'Non authentifié' };
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  type ProfileRow = { role: 'admin' | 'manager' };
-  const userProfile = profile as ProfileRow | null;
-
-  if (userProfile?.role !== 'admin') {
-    return { error: 'Accès réservé aux administrateurs' };
-  }
 
   const { error } = await supabase
     .from('orders')

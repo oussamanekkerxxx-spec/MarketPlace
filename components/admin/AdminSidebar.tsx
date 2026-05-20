@@ -24,13 +24,10 @@ const navItems = [
   { href: '/admin/categories', label: 'Categories', icon: FolderTree },
   { href: '/admin/reports', label: 'Rapports', icon: BarChart3 },
   { href: '/admin/content/why-us', label: 'Pourquoi nous', icon: HelpCircle },
-];
-
-const adminOnlyItems = [
   { href: '/admin/settings', label: 'Parametres', icon: Settings },
 ];
 
-export function AdminSidebar({ locale, role }: { locale: string; role: string }) {
+export function AdminSidebar({ locale }: { locale: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -62,7 +59,7 @@ export function AdminSidebar({ locale, role }: { locale: string; role: string })
     router.push(`/${locale}/login`);
   };
 
-  const allItems = role === 'admin' ? [...navItems, ...adminOnlyItems] : navItems;
+  const allItems = navItems;
 
   const navContent = (
     <>

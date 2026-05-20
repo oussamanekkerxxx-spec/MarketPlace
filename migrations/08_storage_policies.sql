@@ -41,6 +41,13 @@ values
     true,
     5242880,    -- 5 MB per file (logos / favicons are small)
     array['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/svg+xml', 'image/x-icon']
+  ),
+  (
+    'site-assets',
+    'site-assets',
+    true,
+    10485760,   -- 10 MB per file
+    array['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
   )
 on conflict (id) do update set
   public             = excluded.public,
@@ -145,3 +152,35 @@ create policy "brand-assets: admin delete"
   on storage.objects for delete
   to authenticated
   using (bucket_id = 'brand-assets' and public.is_admin());
+
+
+-- =============================================================================
+--  SECTION 5: site-assets policies
+-- =============================================================================
+--  Hero images and other site-wide assets.
+
+drop policy if exists "site-assets: public read"  on storage.objects;
+drop policy if exists "site-assets: staff write"  on storage.objects;
+drop policy if exists "site-assets: staff update" on storage.objects;
+drop policy if exists "site-assets: staff delete" on storage.objects;
+
+create policy "site-assets: public read"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'site-assets');
+
+create policy "site-assets: staff write"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'site-assets' and public.is_staff());
+
+create policy "site-assets: staff update"
+  on storage.objects for update
+  to authenticated
+  using  (bucket_id = 'site-assets' and public.is_staff())
+  with check (bucket_id = 'site-assets' and public.is_staff());
+
+create policy "site-assets: staff delete"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'site-assets' and public.is_staff());

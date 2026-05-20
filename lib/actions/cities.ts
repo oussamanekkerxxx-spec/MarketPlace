@@ -4,27 +4,14 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { citySchema, type CityFormData } from '@/lib/validation/city';
 
-async function checkStaff() {
+async function checkAuth() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Non authentifié');
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  type ProfileRow = { role: 'admin' | 'manager' };
-  const userProfile = profile as ProfileRow | null;
-
-  if (!userProfile || !['admin', 'manager'].includes(userProfile.role)) {
-    throw new Error('Accès non autorisé');
-  }
 }
 
 export async function createCity(data: CityFormData) {
-  await checkStaff();
+  await checkAuth();
   const supabase = await createClient();
 
   const result = citySchema.safeParse(data);
@@ -41,7 +28,7 @@ export async function createCity(data: CityFormData) {
 }
 
 export async function updateCity(id: string, data: CityFormData) {
-  await checkStaff();
+  await checkAuth();
   const supabase = await createClient();
 
   const result = citySchema.safeParse(data);
@@ -58,7 +45,7 @@ export async function updateCity(id: string, data: CityFormData) {
 }
 
 export async function deleteCity(id: string) {
-  await checkStaff();
+  await checkAuth();
   const supabase = await createClient();
 
   const { error } = await supabase.from('cities').delete().eq('id', id);
@@ -70,7 +57,7 @@ export async function deleteCity(id: string) {
 }
 
 export async function toggleCityActive(id: string, isActive: boolean) {
-  await checkStaff();
+  await checkAuth();
   const supabase = await createClient();
 
   const { error } = await supabase.from('cities').update({ is_active: isActive }).eq('id', id);
