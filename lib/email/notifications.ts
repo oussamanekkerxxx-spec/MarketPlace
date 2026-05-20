@@ -88,16 +88,31 @@ export async function sendOrderNotificationEmail(
     ? `${baseUrl}/fr/admin/products/${product_id}`
     : null;
 
-  // Generate QR code as base64 data URL
+  // Generate QR code and upload to Supabase Storage for email-safe public URL
   let qrDataUrl: string | null = null;
   try {
-    qrDataUrl = await QRCode.toDataURL(publicProductUrl, {
+    const qrBuffer = await QRCode.toBuffer(publicProductUrl, {
       width: 180,
       margin: 2,
       color: { dark: '#1e293b', light: '#ffffff' },
+      type: 'png',
     });
+
+    const fileName = `qr-${order_number}-${Date.now()}.png`;
+    const { error: uploadError } = await supabase.storage
+      .from('qr-codes')
+      .upload(fileName, qrBuffer, {
+        contentType: 'image/png',
+        upsert: false,
+        cacheControl: '31536000',
+      });
+
+    if (!uploadError) {
+      const { data: urlData } = supabase.storage.from('qr-codes').getPublicUrl(fileName);
+      qrDataUrl = urlData.publicUrl;
+    }
   } catch {
-    // QR generation is best-effort; email still sends without it
+    // QR generation/upload is best-effort; email still sends without it
     qrDataUrl = null;
   }
 

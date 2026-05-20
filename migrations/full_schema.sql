@@ -1369,6 +1369,13 @@ values
     true,
     10485760,   -- 10 MB per file
     array['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
+  ),
+  (
+    'qr-codes',
+    'qr-codes',
+    true,
+    5242880,    -- 5 MB per file (QR codes are tiny)
+    array['image/png']
   )
 on conflict (id) do update set
   public             = excluded.public,
@@ -1505,6 +1512,39 @@ create policy "site-assets: staff delete"
   on storage.objects for delete
   to authenticated
   using (bucket_id = 'site-assets' and public.is_staff());
+
+
+-- =============================================================================
+--  SECTION 6: qr-codes policies
+-- =============================================================================
+--  QR codes uploaded for email notifications. Public read so email clients
+--  can load the image. Staff write/update/delete for cleanup.
+
+drop policy if exists "qr-codes: public read"  on storage.objects;
+drop policy if exists "qr-codes: staff write"  on storage.objects;
+drop policy if exists "qr-codes: staff update" on storage.objects;
+drop policy if exists "qr-codes: staff delete" on storage.objects;
+
+create policy "qr-codes: public read"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'qr-codes');
+
+create policy "qr-codes: staff write"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'qr-codes' and public.is_staff());
+
+create policy "qr-codes: staff update"
+  on storage.objects for update
+  to authenticated
+  using  (bucket_id = 'qr-codes' and public.is_staff())
+  with check (bucket_id = 'qr-codes' and public.is_staff());
+
+create policy "qr-codes: staff delete"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'qr-codes' and public.is_staff());
 -- =============================================================================
 --  MIGRATION 09: Add google_ads_conversion_label to site_settings
 --  =============================================================================
