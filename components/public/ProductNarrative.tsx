@@ -90,14 +90,16 @@ export function ProductNarrative({ sections, locale }: ProductNarrativeProps) {
             style={{ willChange: 'opacity, transform' }}
           >
             {/* Background image */}
-            <div className="absolute inset-0">
-              <img
-                src={section.image}
-                alt=""
-                className="w-full h-full object-cover"
-                loading={index === 0 ? 'eager' : 'lazy'}
-                decoding="async"
-              />
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="narrative-bg absolute -left-[5%] -top-[5%] w-[110%] h-[110%]">
+                <img
+                  src={section.image}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                />
+              </div>
               {/* Gradient overlay for text readability */}
               <div
                 className={`absolute inset-0 bg-gradient-to-t ${overlayClass}`}
