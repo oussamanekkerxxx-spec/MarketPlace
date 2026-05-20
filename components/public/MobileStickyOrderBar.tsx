@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ArrowRight, MessageCircle, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ShieldCheck } from 'lucide-react';
 
 interface MobileStickyOrderBarProps {
   price: number;
@@ -55,11 +55,6 @@ export function MobileStickyOrderBar({
   const savings = hasDiscount
     ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
     : 0;
-  const whatsappDigits = whatsappNumber?.replace(/\D/g, '') || '';
-  const whatsappHref = whatsappDigits
-    ? `https://wa.me/${whatsappDigits}${whatsappMessage ? `?text=${encodeURIComponent(whatsappMessage)}` : ''}`
-    : null;
-
   return (
     <div
       className={`lg:hidden fixed bottom-0 inset-x-0 z-40 pointer-events-none transition-all duration-400 ${
@@ -74,21 +69,6 @@ export function MobileStickyOrderBar({
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
       >
         <div className="flex items-end gap-2">
-          {whatsappHref && (
-            <a
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="WhatsApp"
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white shadow-[0_10px_24px_rgba(34,197,94,0.38)] transition-transform active:scale-[0.96]"
-              style={{
-                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-              }}
-            >
-              <MessageCircle className="h-6 w-6" />
-            </a>
-          )}
-
           <div
             className="relative flex-1 rounded-2xl overflow-hidden border shadow-[0_-2px_8px_rgba(0,0,0,0.04),0_12px_32px_rgba(0,0,0,0.18)]"
             style={{
