@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 interface FeaturesValue {
   features_fr?: string[];
@@ -21,21 +21,34 @@ const LOCALES = [
 
 export function FeaturesEditor({ value, onChange }: FeaturesEditorProps) {
   const [activeLocale, setActiveLocale] = useState<'fr' | 'en' | 'ar'>('fr');
+  const bulletIdsRef = useRef<Record<string, string[]>>({});
 
   const getFeatures = (locale: 'fr' | 'en' | 'ar'): string[] => {
     return value[`features_${locale}` as keyof FeaturesValue] || [];
   };
 
+  const ensureBulletIds = (locale: 'fr' | 'en' | 'ar', count: number): string[] => {
+    if (!bulletIdsRef.current[locale]) {
+      bulletIdsRef.current[locale] = [];
+    }
+    const ids = bulletIdsRef.current[locale];
+    while (ids.length < count) {
+      ids.push(crypto.randomUUID());
+    }
+    return ids.slice(0, count);
+  };
+
   const updateFeatures = (locale: 'fr' | 'en' | 'ar', features: string[]) => {
-    const cleaned = features.filter((f) => f.trim() !== '');
     onChange({
       ...value,
-      [`features_${locale}`]: cleaned.length > 0 ? cleaned : undefined,
+      [`features_${locale}`]: features.length > 0 ? features : undefined,
     });
   };
 
   const addBullet = (locale: 'fr' | 'en' | 'ar') => {
     const current = getFeatures(locale);
+    if (!bulletIdsRef.current[locale]) bulletIdsRef.current[locale] = [];
+    bulletIdsRef.current[locale].push(crypto.randomUUID());
     updateFeatures(locale, [...current, '']);
   };
 
@@ -47,6 +60,7 @@ export function FeaturesEditor({ value, onChange }: FeaturesEditorProps) {
   };
 
   const removeBullet = (locale: 'fr' | 'en' | 'ar', index: number) => {
+    bulletIdsRef.current[locale]?.splice(index, 1);
     const current = getFeatures(locale);
     updateFeatures(locale, current.filter((_, i) => i !== index));
   };
@@ -55,11 +69,21 @@ export function FeaturesEditor({ value, onChange }: FeaturesEditorProps) {
     const current = getFeatures(locale);
     if (direction === 'up' && index === 0) return;
     if (direction === 'down' && index === current.length - 1) return;
+
     const next = [...current];
     const swapIndex = direction === 'up' ? index - 1 : index + 1;
     [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+
+    const ids = bulletIdsRef.current[locale];
+    if (ids) {
+      [ids[index], ids[swapIndex]] = [ids[swapIndex], ids[index]];
+    }
+
     updateFeatures(locale, next);
   };
+
+  const features = getFeatures(activeLocale);
+  const bulletIds = ensureBulletIds(activeLocale, features.length);
 
   return (
     <div className="space-y-4">
@@ -81,8 +105,8 @@ export function FeaturesEditor({ value, onChange }: FeaturesEditorProps) {
       </div>
 
       <div className="space-y-2">
-        {getFeatures(activeLocale).map((bullet, i) => (
-          <div key={i} className="flex items-center gap-2">
+        {features.map((bullet, i) => (
+          <div key={bulletIds[i]} className="flex items-center gap-2">
             <span className="text-green-500 text-sm">✓</span>
             <input
               type="text"
@@ -104,7 +128,7 @@ export function FeaturesEditor({ value, onChange }: FeaturesEditorProps) {
               <button
                 type="button"
                 onClick={() => moveBullet(activeLocale, i, 'down')}
-                disabled={i === getFeatures(activeLocale).length - 1}
+                disabled={i === features.length - 1}
                 className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:opacity-30 rounded"
               >
                 ↓
@@ -120,7 +144,7 @@ export function FeaturesEditor({ value, onChange }: FeaturesEditorProps) {
           </div>
         ))}
 
-        {getFeatures(activeLocale).length === 0 && (
+        {features.length === 0 && (
           <p className="text-sm text-gray-400 italic">Aucune caractéristique pour cette langue.</p>
         )}
       </div>

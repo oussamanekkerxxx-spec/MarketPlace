@@ -458,7 +458,7 @@ export function NarrativeSectionsEditor({
                     type="button"
                     onClick={() => updateSection(index, { position: key })}
                     className={`w-8 h-8 inline-flex items-center justify-center rounded-md transition-colors ${
-                      section.position === key
+                      (section.position || 'center') === key
                         ? 'bg-orange-100 text-orange-700'
                         : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
                     }`}
@@ -480,7 +480,7 @@ export function NarrativeSectionsEditor({
                     type="button"
                     onClick={() => updateSection(index, { theme: key })}
                     className={`w-8 h-8 inline-flex items-center justify-center rounded-md transition-colors ${
-                      section.theme === key
+                      (section.theme || 'light') === key
                         ? 'bg-orange-100 text-orange-700'
                         : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
                     }`}
