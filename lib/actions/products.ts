@@ -109,6 +109,7 @@ export async function createProduct(data: ProductFormData) {
   }
 
   revalidatePath('/[locale]/admin/products', 'page');
+  revalidatePath('/[locale]/category/[slug]', 'page');
   revalidatePath('/[locale]', 'page');
   revalidateTag('products', 'default');
   return { success: true };
@@ -173,6 +174,7 @@ export async function updateProduct(id: string, data: ProductFormData) {
 
   revalidatePath('/[locale]/admin/products', 'page');
   revalidatePath('/[locale]/product/[slug]', 'page');
+  revalidatePath('/[locale]/category/[slug]', 'page');
   revalidatePath('/[locale]', 'page');
   revalidateTag('products', 'default');
   return { success: true };
@@ -188,6 +190,7 @@ export async function toggleProductActive(id: string, isActive: boolean) {
   if (error) return { error: error.message };
 
   revalidatePath('/[locale]/admin/products', 'page');
+  revalidatePath('/[locale]/category/[slug]', 'page');
   revalidatePath('/[locale]', 'page');
   revalidateTag('products', 'default');
   return { success: true };
@@ -203,6 +206,7 @@ export async function toggleProductFeatured(id: string, isFeatured: boolean) {
   if (error) return { error: error.message };
 
   revalidatePath('/[locale]/admin/products', 'page');
+  revalidatePath('/[locale]/category/[slug]', 'page');
   revalidatePath('/[locale]', 'page');
   revalidateTag('products', 'default');
   return { success: true };
@@ -218,6 +222,7 @@ export async function deleteProduct(id: string) {
   if (error) return { error: error.message };
 
   revalidatePath('/[locale]/admin/products', 'page');
+  revalidatePath('/[locale]/category/[slug]', 'page');
   revalidatePath('/[locale]', 'page');
   revalidateTag('products', 'default');
   return { success: true };
