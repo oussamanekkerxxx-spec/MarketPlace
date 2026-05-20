@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Link } from '@/lib/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Menu, X, Home, ShoppingBag, Mail, HelpCircle, FileText, Shield, User } from 'lucide-react';
+import { getWhatsAppHref } from '@/lib/utils/contact';
 
 interface Category {
   id: string;
@@ -19,6 +20,7 @@ interface MobileDrawerProps {
   siteName: string;
   siteTagline?: string;
   whatsappNumber?: string;
+  whatsappMessage?: string;
   contactEmail?: string;
 }
 
@@ -28,6 +30,7 @@ export function MobileDrawer({
   siteName,
   siteTagline,
   whatsappNumber,
+  whatsappMessage,
   contactEmail,
 }: MobileDrawerProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,11 +65,8 @@ export function MobileDrawer({
   };
 
   const whatsappHref = useMemo(() => {
-    if (!whatsappNumber) return null;
-
-    const digits = whatsappNumber.replace(/\D/g, '');
-    return digits ? `https://wa.me/${digits}` : null;
-  }, [whatsappNumber]);
+    return getWhatsAppHref(whatsappNumber, whatsappMessage);
+  }, [whatsappNumber, whatsappMessage]);
 
   return (
     <>

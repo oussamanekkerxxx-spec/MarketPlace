@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Link } from '@/lib/i18n/navigation';
 import Image from 'next/image';
 import { ChevronDown, Phone, Mail, MapPin, ArrowUp, ShieldCheck } from 'lucide-react';
+import { getWhatsAppHref } from '@/lib/utils/contact';
 
 interface Category {
   id: string;
@@ -22,6 +23,7 @@ interface MobileFooterProps {
   contactPhone?: string;
   contactEmail?: string;
   whatsappNumber?: string;
+  whatsappMessage?: string;
   contactAddress?: string;
   facebookUrl?: string;
   instagramUrl?: string;
@@ -46,6 +48,7 @@ export function MobileFooter({
   contactPhone,
   contactEmail,
   whatsappNumber,
+  whatsappMessage,
   contactAddress,
   facebookUrl,
   instagramUrl,
@@ -257,7 +260,7 @@ export function MobileFooter({
 
           {whatsappNumber && (
             <a
-              href={`https://wa.me/${whatsappNumber.replace(/\D/g, '')}`}
+              href={getWhatsAppHref(whatsappNumber, whatsappMessage) || '#'}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-3 p-3 rounded-xl active:scale-[0.98] transition-transform"

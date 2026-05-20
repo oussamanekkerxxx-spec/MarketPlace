@@ -10,6 +10,7 @@ import { MobileFooter } from '@/components/public/MobileFooter';
 import { ScrollRevealHeader } from '@/components/public/ScrollRevealHeader';
 import { CartShell } from '@/components/public/CartShell';
 import { getSiteSettings, getCategories, getCities } from '@/lib/cache/queries';
+import { getWhatsAppHref } from '@/lib/utils/contact';
 
 import { ChevronDown } from 'lucide-react';
 
@@ -43,7 +44,6 @@ export default async function PublicLayout({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'navigation' });
   const tFooter = await getTranslations({ locale, namespace: 'footer' });
-  const tWhatsapp = await getTranslations({ locale, namespace: 'whatsapp' });
   const settings = await getSiteSettings();
   const categories = await getCategories();
   const cities = await getCities();
@@ -74,7 +74,7 @@ export default async function PublicLayout({
   };
 
   const footerDescription = getLocalizedSetting('footer_description') || tFooter('description');
-  const whatsappMessage = getLocalizedSetting('whatsapp_default_message') || tWhatsapp('defaultMessage');
+  const whatsappMessage = getLocalizedSetting('whatsapp_default_message');
   const siteTagline = getLocalizedSetting('site_tagline');
   const announcementEnabled = (settings?.announcement_enabled as boolean) || false;
   const localeAnnouncement = settings?.[`announcement_text_${locale}` as keyof typeof settings] as string | undefined;
@@ -200,6 +200,7 @@ export default async function PublicLayout({
                 siteName={siteName}
                 siteTagline={siteTagline}
                 whatsappNumber={whatsappNumber ?? undefined}
+                whatsappMessage={whatsappMessage || undefined}
                 contactEmail={contactEmail ?? undefined}
               />
             </div>
@@ -220,6 +221,7 @@ export default async function PublicLayout({
         contactPhone={contactPhone}
         contactEmail={contactEmail}
         whatsappNumber={whatsappNumber ?? undefined}
+        whatsappMessage={whatsappMessage || undefined}
         contactAddress={businessAddress}
         facebookUrl={facebookUrl}
         instagramUrl={instagramUrl}
@@ -329,7 +331,7 @@ export default async function PublicLayout({
                 )}
                 {whatsappNumber && (
                   <a
-                    href={`https://wa.me/${whatsappNumber.replace(/\D/g, '')}`}
+                    href={getWhatsAppHref(whatsappNumber, whatsappMessage) || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block hover:text-primary transition-colors"
@@ -366,7 +368,7 @@ export default async function PublicLayout({
       {/* Floating WhatsApp Button */}
       {whatsappNumber && (
         <a
-          href={`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`}
+          href={getWhatsAppHref(whatsappNumber, whatsappMessage) || '#'}
           target="_blank"
           rel="noopener noreferrer"
           className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 hover:scale-105 transition-all"
