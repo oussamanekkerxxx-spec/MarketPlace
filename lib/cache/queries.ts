@@ -157,6 +157,57 @@ export const getRelatedProducts = unstable_cache(
   { revalidate: 120, tags: ['products', 'product-images'] }
 );
 
+export const getSimilarProducts = unstable_cache(
+  async (categoryId: string | null, excludeProductId: string, limit = 4) => {
+    const supabase = createStaticClient();
+
+    // Step 1: same category
+    let sameCatQuery = supabase
+      .from('products')
+      .select(
+        `id, slug, title_fr, title_en, title_ar, price, compare_at_price, currency, stock_quantity, track_inventory, low_stock_threshold, product_images(url, is_primary)`
+      )
+      .eq('is_active', true)
+      .neq('id', excludeProductId)
+      .limit(limit);
+
+    if (categoryId) {
+      sameCatQuery = sameCatQuery.eq('category_id', categoryId);
+    }
+
+    const { data: sameCat } = await sameCatQuery;
+    const results = (sameCat || []) as Array<Record<string, unknown>>;
+
+    // Step 2: fill from other categories if needed
+    if (results.length < limit && categoryId) {
+      const foundIds = new Set(results.map((p) => p.id as string));
+      foundIds.add(excludeProductId);
+
+      const { data: otherCat } = await supabase
+        .from('products')
+        .select(
+          `id, slug, title_fr, title_en, title_ar, price, compare_at_price, currency, stock_quantity, track_inventory, low_stock_threshold, product_images(url, is_primary)`
+        )
+        .eq('is_active', true)
+        .neq('id', excludeProductId)
+        .not('category_id', 'eq', categoryId)
+        .limit(limit - results.length);
+
+      if (otherCat) {
+        for (const p of otherCat) {
+          if (!foundIds.has(p.id as string)) {
+            results.push(p as Record<string, unknown>);
+          }
+        }
+      }
+    }
+
+    return results.slice(0, limit);
+  },
+  ['similar-products'],
+  { revalidate: 120, tags: ['products', 'product-images'] }
+);
+
 export const getAdjacentProducts = unstable_cache(
   async (currentProductId: string, createdAt: string, categoryId: string | null) => {
     const supabase = createStaticClient();

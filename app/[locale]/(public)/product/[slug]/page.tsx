@@ -14,7 +14,7 @@ import type { DetailSectionFormData } from '@/lib/validation/product';
 import {
   getProductBySlug,
   getProductImages,
-  getRelatedProducts,
+  getSimilarProducts,
   getCities,
   getSiteSettings,
   getAdjacentProducts,
@@ -110,17 +110,17 @@ export default async function ProductPage({
 
   // Related products with their primary image (single joined query — no N+1)
   const categoryId = product.category_id as string | null;
-  const [relatedProducts, adjacentProducts] = await Promise.all([
-    categoryId ? getRelatedProducts(categoryId, product.id as string, 4) : Promise.resolve([]),
+  const [similarProducts, adjacentProducts] = await Promise.all([
+    getSimilarProducts(categoryId, product.id as string, 4),
     getAdjacentProducts(product.id as string, product.created_at as string, categoryId),
   ]);
 
   type RelatedImage = { url: string; is_primary: boolean };
-  const relatedImageMap = new Map<string, string>();
-  for (const rp of relatedProducts as Array<{ id: string; product_images?: RelatedImage[] }>) {
+  const similarImageMap = new Map<string, string>();
+  for (const rp of similarProducts as Array<{ id: string; product_images?: RelatedImage[] }>) {
     const imgs = rp.product_images || [];
     const primary = imgs.find((i) => i.is_primary) || imgs[0];
-    if (primary) relatedImageMap.set(rp.id, primary.url);
+    if (primary) similarImageMap.set(rp.id, primary.url);
   }
 
   const primaryColor = (settings?.primary_color as string) || '#FF6B35';
@@ -426,19 +426,28 @@ export default async function ProductPage({
           )}
 
           {/* ============================================
-              RELATED PRODUCTS
+              PRODUITS SIMILAIRES
               ============================================ */}
-          {relatedProducts.length > 0 && (
+          {similarProducts.length > 0 && (
             <>
               <div className="my-12 lg:my-16 border-t border-border-warm" />
               <ScrollReveal>
                 <div>
-                  <h2 className="text-xl lg:text-2xl font-bold text-secondary mb-6">
-                    {t('relatedProducts')}
-                  </h2>
+                  <div className="flex items-end justify-between mb-6">
+                    <h2 className="text-xl lg:text-2xl font-bold text-secondary">
+                      Vous aimerez aussi
+                    </h2>
+                    <Link
+                      href={categorySlug ? `/category/${categorySlug}` as '/category/[slug]' : '/category/all'}
+                      className="text-sm font-medium hover:opacity-80 transition-opacity"
+                      style={{ color: primaryColor }}
+                    >
+                      Voir plus →
+                    </Link>
+                  </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-                    {relatedProducts.map((rp: { id: string; slug: string; title_fr: string; price: number; compare_at_price: number | null; currency: string; stock_quantity: number; track_inventory: boolean; low_stock_threshold: number }) => {
-                      const imgUrl = relatedImageMap.get(rp.id);
+                    {(similarProducts as Array<{ id: string; slug: string; title_fr: string; price: number; compare_at_price: number | null; currency: string; stock_quantity: number; track_inventory: boolean; low_stock_threshold: number }>).map((rp) => {
+                      const imgUrl = similarImageMap.get(rp.id);
                       const rpTitle = (rp[`title_${locale}` as keyof typeof rp] as string | null) || rp.title_fr;
                       const rpCompareAtPrice = rp.compare_at_price;
                       const rpHasDiscount = rpCompareAtPrice && rpCompareAtPrice > rp.price;
