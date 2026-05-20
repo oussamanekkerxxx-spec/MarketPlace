@@ -371,7 +371,8 @@ export default async function PublicLayout({
           href={getWhatsAppHref(whatsappNumber, whatsappMessage) || '#'}
           target="_blank"
           rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 hover:scale-105 transition-all"
+          className="fixed right-6 z-50 w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 hover:scale-105 transition-all transition-[bottom] duration-300"
+          style={{ bottom: 'calc(1.5rem + var(--sticky-bar-offset, 0px))' }}
           aria-label="Contact WhatsApp"
         >
           <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">

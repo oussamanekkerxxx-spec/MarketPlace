@@ -36,7 +36,10 @@ export function CartShell({ children, cities }: CartShellProps) {
   return (
     <CartProvider>
       {children}
-      <div className="fixed bottom-6 left-6 z-50">
+      <div
+        className="fixed left-6 z-50 transition-[bottom] duration-300"
+        style={{ bottom: 'calc(1.5rem + var(--sticky-bar-offset, 0px))' }}
+      >
         <FloatingCartButton onClick={() => setIsCartOpen(true)} />
       </div>
       <CartDrawer

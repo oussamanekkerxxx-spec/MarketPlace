@@ -44,6 +44,13 @@ export function MobileStickyOrderBar({
     return () => observer.disconnect();
   }, [formAnchorId]);
 
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--sticky-bar-offset',
+      visible ? '6rem' : '0px'
+    );
+  }, [visible]);
+
   const handleClick = () => {
     const target = document.getElementById(formAnchorId);
     if (target) {
