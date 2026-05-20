@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, useEffect, useRef } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { categorySchema, type CategoryFormData } from '@/lib/validation/category';
-import { createCategory } from '@/lib/actions/categories';
+import { createCategory, updateCategory } from '@/lib/actions/categories';
 import { FormInput } from '@/components/ui/FormInput';
 import { TrilingualField } from '@/components/admin/TrilingualField';
 import { SimpleImageUploader } from '@/components/admin/SimpleImageUploader';
@@ -17,6 +17,8 @@ interface CategoryOption {
 
 interface CategoriesFormProps {
   categories: CategoryOption[];
+  initialData?: Partial<CategoryFormData>;
+  categoryId?: string;
 }
 
 type CategoryWithDepth = {
@@ -56,7 +58,17 @@ function flattenCategoryTree(categories: CategoryOption[]): CategoryWithDepth[] 
   return result;
 }
 
-export function CategoriesForm({ categories }: CategoriesFormProps) {
+function generateSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+export function CategoriesForm({ categories, initialData, categoryId }: CategoriesFormProps) {
+  const isEditing = !!categoryId;
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
@@ -66,37 +78,69 @@ export function CategoriesForm({ categories }: CategoriesFormProps) {
     watch,
     setValue,
     reset,
+    control,
     formState: { errors },
   } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
-      is_active: true,
-      display_order: 0,
+      name_fr: initialData?.name_fr || '',
+      name_en: initialData?.name_en || '',
+      name_ar: initialData?.name_ar || '',
+      slug: initialData?.slug || '',
+      description_fr: initialData?.description_fr || '',
+      description_en: initialData?.description_en || '',
+      description_ar: initialData?.description_ar || '',
+      image_url: initialData?.image_url || '',
+      parent_id: initialData?.parent_id || '',
+      display_order: initialData?.display_order ?? 0,
+      is_active: initialData?.is_active ?? true,
+      meta_title_fr: initialData?.meta_title_fr || '',
+      meta_title_en: initialData?.meta_title_en || '',
+      meta_title_ar: initialData?.meta_title_ar || '',
+      meta_description_fr: initialData?.meta_description_fr || '',
+      meta_description_en: initialData?.meta_description_en || '',
+      meta_description_ar: initialData?.meta_description_ar || '',
     },
   });
 
   const nameFr = watch('name_fr');
+  const currentSlug = useWatch({ control, name: 'slug' }) || '';
+  const autoSlugRef = useRef('');
 
-  const generateSlug = (text: string) => {
-    return text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  };
+  // Auto-fill slug from name_fr on create, unless user manually edited it
+  useEffect(() => {
+    if (isEditing || !nameFr) return;
+    const generated = generateSlug(nameFr);
+    if (!currentSlug || currentSlug === autoSlugRef.current) {
+      setValue('slug', generated, { shouldDirty: currentSlug !== '' });
+      autoSlugRef.current = generated;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nameFr, isEditing]);
 
   const onSubmit = async (data: CategoryFormData) => {
     setStatus('loading');
-    const result = await createCategory(data);
-    if (result.error) {
-      setStatus('error');
-      setMessage(result.error);
+    if (isEditing) {
+      const result = await updateCategory(categoryId!, data);
+      if (result.error) {
+        setStatus('error');
+        setMessage(result.error);
+      } else {
+        setStatus('success');
+        setMessage('Catégorie mise à jour avec succès');
+        setTimeout(() => setStatus('idle'), 2000);
+      }
     } else {
-      setStatus('success');
-      setMessage('Catégorie ajoutée avec succès');
-      reset();
-      setTimeout(() => setStatus('idle'), 2000);
+      const result = await createCategory(data);
+      if (result.error) {
+        setStatus('error');
+        setMessage(result.error);
+      } else {
+        setStatus('success');
+        setMessage('Catégorie ajoutée avec succès');
+        reset();
+        setTimeout(() => setStatus('idle'), 2000);
+      }
     }
   };
 
@@ -130,7 +174,7 @@ export function CategoriesForm({ categories }: CategoriesFormProps) {
         label="Slug"
         {...register('slug')}
         error={errors.slug?.message}
-        helperText={nameFr ? `Suggestion: ${generateSlug(nameFr)}` : ''}
+        helperText={!isEditing && nameFr ? `Suggestion: ${generateSlug(nameFr)}` : ''}
       />
 
       <div>
@@ -140,13 +184,15 @@ export function CategoriesForm({ categories }: CategoriesFormProps) {
           className="w-full px-3 py-2 border rounded-lg bg-white"
         >
           <option value="">Aucune (catégorie principale)</option>
-          {categoryTree.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {'\u00A0\u00A0'.repeat(cat.depth)}
-              {cat.depth > 0 ? '↳ ' : ''}
-              {cat.name_fr}
-            </option>
-          ))}
+          {categoryTree
+            .filter((cat) => cat.id !== categoryId)
+            .map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {'\u00A0\u00A0'.repeat(cat.depth)}
+                {cat.depth > 0 ? '↳ ' : ''}
+                {cat.name_fr}
+              </option>
+            ))}
         </select>
         <p className="mt-1 text-xs text-gray-500">
           Sélectionnez une catégorie parente pour créer une sous-catégorie.
@@ -182,7 +228,13 @@ export function CategoriesForm({ categories }: CategoriesFormProps) {
         disabled={status === 'loading'}
         className="w-full py-2.5 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 disabled:opacity-50 transition-colors"
       >
-        {status === 'loading' ? 'Ajout...' : 'Ajouter'}
+        {status === 'loading'
+          ? isEditing
+            ? 'Mise à jour...'
+            : 'Ajout...'
+          : isEditing
+            ? 'Mettre à jour'
+            : 'Ajouter'}
       </button>
     </form>
   );

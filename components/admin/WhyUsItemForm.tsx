@@ -4,11 +4,17 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { whyUsItemSchema, type WhyUsItemFormData } from '@/lib/validation/whyUsItem';
-import { createWhyUsItem } from '@/lib/actions/whyUsItems';
+import { createWhyUsItem, updateWhyUsItem } from '@/lib/actions/whyUsItems';
 import { FormInput } from '@/components/ui/FormInput';
 import { TrilingualField } from '@/components/admin/TrilingualField';
 
-export function WhyUsItemForm() {
+interface WhyUsItemFormProps {
+  initialData?: Partial<WhyUsItemFormData>;
+  itemId?: string;
+}
+
+export function WhyUsItemForm({ initialData, itemId }: WhyUsItemFormProps) {
+  const isEditing = !!itemId;
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
@@ -20,22 +26,43 @@ export function WhyUsItemForm() {
   } = useForm<WhyUsItemFormData>({
     resolver: zodResolver(whyUsItemSchema),
     defaultValues: {
-      is_active: true,
-      display_order: 0,
+      number_label_fr: initialData?.number_label_fr || '',
+      number_label_en: initialData?.number_label_en || '',
+      number_label_ar: initialData?.number_label_ar || '',
+      title_fr: initialData?.title_fr || '',
+      title_en: initialData?.title_en || '',
+      title_ar: initialData?.title_ar || '',
+      text_fr: initialData?.text_fr || '',
+      text_en: initialData?.text_en || '',
+      text_ar: initialData?.text_ar || '',
+      is_active: initialData?.is_active ?? true,
+      display_order: initialData?.display_order ?? 0,
     },
   });
 
   const onSubmit = async (data: WhyUsItemFormData) => {
     setStatus('loading');
-    const result = await createWhyUsItem(data);
-    if (result.error) {
-      setStatus('error');
-      setMessage(result.error);
+    if (isEditing) {
+      const result = await updateWhyUsItem(itemId!, data);
+      if (result.error) {
+        setStatus('error');
+        setMessage(result.error);
+      } else {
+        setStatus('success');
+        setMessage('Élément mis à jour avec succès');
+        setTimeout(() => setStatus('idle'), 2000);
+      }
     } else {
-      setStatus('success');
-      setMessage('Élément ajouté avec succès');
-      reset();
-      setTimeout(() => setStatus('idle'), 2000);
+      const result = await createWhyUsItem(data);
+      if (result.error) {
+        setStatus('error');
+        setMessage(result.error);
+      } else {
+        setStatus('success');
+        setMessage('Élément ajouté avec succès');
+        reset();
+        setTimeout(() => setStatus('idle'), 2000);
+      }
     }
   };
 
@@ -88,7 +115,13 @@ export function WhyUsItemForm() {
         disabled={status === 'loading'}
         className="w-full py-2.5 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 disabled:opacity-50 transition-colors"
       >
-        {status === 'loading' ? 'Ajout...' : 'Ajouter'}
+        {status === 'loading'
+          ? isEditing
+            ? 'Mise à jour...'
+            : 'Ajout...'
+          : isEditing
+            ? 'Mettre à jour'
+            : 'Ajouter'}
       </button>
     </form>
   );

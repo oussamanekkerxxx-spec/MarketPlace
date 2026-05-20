@@ -9,6 +9,7 @@ interface SimpleImageUploaderProps {
   value: string;
   onChange: (url: string) => void;
   label?: string;
+  previewClassName?: string;
 }
 
 const SUPABASE_SUPPORTED_TYPES = new Set([
@@ -76,7 +77,7 @@ async function normalizeUploadImage(file: File): Promise<File> {
   });
 }
 
-export function SimpleImageUploader({ bucket, value, onChange, label }: SimpleImageUploaderProps) {
+export function SimpleImageUploader({ bucket, value, onChange, label, previewClassName }: SimpleImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -150,7 +151,7 @@ export function SimpleImageUploader({ bucket, value, onChange, label }: SimpleIm
     return (
       <div className="space-y-2">
         {label && <label className="block text-sm font-medium text-gray-700">{label}</label>}
-        <div className="relative w-32 h-32 rounded-lg overflow-hidden border">
+        <div className={`relative rounded-lg overflow-hidden border ${previewClassName || 'w-32 h-32'}`}>
           <Image src={value} alt="Preview" fill sizes="128px" className="object-cover" />
           <button
             type="button"

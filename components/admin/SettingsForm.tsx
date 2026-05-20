@@ -320,6 +320,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
                 bucket="brand-assets"
                 value={watch('favicon_url') || ''}
                 onChange={(url) => setValue('favicon_url', url, { shouldDirty: true })}
+                previewClassName="w-16 h-16"
               />
             </div>
           </AdminAccordion>

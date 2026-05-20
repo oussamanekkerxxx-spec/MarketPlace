@@ -21,12 +21,14 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: 'metadata' });
   const settings = await getSiteSettings();
   const siteName = (settings?.site_name as string) || t('title');
+  const faviconUrl = (settings?.favicon_url as string) || null;
   return {
     title: {
       default: siteName,
       template: `%s | ${siteName}`,
     },
     description: t('description'),
+    icons: faviconUrl ? { icon: faviconUrl } : undefined,
   };
 }
 

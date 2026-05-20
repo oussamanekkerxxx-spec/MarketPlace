@@ -1,16 +1,17 @@
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/admin/PageHeader';
 import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Catégories',
-};
 import { DataTable } from '@/components/admin/DataTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { CategoriesForm } from '@/components/admin/CategoriesForm';
 import { AdminAccordion } from '@/components/admin/AdminAccordion';
 import Image from 'next/image';
-import { FolderTree } from 'lucide-react';
+import { FolderTree, Pencil } from 'lucide-react';
+import { Link } from '@/lib/i18n/navigation';
+
+export const metadata: Metadata = {
+  title: 'Catégories',
+};
 
 export default async function CategoriesPage() {
   const supabase = await createClient();
@@ -78,9 +79,18 @@ export default async function CategoriesPage() {
                     <p className="text-xs text-gray-500 truncate mt-0.5">
                       {cat.name_en} · {cat.name_ar}
                     </p>
-                    <code className="inline-block text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded mt-1">
-                      {cat.slug}
-                    </code>
+                    <div className="flex items-center gap-2 mt-1">
+                      <code className="inline-block text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                        {cat.slug}
+                      </code>
+                      <Link
+                        href={`/admin/categories/${cat.id}/edit` as '/admin/categories/[id]/edit'}
+                        className="inline-flex items-center gap-1 text-[11px] text-orange-600 hover:underline"
+                      >
+                        <Pencil className="w-3 h-3" />
+                        Modifier
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))
@@ -133,6 +143,19 @@ export default async function CategoriesPage() {
                   key: 'order',
                   header: 'Ordre',
                   cell: (row) => row.display_order,
+                },
+                {
+                  key: 'actions',
+                  header: '',
+                  cell: (row) => (
+                    <Link
+                      href={`/admin/categories/${row.id}/edit` as '/admin/categories/[id]/edit'}
+                      className="inline-flex items-center gap-1.5 text-sm text-orange-600 hover:underline"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      Modifier
+                    </Link>
+                  ),
                 },
               ]}
             />

@@ -76,6 +76,15 @@ function generateSlug(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+function generateSku(text: string): string {
+  const base = generateSlug(text)
+    .toUpperCase()
+    .replace(/-/g, '')
+    .substring(0, 10);
+  const suffix = Math.floor(1000 + Math.random() * 9000);
+  return `${base || 'PRD'}-${suffix}`;
+}
+
 export function ProductForm({ categories, initialData, productId }: ProductFormProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -131,7 +140,9 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
 
   const titleFr = useWatch({ control, name: 'title_fr' }) || '';
   const currentSlug = useWatch({ control, name: 'slug' }) || '';
+  const currentSku = useWatch({ control, name: 'sku' }) || '';
   const autoSlugRef = useRef('');
+  const autoSkuRef = useRef('');
 
   // Auto-fill slug from title_fr on create, unless user manually edited it
   useEffect(() => {
@@ -140,6 +151,17 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
     if (!currentSlug || currentSlug === autoSlugRef.current) {
       setValue('slug', generated, { shouldDirty: currentSlug !== '' });
       autoSlugRef.current = generated;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [titleFr, isEditing]);
+
+  // Auto-fill SKU from title_fr on create, unless user manually edited it
+  useEffect(() => {
+    if (isEditing || !titleFr) return;
+    const generated = generateSku(titleFr);
+    if (!currentSku || currentSku === autoSkuRef.current) {
+      setValue('sku', generated, { shouldDirty: currentSku !== '' });
+      autoSkuRef.current = generated;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [titleFr, isEditing]);
@@ -253,10 +275,11 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
           helperText={!isEditing && titleFr ? `Suggestion: ${generateSlug(titleFr)}` : ''}
         />
 
-        <input
+        <FormInput
+          label="SKU"
           {...register('sku')}
-          className="w-full rounded-lg border px-3 py-2"
-          placeholder="SKU"
+          error={errors.sku?.message}
+          helperText={!isEditing && titleFr ? `Suggestion: ${generateSku(titleFr)}` : ''}
         />
 
         <div>

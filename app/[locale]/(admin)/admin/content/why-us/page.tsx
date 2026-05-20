@@ -1,15 +1,17 @@
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/admin/PageHeader';
 import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Pourquoi nous',
-};
 import { DataTable } from '@/components/admin/DataTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { WhyUsItemForm } from '@/components/admin/WhyUsItemForm';
 import { AdminAccordion } from '@/components/admin/AdminAccordion';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Pencil } from 'lucide-react';
+import { Link } from '@/lib/i18n/navigation';
+import { DeleteWhyUsButton } from '@/components/admin/DeleteWhyUsButton';
+
+export const metadata: Metadata = {
+  title: 'Pourquoi nous',
+};
 
 export default async function WhyUsPage() {
   const supabase = await createClient();
@@ -72,6 +74,16 @@ export default async function WhyUsPage() {
                       <p className="text-xs text-gray-500 line-clamp-2 mt-1">
                         {it.text_fr}
                       </p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <Link
+                          href={`/admin/content/why-us/${it.id}/edit` as '/admin/content/why-us/[id]/edit'}
+                          className="inline-flex items-center gap-1 text-[11px] text-orange-600 hover:underline"
+                        >
+                          <Pencil className="w-3 h-3" />
+                          Modifier
+                        </Link>
+                        <DeleteWhyUsButton id={it.id} label="Supprimer" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -116,6 +128,22 @@ export default async function WhyUsPage() {
                   key: 'status',
                   header: 'Statut',
                   cell: (row) => <StatusBadge status={row.is_active ? 'active' : 'inactive'} />,
+                },
+                {
+                  key: 'actions',
+                  header: '',
+                  cell: (row) => (
+                    <div className="flex items-center gap-3">
+                      <Link
+                        href={`/admin/content/why-us/${row.id}/edit` as '/admin/content/why-us/[id]/edit'}
+                        className="inline-flex items-center gap-1.5 text-sm text-orange-600 hover:underline"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        Modifier
+                      </Link>
+                      <DeleteWhyUsButton id={row.id} />
+                    </div>
+                  ),
                 },
               ]}
             />

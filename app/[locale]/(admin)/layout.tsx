@@ -7,13 +7,20 @@ import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: {
-    default: 'Admin',
-    template: '%s | Admin',
-  },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const supabase = await createClient();
+  const { data: settings } = await supabase.from('site_settings').select('favicon_url').single();
+  const faviconUrl = (settings?.favicon_url as string) || null;
+
+  return {
+    title: {
+      default: 'Admin',
+      template: '%s | Admin',
+    },
+    robots: { index: false, follow: false },
+    icons: faviconUrl ? { icon: faviconUrl } : undefined,
+  };
+}
 
 export default async function AdminLayout({
   children,

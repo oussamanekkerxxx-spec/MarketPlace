@@ -185,7 +185,13 @@ export async function createReservation(formData: ReservationServerInput) {
     sendCapiEvent({
       eventName: 'Lead',
       eventId: `lead-${order.order_number}`,
-      userData: { phone: normalizedPhone, city: customerCityName },
+      userData: {
+        phone: normalizedPhone,
+        city: customerCityName,
+        name: reservation.customer_name,
+        country: 'MA',
+        external_id: order.id,
+      },
       customData: {
         value: total,
         currency,
@@ -195,7 +201,13 @@ export async function createReservation(formData: ReservationServerInput) {
     sendCapiEvent({
       eventName: 'Purchase',
       eventId: `purchase-${order.order_number}`,
-      userData: { phone: normalizedPhone, city: customerCityName },
+      userData: {
+        phone: normalizedPhone,
+        city: customerCityName,
+        name: reservation.customer_name,
+        country: 'MA',
+        external_id: order.id,
+      },
       customData: {
         value: total,
         currency,

@@ -1,6 +1,13 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import QRCode from 'qrcode';
 import { createAdminClient } from '@/lib/supabase/server';
+
+// --- RESEND (DISABLED) -------------------------------------------------------
+// Re-enable by: uncomment the import below, restore the `RESEND PATH` block
+// further down, comment out the `GMAIL SMTP PATH` block, and set
+// RESEND_API_KEY + FROM_EMAIL in Vercel.
+// import { Resend } from 'resend';
+// -----------------------------------------------------------------------------
 
 export interface OrderEmailPayload {
   order_id: string;
@@ -72,16 +79,6 @@ export async function sendOrderNotificationEmail(
   } = payload;
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
-  const fromEmail = process.env.FROM_EMAIL || `noreply@${baseUrl.replace(/^https?:\/\//, '')}`;
-
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    return {
-      success: false,
-      error: 'Resend API key not configured',
-      details: 'Add RESEND_API_KEY in Vercel Dashboard → Settings → Environment Variables → Production, then redeploy.',
-    };
-  }
 
   const publicProductUrl = product_slug
     ? `${baseUrl}/fr/product/${product_slug}`
@@ -103,8 +100,6 @@ export async function sendOrderNotificationEmail(
     // QR generation is best-effort; email still sends without it
     qrDataUrl = null;
   }
-
-  const resend = new Resend(apiKey);
 
   const html = buildEmailHtml({
     siteName,
@@ -129,27 +124,77 @@ export async function sendOrderNotificationEmail(
     qrDataUrl,
   });
 
-  const { error: sendError } = await resend.emails.send({
-    from: `${siteName} <${fromEmail}>`,
-    to: [toEmail],
-    subject: `Nouvelle commande - ${order_number}`,
-    html,
+  // === GMAIL SMTP PATH (ACTIVE) ============================================
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
+
+  if (!gmailUser || !gmailAppPassword) {
+    return {
+      success: false,
+      error: 'Gmail SMTP not configured',
+      details:
+        'Set GMAIL_USER and GMAIL_APP_PASSWORD in Vercel → Settings → Environment Variables → Production, then redeploy. Generate an App Password at https://myaccount.google.com/apppasswords (2FA must be enabled).',
+    };
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: gmailUser,
+      pass: gmailAppPassword,
+    },
   });
+
+  let sendErrorMessage: string | null = null;
+  try {
+    await transporter.sendMail({
+      from: `"${siteName}" <${gmailUser}>`,
+      to: toEmail,
+      subject: `Nouvelle commande - ${order_number}`,
+      html,
+    });
+  } catch (err) {
+    sendErrorMessage = err instanceof Error ? err.message : String(err);
+  }
+  // =========================================================================
+
+  // === RESEND PATH (DISABLED) ==============================================
+  // To revert: comment out the GMAIL SMTP block above and uncomment this.
+  // Also uncomment the `import { Resend } from 'resend'` at the top.
+  //
+  // const fromEmail = process.env.FROM_EMAIL || `noreply@${baseUrl.replace(/^https?:\/\//, '')}`;
+  // const apiKey = process.env.RESEND_API_KEY;
+  // if (!apiKey) {
+  //   return {
+  //     success: false,
+  //     error: 'Resend API key not configured',
+  //     details: 'Add RESEND_API_KEY in Vercel Dashboard → Settings → Environment Variables → Production, then redeploy.',
+  //   };
+  // }
+  // const resend = new Resend(apiKey);
+  // const { error: sendError } = await resend.emails.send({
+  //   from: `${siteName} <${fromEmail}>`,
+  //   to: [toEmail],
+  //   subject: `Nouvelle commande - ${order_number}`,
+  //   html,
+  // });
+  // const sendErrorMessage = sendError ? sendError.message : null;
+  // =========================================================================
 
   // Log to pixel_events as integration audit log
   await supabase.from('pixel_events').insert({
     event_name: 'email_notification',
     event_id: order_number,
     payload: payload as unknown as Record<string, unknown>,
-    sent_to_meta: !sendError,
-    error_message: sendError ? sendError.message : null,
+    sent_to_meta: !sendErrorMessage,
+    error_message: sendErrorMessage,
   });
 
-  if (sendError) {
+  if (sendErrorMessage) {
     return {
       success: false,
       error: 'Email send failed',
-      details: sendError.message,
+      details: sendErrorMessage,
     };
   }
 

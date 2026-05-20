@@ -8,7 +8,6 @@ import {
   ShoppingCart,
   FolderTree,
   Settings,
-  Users,
   LogOut,
   BarChart3,
   HelpCircle,
@@ -29,7 +28,6 @@ const navItems = [
 
 const adminOnlyItems = [
   { href: '/admin/settings', label: 'Parametres', icon: Settings },
-  { href: '/admin/team', label: 'Equipe', icon: Users },
 ];
 
 export function AdminSidebar({ locale, role }: { locale: string; role: string }) {
