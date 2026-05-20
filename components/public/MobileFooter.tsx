@@ -352,7 +352,7 @@ export function MobileFooter({
           © {new Date().getFullYear()} {siteName}. {rightsLabel}
         </p>
         <p className="text-[10px] text-center mt-1" style={{ color: '#9CA3AF' }}>
-          Made by [Your Name]
+          Made by Zellige
         </p>
       </div>
     </footer>
