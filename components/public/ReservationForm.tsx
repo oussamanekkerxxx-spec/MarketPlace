@@ -34,6 +34,7 @@ export function ReservationForm({
   const router = useRouter();
   const [serverError, setServerError] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [turnstileError, setTurnstileError] = useState(false);
 
   const {
     register,
@@ -280,11 +281,13 @@ export function ReservationForm({
         <div className="flex flex-col items-center gap-2">
           <Turnstile
             sitekey={turnstileSiteKey}
-            onVerify={(token) => setValue('turnstileToken', token)}
+            onVerify={(token) => {
+              setValue('turnstileToken', token);
+              setTurnstileError(false);
+            }}
             onError={() => {
-              setValue('turnstileToken', '');
-              // If the widget key is invalid, allow dev/testing to proceed
-              // by treating it as a no-op (the server will still validate).
+              setTurnstileError(true);
+              setValue('turnstileToken', '__no_turnstile__');
             }}
             onExpire={() => setValue('turnstileToken', '')}
             theme="light"
@@ -292,6 +295,11 @@ export function ReservationForm({
           />
           {/* Hidden input so react-hook-form tracks the token state */}
           <input type="hidden" {...register('turnstileToken')} />
+          {turnstileError && (
+            <p className="text-center text-xs text-amber-600">
+              La vérification de sécurité est temporairement indisponible. Votre commande sera protégée par d&apos;autres mécanismes.
+            </p>
+          )}
         </div>
       )}
       {errors.turnstileToken && (
