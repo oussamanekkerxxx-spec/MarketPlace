@@ -74,18 +74,24 @@ export default async function HomePage({
   ]);
 
   // Fetch images ONLY for the featured products (bounded)
-  let productImages: { product_id: string; url: string }[] = [];
+  let productImages: { product_id: string; url: string; is_primary: boolean }[] = [];
   if (featuredProducts.length > 0) {
     const supabase = await createClient();
     const { data } = await supabase
       .from('product_images')
-      .select('product_id, url')
-      .eq('is_primary', true)
+      .select('product_id, url, is_primary')
       .in('product_id', featuredProducts.map((p) => p.id));
     productImages = data || [];
   }
 
-  const productImageMap = new Map(productImages.map((img) => [img.product_id, img.url]));
+  // Build image map: prefer primary image, fallback to first available
+  const productImageMap = new Map<string, string>();
+  for (const img of productImages) {
+    const existing = productImageMap.get(img.product_id);
+    if (!existing || img.is_primary) {
+      productImageMap.set(img.product_id, img.url);
+    }
+  }
   const getProductImage = (productId: string) => productImageMap.get(productId);
 
   const primaryColor = (settings?.primary_color as string) || '#FF6B35';

@@ -86,20 +86,26 @@ export default async function CategoryPage({
   // default 'newest' is already ordered by created_at from the DB
 
   // Fetch images ONLY for displayed products (bounded)
-  let productImages: { product_id: string; url: string }[] = [];
+  let productImages: { product_id: string; url: string; is_primary: boolean }[] = [];
   if (sortedProducts.length > 0) {
     const supabase = await createClient();
     const { data } = await supabase
       .from('product_images')
-      .select('product_id, url')
-      .eq('is_primary', true)
+      .select('product_id, url, is_primary')
       .in('product_id', sortedProducts.map((p) => p.id));
     productImages = data || [];
   }
 
   const settings = await getSiteSettings();
 
-  const productImageMap = new Map(productImages.map((img) => [img.product_id, img.url]));
+  // Build image map: prefer primary image, fallback to first available
+  const productImageMap = new Map<string, string>();
+  for (const img of productImages) {
+    const existing = productImageMap.get(img.product_id);
+    if (!existing || img.is_primary) {
+      productImageMap.set(img.product_id, img.url);
+    }
+  }
   const primaryColor = (settings?.primary_color as string) || '#FF6B35';
   const codBadge = (settings?.[`cod_badge_${locale}` as keyof typeof settings] as string | undefined) || 'Paiement à la livraison';
 
