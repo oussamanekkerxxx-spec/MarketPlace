@@ -93,7 +93,19 @@ export async function createReservation(formData: ReservationServerInput) {
     return { error: 'Quantité demandée indisponible' };
   }
 
-  const subtotal = unitPrice * reservation.quantity;
+  // Apply bulk discount server-side (source of truth from DB)
+  const bulkThreshold = (product as Record<string, unknown>).bulk_discount_threshold as number | null;
+  const bulkPercent = (product as Record<string, unknown>).bulk_discount_percent as number | null;
+  const hasBulkDiscount =
+    bulkThreshold && bulkPercent && reservation.quantity >= bulkThreshold;
+  const discountPercent = hasBulkDiscount ? bulkPercent : 0;
+  const discountedUnitPrice = hasBulkDiscount
+    ? unitPrice * (1 - discountPercent / 100)
+    : unitPrice;
+  const subtotal = discountedUnitPrice * reservation.quantity;
+  const discountAmount = hasBulkDiscount
+    ? Number((unitPrice * reservation.quantity - subtotal).toFixed(2))
+    : 0;
   const total = subtotal + shippingFee;
   const currency =
     typeof product.currency === 'string' && product.currency.trim().length > 0
@@ -124,6 +136,8 @@ export async function createReservation(formData: ReservationServerInput) {
       shipping_fee: shippingFee,
       total,
       currency,
+      discount_percent: discountPercent || null,
+      discount_amount: discountAmount || null,
       status: 'pending',
       source,
       utm_source: reservation.utm_source || null,

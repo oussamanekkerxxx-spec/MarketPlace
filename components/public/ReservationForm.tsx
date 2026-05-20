@@ -22,6 +22,8 @@ interface ReservationFormProps {
   productCurrency: string;
   cities: City[];
   trustLine?: string;
+  bulkDiscountThreshold?: number;
+  bulkDiscountPercent?: number;
 }
 
 export function ReservationForm({
@@ -30,6 +32,8 @@ export function ReservationForm({
   productCurrency,
   cities,
   trustLine,
+  bulkDiscountThreshold,
+  bulkDiscountPercent,
 }: ReservationFormProps) {
   const router = useRouter();
   const [serverError, setServerError] = useState('');
@@ -92,7 +96,17 @@ export function ReservationForm({
   const selectedCityId = watch('customer_city_id');
   const selectedCity = cities.find((city) => city.id === selectedCityId);
   const shippingFee = selectedCity?.shipping_fee || 0;
-  const subtotal = productPrice * quantity;
+
+  const hasBulkDiscount =
+    bulkDiscountThreshold && bulkDiscountPercent && quantity >= bulkDiscountThreshold;
+  const discountRate = hasBulkDiscount ? bulkDiscountPercent / 100 : 0;
+  const discountedUnitPrice = hasBulkDiscount
+    ? productPrice * (1 - discountRate)
+    : productPrice;
+  const subtotal = discountedUnitPrice * quantity;
+  const discountAmount = hasBulkDiscount
+    ? productPrice * quantity - subtotal
+    : 0;
   const total = subtotal + shippingFee;
 
   const onSubmit = async (data: ReservationInput) => {
@@ -106,6 +120,8 @@ export function ReservationForm({
       customer_address: data.customer_address,
       customer_notes: data.customer_notes,
       quantity,
+      discount_percent: hasBulkDiscount ? bulkDiscountPercent : undefined,
+      discount_amount: hasBulkDiscount ? Number(discountAmount.toFixed(2)) : undefined,
       turnstile_token: data.turnstileToken,
       website: data.website,
       utm_source: data.utm_source,
@@ -260,9 +276,26 @@ export function ReservationForm({
               Produit {quantity > 1 && <span className="text-text-muted">× {quantity}</span>}
             </span>
             <span className="font-medium text-secondary">
-              {subtotal} {productCurrency}
+              {hasBulkDiscount ? (
+                <span>
+                  <span className="text-text-muted line-through text-xs mr-1">
+                    {productPrice * quantity} {productCurrency}
+                  </span>
+                  {subtotal.toFixed(2)} {productCurrency}
+                </span>
+              ) : (
+                <span>{subtotal} {productCurrency}</span>
+              )}
             </span>
           </div>
+          {hasBulkDiscount && (
+            <div className="flex justify-between text-sm">
+              <span className="text-green-600">Remise ({bulkDiscountPercent}%)</span>
+              <span className="font-medium text-green-600">
+                -{discountAmount.toFixed(2)} {productCurrency}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between text-sm">
             <span className="text-text-muted">Livraison</span>
             <span className="font-medium text-secondary">
@@ -272,7 +305,7 @@ export function ReservationForm({
           <div className="flex justify-between border-t border-border-warm pt-2 text-lg font-bold">
             <span className="text-secondary">Total</span>
             <span className="text-primary">
-              {total} {productCurrency}
+              {total.toFixed(2)} {productCurrency}
             </span>
           </div>
         </div>

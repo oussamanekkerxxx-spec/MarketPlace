@@ -2,7 +2,7 @@ import { unstable_cache } from 'next/cache';
 import { createStaticClient } from '@/lib/supabase/server';
 
 const PRODUCT_SELECT_BASE =
-  'id, slug, title_fr, title_en, title_ar, short_description_fr, short_description_en, short_description_ar, description_fr, description_en, description_ar, price, compare_at_price, currency, category_id, sku, stock_quantity, track_inventory, low_stock_threshold, attributes, meta_title_fr, meta_title_en, meta_title_ar, meta_description_fr, meta_description_en, meta_description_ar, categories(name_fr, name_en, name_ar, slug)';
+  'id, slug, title_fr, title_en, title_ar, short_description_fr, short_description_en, short_description_ar, description_fr, description_en, description_ar, price, compare_at_price, currency, category_id, sku, stock_quantity, track_inventory, low_stock_threshold, attributes, meta_title_fr, meta_title_en, meta_title_ar, meta_description_fr, meta_description_en, meta_description_ar, bulk_discount_threshold, bulk_discount_percent, categories(name_fr, name_en, name_ar, slug)';
 
 const PRODUCT_SELECT_WITH_DETAIL_SECTIONS = `${PRODUCT_SELECT_BASE}, detail_sections`;
 
@@ -105,7 +105,7 @@ export const getFeaturedProducts = unstable_cache(
     const supabase = createStaticClient();
     const { data } = await supabase
       .from('products')
-      .select('id, slug, title_fr, title_en, title_ar, price, compare_at_price, currency, track_inventory, stock_quantity, low_stock_threshold')
+      .select('id, slug, title_fr, title_en, title_ar, price, compare_at_price, currency, track_inventory, stock_quantity, low_stock_threshold, bulk_discount_threshold, bulk_discount_percent')
       .eq('is_active', true)
       .eq('is_featured', true)
       .order('created_at', { ascending: false })

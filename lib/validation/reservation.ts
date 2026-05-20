@@ -39,6 +39,8 @@ export const reservationServerSchema = z.object({
   customer_address: optionalShortText,
   customer_notes: optionalLongText,
   quantity: z.number().int().min(1, 'Quantite invalide').max(99, 'Quantite invalide'),
+  discount_percent: z.number().min(0).max(100).optional(),
+  discount_amount: z.number().min(0).optional(),
   turnstile_token: z.string().trim().max(2048, 'Jeton de securite invalide').optional(),
   website: optionalShortText,
   utm_source: optionalTrackingValue,

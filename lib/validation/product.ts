@@ -43,6 +43,8 @@ export const productSchema = z.object({
   low_stock_threshold: z.number().min(0).optional(),
   is_active: z.boolean().optional(),
   is_featured: z.boolean().optional(),
+  bulk_discount_threshold: z.number().min(2).optional(),
+  bulk_discount_percent: z.number().min(0).max(100).optional(),
   attributes: z.object({
     features_fr: z.array(z.string()).optional(),
     features_en: z.array(z.string()).optional(),

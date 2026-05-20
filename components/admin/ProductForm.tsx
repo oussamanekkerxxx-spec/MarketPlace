@@ -65,6 +65,8 @@ const FIELD_LABELS: Partial<Record<keyof ProductFormData, string>> = {
   meta_description_ar: 'Meta description (AR)',
   is_active: 'Actif',
   is_featured: 'En vedette',
+  bulk_discount_threshold: 'Seuil remise (quantité)',
+  bulk_discount_percent: 'Remise (%)',
 };
 
 function generateSlug(text: string): string {
@@ -121,6 +123,12 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
       low_stock_threshold: (initialData?.low_stock_threshold as number) || 5,
       is_active: (initialData?.is_active as boolean) ?? true,
       is_featured: (initialData?.is_featured as boolean) || false,
+      bulk_discount_threshold: initialData?.bulk_discount_threshold != null && !Number.isNaN(initialData.bulk_discount_threshold)
+        ? (initialData.bulk_discount_threshold as number)
+        : undefined,
+      bulk_discount_percent: initialData?.bulk_discount_percent != null && !Number.isNaN(initialData.bulk_discount_percent)
+        ? (initialData.bulk_discount_percent as number)
+        : undefined,
       meta_title_fr: (initialData?.meta_title_fr as string) || '',
       meta_title_en: (initialData?.meta_title_en as string) || '',
       meta_title_ar: (initialData?.meta_title_ar as string) || '',
@@ -325,6 +333,34 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
             error={errors.compare_at_price?.message}
           />
           <FormInput label="Devise" {...register('currency')} />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mt-4">
+          <FormInput
+            label="Seuil remise (quantité min)"
+            type="number"
+            min={2}
+            {...register('bulk_discount_threshold', { setValueAs: v => {
+              if (v === '' || v == null) return undefined;
+              const n = Number(v);
+              return Number.isNaN(n) ? undefined : n;
+            } })}
+            error={errors.bulk_discount_threshold?.message}
+            helperText="Ex: 2 (la remise s'applique à partir de 2 unités)"
+          />
+          <FormInput
+            label="Remise (%)"
+            type="number"
+            step="0.01"
+            min={0}
+            max={100}
+            {...register('bulk_discount_percent', { setValueAs: v => {
+              if (v === '' || v == null) return undefined;
+              const n = Number(v);
+              return Number.isNaN(n) ? undefined : n;
+            } })}
+            error={errors.bulk_discount_percent?.message}
+            helperText="Ex: 15 pour 15% de remise"
+          />
         </div>
       </AdminAccordion>
 

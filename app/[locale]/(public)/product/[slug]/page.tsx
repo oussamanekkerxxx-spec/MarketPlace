@@ -293,7 +293,7 @@ export default async function ProductPage({
                 </h1>
 
                 {/* SKU */}
-                {(product.sku as string | null) && (
+                {Boolean(product.sku) && (
                   <p className="text-xs text-text-muted mt-1">
                     Réf: {product.sku as string}
                   </p>
@@ -316,6 +316,16 @@ export default async function ProductPage({
                     </>
                   )}
                 </div>
+
+                {/* Bulk discount badge */}
+                {(product.bulk_discount_threshold as number | null) && (product.bulk_discount_percent as number | null) && (
+                  <div className="pt-1">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-sm font-semibold">
+                      <Tag className="w-3.5 h-3.5" />
+                      -{product.bulk_discount_percent as number}% à partir de {product.bulk_discount_threshold as number} unités
+                    </span>
+                  </div>
+                )}
 
                 {/* Stock + COD badges */}
                 <div className="flex flex-wrap gap-2.5 pt-1">
@@ -377,6 +387,8 @@ export default async function ProductPage({
                     productCurrency={currency}
                     cities={cities}
                     trustLine={codBadge}
+                    bulkDiscountThreshold={product.bulk_discount_threshold as number | undefined}
+                    bulkDiscountPercent={product.bulk_discount_percent as number | undefined}
                   />
                 </div>
               </ScrollReveal>
