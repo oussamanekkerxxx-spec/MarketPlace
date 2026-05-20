@@ -27,6 +27,8 @@ export interface OrderEmailPayload {
   subtotal: number;
   total: number;
   currency: string;
+  discount_percent?: number | null;
+  discount_amount?: number | null;
 }
 
 export interface SendResult {
@@ -76,6 +78,8 @@ export async function sendOrderNotificationEmail(
     subtotal,
     total,
     currency,
+    discount_percent,
+    discount_amount,
   } = payload;
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
@@ -133,6 +137,8 @@ export async function sendOrderNotificationEmail(
     subtotal,
     total,
     currency,
+    discount_percent: discount_percent ?? null,
+    discount_amount: discount_amount ?? null,
     adminOrderUrl,
     adminProductUrl,
     publicProductUrl,
@@ -206,6 +212,8 @@ interface EmailData {
   subtotal: number;
   total: number;
   currency: string;
+  discount_percent: number | null;
+  discount_amount: number | null;
   adminOrderUrl: string;
   adminProductUrl: string | null;
   publicProductUrl: string;
@@ -230,6 +238,8 @@ function buildEmailHtml(data: EmailData): string {
     subtotal,
     total,
     currency,
+    discount_percent,
+    discount_amount,
     adminOrderUrl,
     adminProductUrl,
     publicProductUrl,
@@ -344,9 +354,13 @@ function buildEmailHtml(data: EmailData): string {
                   <td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:14px;width:140px;">Sous-total</td>
                   <td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${fmt(subtotal)} ${currency}</td>
                 </tr>
+                ${discount_amount && discount_amount > 0 ? `<tr>
+                  <td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:14px;width:140px;">Remise</td>
+                  <td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#16a34a;font-weight:600;">-${fmt(discount_amount)} ${currency} (${discount_percent}%)</td>
+                </tr>` : ''}
                 <tr>
                   <td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:14px;width:140px;">Livraison</td>
-                  <td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${fmt(shipping_fee)} ${currency}</td>
+                  <td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#16a34a;font-weight:600;">Gratuite</td>
                 </tr>
                 <tr>
                   <td style="padding:10px 0;border-bottom:2px solid #e2e8f0;color:#1e293b;font-size:15px;width:140px;font-weight:700;">Total</td>
@@ -386,6 +400,162 @@ function buildEmailHtml(data: EmailData): string {
   </table>
 </body>
 </html>`;
+}
+
+// ---------------------------------------------------------------------------
+// Cart / multi-item order email
+// ---------------------------------------------------------------------------
+
+export interface CartEmailItem {
+  product_title: string;
+  product_image?: string | null;
+  quantity: number;
+  unit_price: number;
+  discount_percent?: number | null;
+  discount_amount?: number | null;
+  line_total: number;
+  currency: string;
+}
+
+export interface CartOrderEmailPayload {
+  order_id: string;
+  order_number: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_city: string;
+  customer_address?: string | null;
+  customer_notes?: string | null;
+  items: CartEmailItem[];
+  subtotal: number;
+  total: number;
+  currency: string;
+  discount_total: number;
+}
+
+export async function sendCartOrderEmail(payload: CartOrderEmailPayload): Promise<SendResult> {
+  const supabase = createAdminClient();
+
+  const { data: settings } = await supabase
+    .from('site_settings')
+    .select('notification_email, site_name, logo_url')
+    .eq('id', 1)
+    .single();
+
+  const toEmail = (settings?.notification_email as string) || process.env.ADMIN_EMAIL;
+  const siteName = (settings?.site_name as string) || 'Boutique';
+  const logoUrl = (settings?.logo_url as string) || null;
+
+  if (!toEmail) {
+    return { success: false, error: 'No notification email configured' };
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+  const adminOrderUrl = `${baseUrl}/fr/admin/orders/${payload.order_id}`;
+
+  const fmt = (n: number) =>
+    Number.isFinite(n)
+      ? n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : '—';
+
+  const logoSection = logoUrl
+    ? `<div style="text-align:center;padding-bottom:16px;"><img src="${logoUrl}" alt="${escapeHtml(siteName)}" style="max-height:48px;max-width:160px;" /></div>`
+    : `<div style="text-align:center;padding-bottom:8px;font-size:18px;font-weight:700;color:#1e293b;">${escapeHtml(siteName)}</div>`;
+
+  const itemsRows = payload.items
+    .map((item) => {
+      const discountLabel =
+        item.discount_percent && item.discount_percent > 0
+          ? `<span style="color:#16a34a;font-size:12px;">(-${item.discount_percent}%)</span>`
+          : '';
+      const imgCell = item.product_image
+        ? `<td style="padding:10px 0;border-bottom:1px solid #e2e8f0;width:60px;"><img src="${item.product_image}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;" /></td>`
+        : `<td style="padding:10px 0;border-bottom:1px solid #e2e8f0;width:60px;"><div style="width:48px;height:48px;background:#f1f5f9;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;color:#94a3b8;">${escapeHtml(item.product_title.charAt(0))}</div></td>`;
+      return `<tr>
+        ${imgCell}
+        <td style="padding:10px 8px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">
+          <div style="font-weight:600;">${escapeHtml(item.product_title)}</div>
+          <div style="font-size:12px;color:#64748b;">Qté: ${item.quantity} × ${fmt(item.unit_price)} ${item.currency} ${discountLabel}</div>
+        </td>
+        <td style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:14px;font-weight:600;text-align:right;white-space:nowrap;">${fmt(item.line_total)} ${item.currency}</td>
+      </tr>`;
+    })
+    .join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Nouvelle commande - ${escapeHtml(payload.order_number)}</title></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr><td align="center" style="padding:24px 12px;">
+      <table role="presentation" width="100%" max-width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">
+        <tr><td style="padding:24px 24px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+          ${logoSection}
+          <h1 style="margin:0;font-size:20px;color:#1e293b;text-align:center;">🛒 Nouvelle commande reçue</h1>
+          <p style="margin:6px 0 0;font-size:14px;color:#64748b;text-align:center;">${escapeHtml(payload.order_number)}</p>
+        </td></tr>
+        <tr><td style="padding:20px 24px;">
+          <h2 style="margin:0 0 12px;font-size:16px;color:#1e293b;">👤 Informations client</h2>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+            <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:14px;width:120px;">Nom</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;font-weight:600;">${escapeHtml(payload.customer_name)}</td></tr>
+            <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:14px;width:120px;">Téléphone</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;direction:ltr;text-align:left;">${escapeHtml(payload.customer_phone)}</td></tr>
+            <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:14px;width:120px;">Ville</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${escapeHtml(payload.customer_city)}</td></tr>
+            ${payload.customer_address ? `<tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:14px;width:120px;">Adresse</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${escapeHtml(payload.customer_address)}</td></tr>` : ''}
+            ${payload.customer_notes ? `<tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:14px;width:120px;">Notes</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;">${escapeHtml(payload.customer_notes)}</td></tr>` : ''}
+          </table>
+        </td></tr>
+        <tr><td style="padding:0 24px 20px;">
+          <h2 style="margin:0 0 12px;font-size:16px;color:#1e293b;">📦 Produits commandés</h2>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+            ${itemsRows}
+            <tr><td colspan="2" style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Sous-total</td><td style="padding:10px 0;border-bottom:1px solid #e2e8f0;font-size:14px;text-align:right;white-space:nowrap;">${fmt(payload.subtotal)} ${payload.currency}</td></tr>
+            ${payload.discount_total > 0 ? `<tr><td colspan="2" style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#16a34a;">Remise totale</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#16a34a;text-align:right;white-space:nowrap;font-weight:600;">-${fmt(payload.discount_total)} ${payload.currency}</td></tr>` : ''}
+            <tr><td colspan="2" style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Livraison</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#16a34a;text-align:right;white-space:nowrap;font-weight:600;">Gratuite</td></tr>
+            <tr><td colspan="2" style="padding:10px 0;border-bottom:2px solid #e2e8f0;font-size:15px;color:#1e293b;font-weight:700;">Total</td><td style="padding:10px 0;border-bottom:2px solid #e2e8f0;font-size:15px;color:#1e293b;font-weight:700;text-align:right;white-space:nowrap;">${fmt(payload.total)} ${payload.currency}</td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:0 24px 20px;text-align:center;">
+          <a href="${adminOrderUrl}" style="display:inline-block;background:#3b82f6;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;margin:4px;">Voir la commande</a>
+        </td></tr>
+        <tr><td style="padding:16px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
+          <p style="margin:0;font-size:12px;color:#94a3b8;">Notification automatique — ${escapeHtml(siteName)}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const fromEmail = process.env.FROM_EMAIL || `noreply@${baseUrl.replace(/^https?:\/\//, '')}`;
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    return { success: false, error: 'Resend API key not configured' };
+  }
+  const resend = new Resend(apiKey);
+
+  let sendErrorMessage: string | null = null;
+  try {
+    const { error: sendError } = await resend.emails.send({
+      from: `${siteName} <${fromEmail}>`,
+      to: [toEmail],
+      subject: `Nouvelle commande - ${payload.order_number}`,
+      html,
+    });
+    sendErrorMessage = sendError ? sendError.message : null;
+  } catch (err) {
+    sendErrorMessage = err instanceof Error ? err.message : String(err);
+  }
+
+  await supabase.from('pixel_events').insert({
+    event_name: 'cart_email_notification',
+    event_id: payload.order_number,
+    payload: payload as unknown as Record<string, unknown>,
+    sent_to_meta: !sendErrorMessage,
+    error_message: sendErrorMessage,
+  });
+
+  if (sendErrorMessage) {
+    return { success: false, error: 'Email send failed', details: sendErrorMessage };
+  }
+  return { success: true };
 }
 
 function escapeHtml(str: string): string {

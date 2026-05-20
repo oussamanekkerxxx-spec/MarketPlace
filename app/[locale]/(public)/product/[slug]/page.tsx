@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import { getTranslations } from 'next-intl/server';
 import { ReservationForm } from '@/components/public/ReservationForm';
+import { AddToCartButton } from '@/components/public/AddToCartButton';
 import { PixelEvent } from '@/components/public/PixelEvent';
 import { ProductGallery } from '@/components/public/ProductGallery';
 import { ScrollReveal } from '@/components/public/ScrollReveal';
@@ -381,15 +382,30 @@ export default async function ProductPage({
                   <h2 className="text-lg font-bold text-secondary mb-4">
                     Commander ce produit
                   </h2>
-                  <ReservationForm
-                    productId={product.id as string}
-                    productPrice={price}
-                    productCurrency={currency}
-                    cities={cities}
-                    trustLine={codBadge}
-                    bulkDiscountThreshold={product.bulk_discount_threshold as number | undefined}
-                    bulkDiscountPercent={product.bulk_discount_percent as number | undefined}
-                  />
+                  <div className="mb-4">
+                    <AddToCartButton
+                      productId={product.id as string}
+                      slug={slug}
+                      title={title}
+                      price={price}
+                      currency={currency}
+                      image={images[0] || null}
+                      bulkDiscountThreshold={product.bulk_discount_threshold as number | undefined}
+                      bulkDiscountPercent={product.bulk_discount_percent as number | undefined}
+                    />
+                  </div>
+                  <div className="border-t border-border-warm pt-4">
+                    <p className="text-xs text-text-muted mb-3">Ou commandez directement :</p>
+                    <ReservationForm
+                      productId={product.id as string}
+                      productPrice={price}
+                      productCurrency={currency}
+                      cities={cities}
+                      trustLine={codBadge}
+                      bulkDiscountThreshold={product.bulk_discount_threshold as number | undefined}
+                      bulkDiscountPercent={product.bulk_discount_percent as number | undefined}
+                    />
+                  </div>
                 </div>
               </ScrollReveal>
             </div>

@@ -8,7 +8,8 @@ import { AnnouncementBar } from '@/components/public/AnnouncementBar';
 import { MobileDrawer } from '@/components/public/MobileDrawer';
 import { MobileFooter } from '@/components/public/MobileFooter';
 import { ScrollRevealHeader } from '@/components/public/ScrollRevealHeader';
-import { getSiteSettings, getCategories } from '@/lib/cache/queries';
+import { CartShell } from '@/components/public/CartShell';
+import { getSiteSettings, getCategories, getCities } from '@/lib/cache/queries';
 
 import { ChevronDown } from 'lucide-react';
 
@@ -45,6 +46,7 @@ export default async function PublicLayout({
   const tWhatsapp = await getTranslations({ locale, namespace: 'whatsapp' });
   const settings = await getSiteSettings();
   const categories = await getCategories();
+  const cities = await getCities();
   const nonce = (await headers()).get('x-nonce');
 
   const siteName = (settings?.site_name as string) || 'Boutique';
@@ -80,6 +82,7 @@ export default async function PublicLayout({
   const announcementText = localeAnnouncement || frAnnouncement || '';
 
   return (
+    <CartShell cities={cities}>
     <div className="min-h-screen flex flex-col bg-background">
       <MarketingConsentWrapper
         pixelId={pixelId}
@@ -376,6 +379,7 @@ export default async function PublicLayout({
       )}
       <CookieConsentBanner />
     </div>
+    </CartShell>
   );
 }
 

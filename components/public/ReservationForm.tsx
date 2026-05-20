@@ -95,7 +95,7 @@ export function ReservationForm({
 
   const selectedCityId = watch('customer_city_id');
   const selectedCity = cities.find((city) => city.id === selectedCityId);
-  const shippingFee = selectedCity?.shipping_fee || 0;
+  const shippingFee = 0; // Free shipping for all cities
 
   const hasBulkDiscount =
     bulkDiscountThreshold && bulkDiscountPercent && quantity >= bulkDiscountThreshold;
@@ -296,12 +296,6 @@ export function ReservationForm({
               </span>
             </div>
           )}
-          <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Livraison</span>
-            <span className="font-medium text-secondary">
-              {shippingFee} {productCurrency}
-            </span>
-          </div>
           <div className="flex justify-between border-t border-border-warm pt-2 text-lg font-bold">
             <span className="text-secondary">Total</span>
             <span className="text-primary">
