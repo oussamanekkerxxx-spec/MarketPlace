@@ -35,6 +35,7 @@ export function ReservationForm({
   const [serverError, setServerError] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [turnstileError, setTurnstileError] = useState(false);
+  const [turnstileFailed, setTurnstileFailed] = useState(false);
 
   const {
     register,
@@ -279,20 +280,23 @@ export function ReservationForm({
 
       {turnstileSiteKey && (
         <div className="flex flex-col items-center gap-2">
-          <Turnstile
-            sitekey={turnstileSiteKey}
-            onVerify={(token) => {
-              setValue('turnstileToken', token);
-              setTurnstileError(false);
-            }}
-            onError={() => {
-              setTurnstileError(true);
-              setValue('turnstileToken', '__no_turnstile__');
-            }}
-            onExpire={() => setValue('turnstileToken', '')}
-            theme="light"
-            size="normal"
-          />
+          {!turnstileFailed && (
+            <Turnstile
+              sitekey={turnstileSiteKey}
+              onVerify={(token) => {
+                setValue('turnstileToken', token);
+                setTurnstileError(false);
+              }}
+              onError={() => {
+                setTurnstileError(true);
+                setTurnstileFailed(true);
+                setValue('turnstileToken', '__no_turnstile__');
+              }}
+              onExpire={() => setValue('turnstileToken', '')}
+              theme="light"
+              size="normal"
+            />
+          )}
           {/* Hidden input so react-hook-form tracks the token state */}
           <input type="hidden" {...register('turnstileToken')} />
           {turnstileError && (
