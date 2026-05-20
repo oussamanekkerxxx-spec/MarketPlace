@@ -6,7 +6,7 @@ import { createAdminClient } from '@/lib/supabase/server';
 // Re-enable by: uncomment the import below, restore the `RESEND PATH` block
 // further down, comment out the `GMAIL SMTP PATH` block, and set
 // RESEND_API_KEY + FROM_EMAIL in Vercel.
-// import { Resend } from 'resend';
+import { Resend } from 'resend';
 // -----------------------------------------------------------------------------
 
 export interface OrderEmailPayload {
@@ -124,61 +124,30 @@ export async function sendOrderNotificationEmail(
     qrDataUrl,
   });
 
-  // === GMAIL SMTP PATH (ACTIVE) ============================================
-  const gmailUser = process.env.GMAIL_USER;
-  const gmailAppPassword = process.env.GMAIL_APP_PASSWORD;
-
-  if (!gmailUser || !gmailAppPassword) {
+  // === RESEND PATH (ACTIVE) ==================================================
+  const fromEmail = process.env.FROM_EMAIL || `noreply@${baseUrl.replace(/^https?:\/\//, '')}`;
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
     return {
       success: false,
-      error: 'Gmail SMTP not configured',
-      details:
-        'Set GMAIL_USER and GMAIL_APP_PASSWORD in Vercel → Settings → Environment Variables → Production, then redeploy. Generate an App Password at https://myaccount.google.com/apppasswords (2FA must be enabled).',
+      error: 'Resend API key not configured',
+      details: 'Add RESEND_API_KEY in Vercel Dashboard → Settings → Environment Variables → Production, then redeploy.',
     };
   }
-
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: gmailUser,
-      pass: gmailAppPassword,
-    },
-  });
+  const resend = new Resend(apiKey);
 
   let sendErrorMessage: string | null = null;
   try {
-    await transporter.sendMail({
-      from: `"${siteName}" <${gmailUser}>`,
-      to: toEmail,
+    const { error: sendError } = await resend.emails.send({
+      from: `${siteName} <${fromEmail}>`,
+      to: [toEmail],
       subject: `Nouvelle commande - ${order_number}`,
       html,
     });
+    sendErrorMessage = sendError ? sendError.message : null;
   } catch (err) {
     sendErrorMessage = err instanceof Error ? err.message : String(err);
   }
-  // =========================================================================
-
-  // === RESEND PATH (DISABLED) ==============================================
-  // To revert: comment out the GMAIL SMTP block above and uncomment this.
-  // Also uncomment the `import { Resend } from 'resend'` at the top.
-  //
-  // const fromEmail = process.env.FROM_EMAIL || `noreply@${baseUrl.replace(/^https?:\/\//, '')}`;
-  // const apiKey = process.env.RESEND_API_KEY;
-  // if (!apiKey) {
-  //   return {
-  //     success: false,
-  //     error: 'Resend API key not configured',
-  //     details: 'Add RESEND_API_KEY in Vercel Dashboard → Settings → Environment Variables → Production, then redeploy.',
-  //   };
-  // }
-  // const resend = new Resend(apiKey);
-  // const { error: sendError } = await resend.emails.send({
-  //   from: `${siteName} <${fromEmail}>`,
-  //   to: [toEmail],
-  //   subject: `Nouvelle commande - ${order_number}`,
-  //   html,
-  // });
-  // const sendErrorMessage = sendError ? sendError.message : null;
   // =========================================================================
 
   // Log to pixel_events as integration audit log

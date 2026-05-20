@@ -34,13 +34,15 @@ Go to Project Settings → Environment Variables, then add **all** of the follow
 | `SUPABASE_SERVICE_ROLE_KEY` | *(see Secure Transfer below)* | Production |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | `0x4AAAAAADSiLSJg9JgHYFoW` | Production |
 | `TURNSTILE_SECRET_KEY` | *(see Secure Transfer below)* | Production |
-| `GMAIL_USER` | `shahdmall119@gmail.com` | Production |
-| `GMAIL_APP_PASSWORD` | *(see Secure Transfer below)* | Production |
+| `RESEND_API_KEY` | *(see Secure Transfer below)* | Production |
+| `FROM_EMAIL` | `onboarding@resend.dev` | Production |
 | `ADMIN_EMAIL` | `shahdmall119@gmail.com` | Production |
 | `INTERNAL_API_SECRET` | `marketplace-internal-secret-2026` | Production |
 | `NEXT_PUBLIC_SITE_URL` | `https://your-actual-domain.com` | Production |
 
 > **Important:** Replace `NEXT_PUBLIC_SITE_URL` with the actual domain Vercel gives you (e.g., `https://marketplace-xyz.vercel.app`) or your custom domain.
+> 
+> **Email:** `FROM_EMAIL` can stay as `onboarding@resend.dev` for testing. Once you verify a domain in Resend, switch it to `notifications@your-domain.com`.
 
 ### Step 4: Re-deploy
 After adding all env vars, go to Deployments and click **Redeploy** on the latest build.
@@ -66,8 +68,8 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnemttenB
 TURNSTILE_SECRET_KEY=
 0x4AAAAAADSiLXLlzctWpMqPFRwKgukXhG8
 
-GMAIL_APP_PASSWORD=
-123@yahya
+RESEND_API_KEY=
+(Your Resend API key from https://resend.com)
 ```
 
 ---
