@@ -199,6 +199,25 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
     }
   };
 
+  const onError = (formErrors: typeof errors) => {
+    const errorMessages = Object.entries(formErrors)
+      .map(([field, err]) => {
+        const label =
+          field === 'site_name' ? 'Nom du site' :
+          field === 'primary_color' ? 'Couleur primaire' :
+          field === 'secondary_color' ? 'Couleur secondaire' :
+          field === 'accent_color' ? 'Couleur accent' :
+          field === 'contact_email' ? 'Email' :
+          field === 'notification_email' ? 'Email de notification' :
+          field;
+        return `${label}: ${err?.message}`;
+      })
+      .filter(Boolean);
+    if (errorMessages.length > 0) {
+      toast.error(`Veuillez corriger les erreurs:\n${errorMessages.join('\n')}`);
+    }
+  };
+
   /** True if any of the listed dirty-fields tracker keys are dirty (any locale variant). */
   const isAnyDirty = (...keys: string[]): boolean =>
     keys.some((k) => (dirtyFields as Record<string, unknown>)[k] !== undefined);
@@ -211,7 +230,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
   const showLangSwitcher = activeTabConfig.multilingual;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 max-w-4xl">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-5 max-w-4xl">
       {/* ====================================================================
           TAB BAR — icon above label on mobile (5-col grid), pills on desktop
           ==================================================================== */}
@@ -748,7 +767,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
         visible={isDirty}
         saving={saving}
         saveLabel="Enregistrer"
-        onSave={() => handleSubmit(onSubmit)()}
+        onSave={() => handleSubmit(onSubmit, onError)()}
         onDiscard={() => reset()}
         discardLabel="Annuler"
       />
