@@ -19,12 +19,19 @@ export async function updateSettings(formData: FormData) {
   const rawData = Object.fromEntries(formData.entries());
   const data: Record<string, unknown> = {};
 
-  // Boolean fields that come through FormData as strings
-  const booleanFields = ['announcement_enabled'];
-
   for (const [key, value] of Object.entries(rawData)) {
-    if (booleanFields.includes(key)) {
-      data[key] = value === 'true';
+    if (key === 'announcement_enabled') {
+      // Robust boolean normalization: handles string, boolean, or array
+      if (typeof value === 'boolean') {
+        data[key] = value;
+      } else if (typeof value === 'string') {
+        data[key] = value === 'true' || value === 'on' || value === '1';
+      } else if (Array.isArray(value)) {
+        const first = value[0];
+        data[key] = first === true || first === 'true' || first === 'on' || first === '1';
+      } else {
+        data[key] = Boolean(value);
+      }
     } else if (typeof value === 'string') {
       data[key] = value;
     }

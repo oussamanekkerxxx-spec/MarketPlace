@@ -37,8 +37,8 @@ export const settingsSchema = z.object({
   cod_badge_fr: z.string().optional(),
   cod_badge_en: z.string().optional(),
   cod_badge_ar: z.string().optional(),
-  // Announcement bar
-  announcement_enabled: z.boolean().optional(),
+  // Announcement bar — robust: handles boolean, string, or array from DB/FormData
+  announcement_enabled: z.boolean().optional().catch(false),
   announcement_text_fr: z.string().optional(),
   announcement_text_en: z.string().optional(),
   announcement_text_ar: z.string().optional(),

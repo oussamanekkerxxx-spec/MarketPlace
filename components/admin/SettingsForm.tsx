@@ -121,7 +121,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
       cod_badge_fr: (initialData?.cod_badge_fr as string) || '',
       cod_badge_en: (initialData?.cod_badge_en as string) || '',
       cod_badge_ar: (initialData?.cod_badge_ar as string) || '',
-      announcement_enabled: (initialData?.announcement_enabled as boolean) ?? false,
+      announcement_enabled: Boolean(initialData?.announcement_enabled ?? false),
       announcement_text_fr: (initialData?.announcement_text_fr as string) || '',
       announcement_text_en: (initialData?.announcement_text_en as string) || '',
       announcement_text_ar: (initialData?.announcement_text_ar as string) || '',
