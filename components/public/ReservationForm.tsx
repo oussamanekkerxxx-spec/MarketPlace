@@ -217,7 +217,7 @@ export function ReservationForm({
           <option value="">Sélectionnez votre ville</option>
           {cities.map((city) => (
             <option key={city.id} value={city.id}>
-              {city.name_fr} (+{city.shipping_fee} MAD)
+              {city.name_fr}
             </option>
           ))}
         </select>
