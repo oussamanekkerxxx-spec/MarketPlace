@@ -63,7 +63,12 @@ export const getProductBySlug = unstable_cache(
       return data as Record<string, unknown> | null;
     }
 
-    if (/detail_sections/i.test(error.message)) {
+    // Fallback for missing columns (detail_sections or bulk_discount_*)
+    const missingColumnMatch = error.message.match(/column products\.(\w+)/i);
+    const missingColumn = missingColumnMatch ? missingColumnMatch[1] : null;
+
+    if (missingColumn) {
+      console.warn(`[getProductBySlug] Column ${missingColumn} missing, falling back to base select`);
       const { data: fallbackData, error: fallbackError } = await supabase
         .from('products')
         .select(PRODUCT_SELECT_BASE)
@@ -76,7 +81,14 @@ export const getProductBySlug = unstable_cache(
         return null;
       }
 
-      return fallbackData ? ({ ...fallbackData, detail_sections: [] } as Record<string, unknown>) : null;
+      return fallbackData
+        ? ({
+            ...fallbackData,
+            detail_sections: (fallbackData as Record<string, unknown>).detail_sections ?? [],
+            bulk_discount_threshold: (fallbackData as Record<string, unknown>).bulk_discount_threshold ?? null,
+            bulk_discount_percent: (fallbackData as Record<string, unknown>).bulk_discount_percent ?? null,
+          } as Record<string, unknown>)
+        : null;
     }
 
     console.error('[getProductBySlug] Supabase error:', error.message);

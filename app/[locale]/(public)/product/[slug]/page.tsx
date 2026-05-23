@@ -10,7 +10,7 @@ import { MobileStickyOrderBar } from '@/components/public/MobileStickyOrderBar';
 import { ProductSwipeNav } from '@/components/public/ProductSwipeNav';
 import { GoogleProductView } from '@/components/public/GoogleProductView';
 import { ProductNarrative } from '@/components/public/ProductNarrative';
-import { sendCapiEvent } from '@/lib/facebook/capi';
+import { sendCapiEventServerSide } from '@/lib/facebook/capi-server';
 import type { DetailSectionFormData } from '@/lib/validation/product';
 import {
   getProductBySlug,
@@ -170,8 +170,10 @@ export default async function ProductPage({
   const isLowStock = trackInventory && isInStock && stockQty <= lowStockThreshold;
 
   // Server-side CAPI ViewContent (catches iOS 14.5+ blocked browsers)
+  // We use the server-side helper directly (not the 'use server' action)
+  // to avoid Next.js 16 request-scope issues with floating promises.
   const viewContentEventId = `viewcontent-${product.id as string}`;
-  sendCapiEvent({
+  sendCapiEventServerSide({
     eventName: 'ViewContent',
     eventId: viewContentEventId,
     customData: {
