@@ -94,12 +94,10 @@ function cloneMiddlewareResponse(source: NextResponse, requestHeaders: Headers):
 }
 
 export default async function proxy(request: NextRequest) {
-  const nonce = crypto.randomUUID();
   const allowVercelPreviewTools = request.nextUrl.hostname.endsWith('.vercel.app');
   const csp = buildCsp(allowVercelPreviewTools);
   const requestHeaders = new Headers(request.headers);
 
-  requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('Content-Security-Policy', csp);
 
   let response = intlMiddleware(request);

@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation';
-import { headers } from 'next/headers';
 import { getTranslations } from 'next-intl/server';
 import { ReservationForm } from '@/components/public/ReservationForm';
 import { AddToCartButton } from '@/components/public/AddToCartButton';
@@ -137,7 +136,6 @@ export default async function ProductPage({
   const codBadge = getLocalizedSetting('cod_badge') || 'Paiement à la livraison';
   const whatsappMessage = getLocalizedSetting('whatsapp_default_message') || 'Bonjour, j\'ai une question sur ce produit';
   const t = await getTranslations({ locale, namespace: 'product' });
-  const nonce = (await headers()).get('x-nonce');
 
   const title = getLocalized(product, 'title', locale);
   const shortDescription = getLocalized(product, 'short_description', locale);
@@ -204,7 +202,6 @@ export default async function ProductPage({
       />
       {/* JSON-LD structured data for Google rich results */}
       <script
-        nonce={nonce || undefined}
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({

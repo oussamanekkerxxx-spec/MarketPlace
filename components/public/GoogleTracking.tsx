@@ -7,10 +7,9 @@ interface GoogleTrackingProps {
   gaId: string | null;
   adsId: string | null;
   adsConversionLabel: string | null;
-  nonce?: string | null;
 }
 
-export function GoogleTracking({ gaId, adsId, adsConversionLabel, nonce }: GoogleTrackingProps) {
+export function GoogleTracking({ gaId, adsId, adsConversionLabel }: GoogleTrackingProps) {
   useEffect(() => {
     if (!gaId && !adsId) return;
 
@@ -44,12 +43,10 @@ export function GoogleTracking({ gaId, adsId, adsConversionLabel, nonce }: Googl
         id="google-gtag"
         strategy="lazyOnload"
         src={`https://www.googletagmanager.com/gtag/js?id=${primaryId}`}
-        nonce={nonce || undefined}
       />
       <Script
         id="google-gtag-init"
         strategy="lazyOnload"
-        nonce={nonce || undefined}
         dangerouslySetInnerHTML={{
           __html: `
             window.dataLayer = window.dataLayer || [];

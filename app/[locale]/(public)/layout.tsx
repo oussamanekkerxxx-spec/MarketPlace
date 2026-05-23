@@ -1,5 +1,4 @@
 import { getTranslations } from 'next-intl/server';
-import { headers } from 'next/headers';
 import { Link } from '@/lib/i18n/navigation';
 import { LanguageSwitcher } from '@/components/public/LanguageSwitcher';
 import { MarketingConsentWrapper } from '@/components/public/MarketingConsentWrapper';
@@ -47,7 +46,6 @@ export default async function PublicLayout({
   const settings = await getSiteSettings();
   const categories = await getCategories();
   const cities = await getCities();
-  const nonce = (await headers()).get('x-nonce');
 
   const siteName = (settings?.site_name as string) || 'Boutique';
   const logoUrl = settings?.logo_url as string | null;
@@ -89,7 +87,6 @@ export default async function PublicLayout({
         gaId={gaId}
         adsId={adsId}
         adsConversionLabel={adsConversionLabel}
-        nonce={nonce}
       />
       <ScrollRevealHeader />
 

@@ -19,13 +19,11 @@ export function MarketingConsentWrapper({
   gaId,
   adsId,
   adsConversionLabel,
-  nonce,
 }: {
   pixelId: string | null;
   gaId: string | null;
   adsId: string | null;
   adsConversionLabel: string | null;
-  nonce?: string | null;
 }) {
   const { hasMarketingConsent } = useCookieConsent();
   const [idle, setIdle] = useState(false);
@@ -59,9 +57,9 @@ export function MarketingConsentWrapper({
 
   return (
     <>
-      {pixelId && <MetaPixel pixelId={pixelId} nonce={nonce} />}
+      {pixelId && <MetaPixel pixelId={pixelId} />}
       {(gaId || adsId) && (
-        <GoogleTracking gaId={gaId} adsId={adsId} adsConversionLabel={adsConversionLabel} nonce={nonce} />
+        <GoogleTracking gaId={gaId} adsId={adsId} adsConversionLabel={adsConversionLabel} />
       )}
     </>
   );

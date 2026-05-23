@@ -5,12 +5,11 @@ import { useEffect } from 'react';
 
 interface MetaPixelProps {
   pixelId: string | null;
-  nonce?: string | null;
   eventName?: 'PageView' | 'ViewContent' | 'Lead' | 'Purchase';
   eventData?: Record<string, unknown>;
 }
 
-export function MetaPixel({ pixelId, nonce, eventName = 'PageView', eventData }: MetaPixelProps) {
+export function MetaPixel({ pixelId, eventName = 'PageView', eventData }: MetaPixelProps) {
   useEffect(() => {
     if (!pixelId || typeof window === 'undefined') return;
 
@@ -47,7 +46,6 @@ export function MetaPixel({ pixelId, nonce, eventName = 'PageView', eventData }:
       <Script
         id="meta-pixel"
         strategy="lazyOnload"
-        nonce={nonce || undefined}
         dangerouslySetInnerHTML={{
           __html: `
             !function(f,b,e,v,n,t,s)
