@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { productSchema, type ProductFormData } from '@/lib/validation/product';
-import DOMPurify from 'isomorphic-dompurify';
+import { sanitizeHtml } from '@/lib/utils/sanitize-html';
 
 function normalizeDetailSections(sections: ProductFormData['detail_sections']) {
   if (!sections || sections.length === 0) return undefined;
@@ -77,9 +77,9 @@ export async function createProduct(data: ProductFormData) {
     bulk_discount_threshold: productData.bulk_discount_threshold ?? null,
     bulk_discount_percent: productData.bulk_discount_percent ?? null,
     sku: productData.sku || null,
-    description_fr: DOMPurify.sanitize(productData.description_fr || ''),
-    description_en: DOMPurify.sanitize(productData.description_en || ''),
-    description_ar: DOMPurify.sanitize(productData.description_ar || ''),
+    description_fr: sanitizeHtml(productData.description_fr || ''),
+    description_en: sanitizeHtml(productData.description_en || ''),
+    description_ar: sanitizeHtml(productData.description_ar || ''),
     ...(normalizedDetailSections ? { detail_sections: normalizedDetailSections } : {}),
   };
 
@@ -136,9 +136,9 @@ export async function updateProduct(id: string, data: ProductFormData) {
     bulk_discount_threshold: productData.bulk_discount_threshold ?? null,
     bulk_discount_percent: productData.bulk_discount_percent ?? null,
     sku: productData.sku || null,
-    description_fr: DOMPurify.sanitize(productData.description_fr || ''),
-    description_en: DOMPurify.sanitize(productData.description_en || ''),
-    description_ar: DOMPurify.sanitize(productData.description_ar || ''),
+    description_fr: sanitizeHtml(productData.description_fr || ''),
+    description_en: sanitizeHtml(productData.description_en || ''),
+    description_ar: sanitizeHtml(productData.description_ar || ''),
     ...(normalizedDetailSections ? { detail_sections: normalizedDetailSections } : {}),
   };
 
