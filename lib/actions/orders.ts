@@ -6,7 +6,7 @@ import { sendOrderNotificationEmail, sendCartOrderEmail } from '@/lib/email/noti
 import { sendCapiEvent } from '@/lib/facebook/capi';
 import { sendTelegramNotification } from '@/lib/integrations/telegram';
 import { rateLimit } from '@/lib/rate-limit';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { detectSource } from '@/lib/utils/attribution';
 import { reservationServerSchema, type ReservationServerInput } from '@/lib/validation/reservation';
 
@@ -55,7 +55,12 @@ export async function createReservation(formData: ReservationServerInput) {
     }
   }
 
-  const supabase = await createClient();
+  // Use the service-role client for the public order flow. The request is
+  // already fully validated server-side (Zod schema, Turnstile, rate limit,
+  // honeypot), and we don't want browser cookie state — which IG/FB in-app
+  // browsers handle inconsistently — to put us into an RLS path. With this
+  // client the insert no longer depends on the visitor's auth state.
+  const supabase = createAdminClient();
 
   const [{ data: product, error: productError }, { data: city, error: cityError }] = await Promise.all([
     supabase
@@ -368,7 +373,9 @@ interface CartOrderInput {
 }
 
 export async function createOrderFromCart(input: CartOrderInput) {
-  const supabase = await createClient();
+  // Same reasoning as createReservation: use service-role to avoid being held
+  // hostage by inconsistent cookie behavior in IG/FB in-app browsers.
+  const supabase = createAdminClient();
 
   // Basic validation
   if (!input.items?.length) return { error: 'Panier vide' };
