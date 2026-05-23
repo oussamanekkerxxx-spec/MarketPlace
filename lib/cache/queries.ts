@@ -2,7 +2,7 @@ import { unstable_cache } from 'next/cache';
 import { createStaticClient } from '@/lib/supabase/server';
 
 const PRODUCT_SELECT_BASE =
-  'id, slug, title_fr, title_en, title_ar, short_description_fr, short_description_en, short_description_ar, description_fr, description_en, description_ar, price, compare_at_price, currency, category_id, sku, stock_quantity, track_inventory, low_stock_threshold, attributes, meta_title_fr, meta_title_en, meta_title_ar, meta_description_fr, meta_description_en, meta_description_ar, bulk_discount_threshold, bulk_discount_percent, categories(name_fr, name_en, name_ar, slug)';
+  'id, slug, title_fr, title_en, title_ar, short_description_fr, short_description_en, short_description_ar, description_fr, description_en, description_ar, price, compare_at_price, currency, category_id, sku, stock_quantity, track_inventory, low_stock_threshold, attributes, meta_title_fr, meta_title_en, meta_title_ar, meta_description_fr, meta_description_en, meta_description_ar, bulk_discount_threshold, bulk_discount_percent, created_at, updated_at, categories(name_fr, name_en, name_ar, slug)';
 
 const PRODUCT_SELECT_WITH_DETAIL_SECTIONS = `${PRODUCT_SELECT_BASE}, detail_sections`;
 
@@ -12,7 +12,7 @@ export async function getSiteSettings() {
   const supabase = createStaticClient();
   const { data, error } = await supabase.from('site_settings_public').select('*').single();
   if (error) {
-    console.error('[getSiteSettings] Supabase error:', error.message, '| code:', error.code, '| details:', error.details);
+    console.warn('[getSiteSettings] Supabase error:', error.message, '| code:', error.code, '| details:', error.details);
   }
   return data as Record<string, unknown> | null;
 }
@@ -63,7 +63,7 @@ export const getProductBySlug = unstable_cache(
       return data as Record<string, unknown> | null;
     }
 
-    console.error('[getProductBySlug] Supabase error:', error.message, '| code:', error.code, '| hint:', error.hint, '| slug:', slug);
+    console.warn('[getProductBySlug] Supabase error:', error.message, '| code:', error.code, '| hint:', error.hint, '| slug:', slug);
 
     // Fallback for missing columns (detail_sections or bulk_discount_*)
     const missingColumnMatch = error.message.match(/column products\.(\w+)/i);
@@ -256,10 +256,10 @@ export const getAdjacentProducts = unstable_cache(
     const [{ data: prev, error: prevError }, { data: next, error: nextError }] = await Promise.all([prevQuery, nextQuery]);
 
     if (prevError) {
-      console.error('[getAdjacentProducts] prev query error:', prevError.message, '| code:', prevError.code, '| productId:', currentProductId);
+      console.warn('[getAdjacentProducts] prev query error:', prevError.message, '| code:', prevError.code, '| productId:', currentProductId);
     }
     if (nextError) {
-      console.error('[getAdjacentProducts] next query error:', nextError.message, '| code:', nextError.code, '| productId:', currentProductId);
+      console.warn('[getAdjacentProducts] next query error:', nextError.message, '| code:', nextError.code, '| productId:', currentProductId);
     }
 
     return {
