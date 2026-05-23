@@ -45,12 +45,19 @@ export async function createReservation(formData: ReservationServerInput) {
       body: JSON.stringify({
         secret: process.env.TURNSTILE_SECRET_KEY,
         response: turnstileToken,
-        remoteip: ip,
+        // remoteip intentionally omitted: Facebook/Instagram in-app browsers
+        // route through Meta proxies, causing IP mismatches that fail
+        // Turnstile verification. Cloudflare accepts requests without it.
       }),
     });
 
-    const verifyData = await verifyRes.json();
+    const verifyData = (await verifyRes.json()) as {
+      success: boolean;
+      'error-codes'?: string[];
+      challenge_ts?: string;
+    };
     if (!verifyData.success) {
+      console.warn('[Turnstile] Verification failed:', verifyData['error-codes']);
       return { error: 'Vérification de sécurité échouée. Veuillez réessayer.' };
     }
   }
