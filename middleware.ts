@@ -5,7 +5,7 @@ import { routing } from './lib/i18n/routing';
 
 const intlMiddleware = createMiddleware(routing);
 
-function buildCsp(nonce: string, allowVercelPreviewTools: boolean): string {
+function buildCsp(allowVercelPreviewTools: boolean): string {
   const isDev = process.env.NODE_ENV === 'development';
   // Speed Insights runs on all Vercel environments (preview + production).
   const isVercel = process.env.VERCEL === '1' || allowVercelPreviewTools;
@@ -96,7 +96,7 @@ function cloneMiddlewareResponse(source: NextResponse, requestHeaders: Headers):
 export default async function proxy(request: NextRequest) {
   const nonce = crypto.randomUUID();
   const allowVercelPreviewTools = request.nextUrl.hostname.endsWith('.vercel.app');
-  const csp = buildCsp(nonce, allowVercelPreviewTools);
+  const csp = buildCsp(allowVercelPreviewTools);
   const requestHeaders = new Headers(request.headers);
 
   requestHeaders.set('x-nonce', nonce);
