@@ -76,6 +76,7 @@ async function buildUserData(
  */
 export async function sendCapiEventServerSide(params: CapiEventParams) {
   try {
+    console.log('[sendCapiEventServerSide] Starting event:', params.eventName, '| eventId:', params.eventId);
     const supabase = await createClient();
 
     const { data: settings } = await supabase
@@ -145,7 +146,14 @@ export async function sendCapiEventServerSide(params: CapiEventParams) {
       meta_response: metaResponse as Record<string, unknown> | null,
       error_message: errorMessage,
     });
-  } catch {
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    console.error('[sendCapiEventServerSide] Failed:', {
+      eventName: params.eventName,
+      eventId: params.eventId,
+      message: error.message,
+      stack: error.stack,
+    });
     // Never throw — pixel failures must not break orders
   }
 }

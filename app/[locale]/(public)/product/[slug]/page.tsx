@@ -97,24 +97,25 @@ export default async function ProductPage({
 }) {
   const { slug, locale } = await params;
 
-  const product = await getProductBySlug(slug);
-  if (!product) {
-    notFound();
-  }
+  try {
+    const product = await getProductBySlug(slug);
+    if (!product) {
+      notFound();
+    }
 
-  // Parallelize all independent data fetches
-  const [productImages, cities, settings] = await Promise.all([
-    getProductImages(product.id as string),
-    getCities(),
-    getSiteSettings(),
-  ]);
+    // Parallelize all independent data fetches
+    const [productImages, cities, settings] = await Promise.all([
+      getProductImages(product.id as string),
+      getCities(),
+      getSiteSettings(),
+    ]);
 
-  // Related products with their primary image (single joined query — no N+1)
-  const categoryId = product.category_id as string | null;
-  const [similarProducts, adjacentProducts] = await Promise.all([
-    getSimilarProducts(categoryId, product.id as string, 4),
-    getAdjacentProducts(product.id as string, product.created_at as string, categoryId),
-  ]);
+    // Related products with their primary image (single joined query — no N+1)
+    const categoryId = product.category_id as string | null;
+    const [similarProducts, adjacentProducts] = await Promise.all([
+      getSimilarProducts(categoryId, product.id as string, 4),
+      getAdjacentProducts(product.id as string, product.created_at as string, categoryId),
+    ]);
 
   type RelatedImage = { url: string; is_primary: boolean };
   const similarImageMap = new Map<string, string>();
@@ -562,4 +563,14 @@ export default async function ProductPage({
       {/* WhatsApp button is now only in MobileStickyOrderBar */}
     </ProductSwipeNav>
   );
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    console.error('[ProductPage] Render error:', {
+      slug,
+      locale,
+      message: error.message,
+      stack: error.stack,
+    });
+    throw error;
+  }
 }

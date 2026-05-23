@@ -12,7 +12,7 @@ export async function getSiteSettings() {
   const supabase = createStaticClient();
   const { data, error } = await supabase.from('site_settings_public').select('*').single();
   if (error) {
-    console.error('[getSiteSettings] Supabase error:', error.message);
+    console.error('[getSiteSettings] Supabase error:', error.message, '| code:', error.code, '| details:', error.details);
   }
   return data as Record<string, unknown> | null;
 }
@@ -63,6 +63,8 @@ export const getProductBySlug = unstable_cache(
       return data as Record<string, unknown> | null;
     }
 
+    console.error('[getProductBySlug] Supabase error:', error.message, '| code:', error.code, '| hint:', error.hint, '| slug:', slug);
+
     // Fallback for missing columns (detail_sections or bulk_discount_*)
     const missingColumnMatch = error.message.match(/column products\.(\w+)/i);
     const missingColumn = missingColumnMatch ? missingColumnMatch[1] : null;
@@ -77,7 +79,7 @@ export const getProductBySlug = unstable_cache(
         .single();
 
       if (fallbackError) {
-        console.error('[getProductBySlug] Fallback Supabase error:', fallbackError.message);
+        console.error('[getProductBySlug] Fallback Supabase error:', fallbackError.message, '| code:', fallbackError.code, '| slug:', slug);
         return null;
       }
 
@@ -91,7 +93,6 @@ export const getProductBySlug = unstable_cache(
         : null;
     }
 
-    console.error('[getProductBySlug] Supabase error:', error.message);
     return null;
   },
   ['product-by-slug'],
@@ -252,7 +253,14 @@ export const getAdjacentProducts = unstable_cache(
       nextQuery = nextQuery.eq('category_id', categoryId);
     }
 
-    const [{ data: prev }, { data: next }] = await Promise.all([prevQuery, nextQuery]);
+    const [{ data: prev, error: prevError }, { data: next, error: nextError }] = await Promise.all([prevQuery, nextQuery]);
+
+    if (prevError) {
+      console.error('[getAdjacentProducts] prev query error:', prevError.message, '| code:', prevError.code, '| productId:', currentProductId);
+    }
+    if (nextError) {
+      console.error('[getAdjacentProducts] next query error:', nextError.message, '| code:', nextError.code, '| productId:', currentProductId);
+    }
 
     return {
       prev: prev?.[0] || null,
