@@ -19,10 +19,14 @@ function buildCsp(nonce: string, allowVercelPreviewTools: boolean): string {
     "form-action 'self'",
     "frame-ancestors 'none'",
     "object-src 'none'",
+    // Note: per-request nonces + 'strict-dynamic' don't mix with ISR/static
+    // caching — the HTML is cached but the CSP header is regenerated, so the
+    // nonces never match and every inline script gets blocked. We use a
+    // host-allowlist + 'unsafe-inline' instead. 'unsafe-inline' is ignored
+    // by browsers when a nonce or hash is present; we keep neither, so it
+    // applies to Next.js's required hydration inline scripts.
     [
-      "script-src 'self'",
-      `'nonce-${nonce}'`,
-      "'strict-dynamic'",
+      "script-src 'self' 'unsafe-inline'",
       isDev ? "'unsafe-eval'" : '',
       'https://connect.facebook.net',
       'https://www.googletagmanager.com',
