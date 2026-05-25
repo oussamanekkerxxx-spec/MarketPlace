@@ -5,11 +5,6 @@ import { ShoppingCart } from 'lucide-react';
 import { CartProvider, useCart } from '@/lib/cart/context';
 import { CartDrawer } from './CartDrawer';
 
-interface CartShellProps {
-  children: React.ReactNode;
-  cities: Array<{ id: string; name_fr: string }>;
-}
-
 function FloatingCartButton({ onClick }: { onClick: () => void }) {
   const { itemCount } = useCart();
 
@@ -30,7 +25,7 @@ function FloatingCartButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-export function CartShell({ children, cities }: CartShellProps) {
+export function CartShell({ children }: { children: React.ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   return (
@@ -45,7 +40,6 @@ export function CartShell({ children, cities }: CartShellProps) {
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        cities={cities}
       />
     </CartProvider>
   );

@@ -10,6 +10,7 @@ interface SortDropdownProps {
 
 const defaultOptions = [
   { value: 'newest', label: 'Nouveautés' },
+  { value: 'bestsellers', label: 'Meilleures ventes' },
   { value: 'price-asc', label: 'Prix croissant' },
   { value: 'price-desc', label: 'Prix décroissant' },
 ];

@@ -86,6 +86,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
     formState: { errors, isDirty, dirtyFields },
   } = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
+    shouldUnregister: false,
     defaultValues: {
       site_name: (initialData?.site_name as string) || 'My Shop',
       site_tagline_fr: (initialData?.site_tagline_fr as string) || '',
@@ -137,7 +138,6 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
       hero_subtitle_fr: (initialData?.hero_subtitle_fr as string) || '',
       hero_subtitle_en: (initialData?.hero_subtitle_en as string) || '',
       hero_subtitle_ar: (initialData?.hero_subtitle_ar as string) || '',
-      hero_image_url: (initialData?.hero_image_url as string) || '',
       footer_description_fr: (initialData?.footer_description_fr as string) || '',
       footer_description_en: (initialData?.footer_description_en as string) || '',
       footer_description_ar: (initialData?.footer_description_ar as string) || '',
@@ -182,20 +182,25 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
 
   const onSubmit = async (data: SettingsFormData) => {
     setSaving(true);
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        formData.append(key, String(value));
-      }
-    });
+    try {
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
+        }
+      });
 
-    const result = await updateSettings(formData);
-    setSaving(false);
-    if (result.error) {
-      toast.error(result.error);
-    } else {
-      toast.success('Paramètres enregistrés');
-      reset(data); // Resets dirty state so the save bar hides
+      const result = await updateSettings(formData);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success('Paramètres enregistrés');
+        reset(data); // Resets dirty state so the save bar hides
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur inattendue');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -230,7 +235,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
   const showLangSwitcher = activeTabConfig.multilingual;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-5 max-w-4xl">
+    <form id="settings-form" onSubmit={handleSubmit(onSubmit, onError)} className="space-y-5 max-w-4xl">
       {/* ====================================================================
           TAB BAR — icon above label on mobile (5-col grid), pills on desktop
           ==================================================================== */}
@@ -448,13 +453,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
             description="Bannière principale de la page d'accueil"
             icon={<span className="text-base">🖼️</span>}
             badge={
-              isAnyDirty(
-                'hero_eyebrow_fr', 'hero_eyebrow_en', 'hero_eyebrow_ar',
-                'hero_title_accent_fr', 'hero_title_accent_en', 'hero_title_accent_ar',
-                'hero_title_main_fr', 'hero_title_main_en', 'hero_title_main_ar',
-                'hero_subtitle_fr', 'hero_subtitle_en', 'hero_subtitle_ar',
-                'hero_image_url'
-              ) && <ModifiedDot />
+              isAnyDirty('hero_eyebrow_fr', 'hero_eyebrow_en', 'hero_eyebrow_ar') && <ModifiedDot />
             }
           >
             <FormInput
@@ -465,37 +464,13 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
                 langTab === 'en' ? 'e.g. Limited Edition · Handmade in Fez' :
                 'مثال: إصدار محدود · صنع يدوي في فاس'
               }
-            />
-            <FormInput
-              label="Titre accentué"
-              {...register(`hero_title_accent_${langTab}` as keyof SettingsFormData)}
-              placeholder={
-                langTab === 'fr' ? 'Ex: Le cuir berbère' :
-                langTab === 'en' ? 'e.g. Berber leather' :
-                'مثال: الجلد الأمازيغي'
-              }
-            />
-            <FormInput
-              label="Titre principal"
-              {...register(`hero_title_main_${langTab}` as keyof SettingsFormData)}
-              placeholder={
-                langTab === 'fr' ? 'Ex: , livré chez vous en 48h' :
-                langTab === 'en' ? 'e.g. , delivered to your door in 48h' :
-                'مثال: ، يصلك خلال 48 ساعة'
-              }
-            />
-            <FormTextarea
-              label="Sous-titre"
-              {...register(`hero_subtitle_${langTab}` as keyof SettingsFormData)}
+              helperText="Affiché en bandeau fixe dans le coin supérieur des images du hero (reste visible quand les images défilent)."
             />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Image de fond</label>
-              <SimpleImageUploader
-                bucket="site-assets"
-                value={watch('hero_image_url') || ''}
-                onChange={(url) => setValue('hero_image_url', url, { shouldDirty: true })}
-              />
-              <p className="text-xs text-gray-400 mt-1">Recommandé : 1920×1080 px. Une seule image pour toutes les langues.</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Les images du hero se gèrent depuis <strong>Contenu → Images du hero</strong>.
+              </p>
             </div>
           </AdminAccordion>
 
@@ -524,32 +499,6 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
               {...register(`featured_section_subtitle_${langTab}` as keyof SettingsFormData)}
             />
             <p className="text-xs text-gray-400">Laissez vide pour utiliser les textes par défaut.</p>
-          </AdminAccordion>
-
-          <AdminAccordion
-            title="Pourquoi nous ?"
-            description="Section d'argumentaire"
-            icon={<span className="text-base">💡</span>}
-            badge={
-              isAnyDirty(
-                'why_us_title_fr', 'why_us_title_en', 'why_us_title_ar',
-                'why_us_sub_fr', 'why_us_sub_en', 'why_us_sub_ar',
-              ) && <ModifiedDot />
-            }
-          >
-            <FormInput
-              label="Titre"
-              {...register(`why_us_title_${langTab}` as keyof SettingsFormData)}
-              placeholder={
-                langTab === 'fr' ? 'Ex: Pourquoi nous choisir ?' :
-                langTab === 'en' ? 'e.g. Why choose us?' :
-                'مثال: لماذا تختارنا؟'
-              }
-            />
-            <FormTextarea
-              label="Sous-titre"
-              {...register(`why_us_sub_${langTab}` as keyof SettingsFormData)}
-            />
           </AdminAccordion>
 
           <AdminAccordion
@@ -764,12 +713,12 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
       </div>
 
       <StickySaveBar
-        visible={isDirty}
+        dirty={isDirty}
         saving={saving}
         saveLabel="Enregistrer"
-        onSave={() => handleSubmit(onSubmit, onError)()}
         onDiscard={() => reset()}
         discardLabel="Annuler"
+        formId="settings-form"
       />
 
       {/* Spacer so sticky bar doesn't cover the last accordion on mobile */}

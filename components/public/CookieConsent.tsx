@@ -33,7 +33,8 @@ function subscribe(onStoreChange: () => void) {
 
 function getConsentSnapshot(): Consent {
   if (typeof window === 'undefined') return null;
-  return (window.localStorage.getItem(CONSENT_KEY) as Consent) || null;
+  // Auto-accept when no explicit choice was made (banner is hidden)
+  return (window.localStorage.getItem(CONSENT_KEY) as Consent) || 'accepted';
 }
 
 function getServerSnapshot(): Consent {

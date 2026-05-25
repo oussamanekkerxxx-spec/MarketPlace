@@ -11,7 +11,19 @@
     "contact": "Contact",
     "admin": "Administration",
     "login": "Connexion",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "search": "Rechercher"
+  },
+  "category": {
+    "search": "Recherche",
+    "resultsFor": "Résultats pour",
+    "product": "produit",
+    "products": "produits",
+    "noResults": "Aucun résultat trouvé",
+    "noResultsDesc": "Essayez un autre terme ou parcourez nos catégories.",
+    "browseAll": "Voir tous les produits",
+    "startSearching": "Commencez votre recherche",
+    "searchDesc": "Tapez un mot-clé dans la barre de recherche en haut de la page."
   },
   "localeSwitcher": {
     "label": "Langue",
@@ -62,13 +74,24 @@
   "reservation": {
     "title": "Confirmer ma commande",
     "fullName": "Nom complet",
+    "fullNamePlaceholder": "Votre nom complet",
     "phone": "Téléphone",
     "phonePlaceholder": "06 12 34 56 78",
+    "phoneFormat": "Format: 06 12 34 56 78",
     "city": "Ville",
-    "selectCity": "Sélectionnez votre ville",
+    "cityPlaceholder": "Votre ville",
     "address": "Adresse (optionnel)",
-    "notes": "Notes (optionnel)",
+    "addressPlaceholder": "Votre adresse",
+    "quantity": "Quantité",
+    "decreaseQuantity": "Diminuer la quantité",
+    "increaseQuantity": "Augmenter la quantité",
+    "product": "Produit",
+    "discountLabel": "Remise ({percent}%)",
+    "total": "Total",
+    "processing": "Traitement...",
     "submit": "Confirmer ma commande",
+    "confirmationText": "En confirmant, vous acceptez d'être contacté par téléphone pour la validation de votre commande.",
+    "orderDirectly": "Ou commandez directement :",
     "successTitle": "Merci pour votre commande !",
     "successMessage": "Nous vous appellerons sous peu pour confirmer votre commande.",
     "orderNumber": "Numéro de commande",
@@ -76,7 +99,25 @@
     "defaultThankYou": "Merci pour votre commande ! Nous vous appellerons sous peu pour confirmer.",
     "callUs": "Nous appeler",
     "continueShopping": "Continuer mes achats",
-    "codTrustLine": "Paiement à la livraison — aucun paiement en ligne requis"
+    "codTrustLine": "Paiement à la livraison — aucun paiement en ligne requis",
+    "cartTitle": "Votre panier",
+    "cartEmpty": "Votre panier est vide",
+    "cartEmptyDesc": "Ajoutez des produits pour commencer",
+    "deliveryInfo": "Informations de livraison",
+    "back": "Retour",
+    "orderSuccess": "Commande envoyée avec succès !",
+    "error": "Une erreur est survenue",
+    "fillRequiredFields": "Veuillez remplir tous les champs obligatoires",
+    "subtotal": "Sous-total",
+    "delivery": "Livraison",
+    "free": "Gratuite",
+    "order": "Commander",
+    "validation": {
+      "required": "Ce champ est requis",
+      "phoneInvalid": "Numéro de téléphone invalide",
+      "nameTooShort": "Le nom doit contenir au moins 2 caractères",
+      "cityRequired": "Veuillez entrer votre ville"
+    }
   },
   "admin": {
     "dashboard": "Tableau de bord",
@@ -117,6 +158,11 @@
   "footer": {
     "description": "Livraison gratuite et paiement à la livraison partout au Maroc.",
     "shop": "Boutique",
+    "services": "Nos Services",
+    "fastDelivery": "Livraison rapide 24-48h — partout au Maroc",
+    "cod": "Paiement à la livraison — aucun paiement en ligne requis",
+    "satisfaction": "Satisfait ou remboursé — 7 jours pour changer d'avis",
+    "freeDelivery": "Livraison gratuite — sur toutes les commandes",
     "help": "Aide",
     "followUs": "Suivez-nous",
     "rights": "Tous droits réservés."

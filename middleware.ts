@@ -67,6 +67,7 @@ function buildCsp(allowVercelPreviewTools: boolean): string {
       'https://www.facebook.com',
       isVercel ? 'https://vercel.live' : '',
     ].filter(Boolean).join(' '),
+    'upgrade-insecure-requests',
   ].join('; ');
 }
 
@@ -94,6 +95,15 @@ function cloneMiddlewareResponse(source: NextResponse, requestHeaders: Headers):
 }
 
 export default async function proxy(request: NextRequest) {
+  // Force HTTPS redirect (skip localhost)
+  const proto = request.headers.get('x-forwarded-proto');
+  const host = request.headers.get('host');
+  if (proto === 'http' && host && !host.startsWith('localhost')) {
+    const httpsUrl = request.nextUrl.clone();
+    httpsUrl.protocol = 'https:';
+    return NextResponse.redirect(httpsUrl, 308);
+  }
+
   const allowVercelPreviewTools = request.nextUrl.hostname.endsWith('.vercel.app');
   const csp = buildCsp(allowVercelPreviewTools);
   const requestHeaders = new Headers(request.headers);
@@ -126,7 +136,7 @@ export default async function proxy(request: NextRequest) {
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) => {
               request.cookies.set(name, value);
-              response.cookies.set(name, value, options);
+              response.cookies.set(name, value, { ...options, secure: true });
             });
           },
         },

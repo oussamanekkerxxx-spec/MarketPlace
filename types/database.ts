@@ -46,6 +46,7 @@ export interface Database {
           total_revenue: number;
           view_count: number;
           detail_sections: Json;
+          product_row_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -87,6 +88,23 @@ export interface Database {
           meta_description_ar: string | null;
           created_at: string;
           updated_at: string;
+        };
+        Insert: any;
+        Update: any;
+      };
+      product_rows: {
+        Row: {
+          id: string;
+          slug: string;
+          title_fr: string;
+          title_en: string | null;
+          title_ar: string | null;
+          subtitle_fr: string | null;
+          subtitle_en: string | null;
+          subtitle_ar: string | null;
+          display_order: number;
+          is_active: boolean;
+          created_at: string;
         };
         Insert: any;
         Update: any;
@@ -230,7 +248,6 @@ export interface Database {
           hero_subtitle_fr: string | null;
           hero_subtitle_en: string | null;
           hero_subtitle_ar: string | null;
-          hero_image_url: string | null;
           // Trust strip
           trust_1_title_fr: string | null;
           trust_1_title_en: string | null;
@@ -290,6 +307,18 @@ export interface Database {
           is_active: boolean;
           created_at: string;
           updated_at: string;
+        };
+        Insert: any;
+        Update: any;
+      };
+      hero_images: {
+        Row: {
+          id: string;
+          url: string;
+          alt_text: string | null;
+          display_order: number;
+          is_active: boolean;
+          created_at: string;
         };
         Insert: any;
         Update: any;

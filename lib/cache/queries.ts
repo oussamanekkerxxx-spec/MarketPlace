@@ -134,7 +134,7 @@ export const getProductsByCategory = unstable_cache(
     const supabase = createStaticClient();
     let query = supabase
       .from('products')
-      .select('id, slug, title_fr, title_en, title_ar, price, compare_at_price, currency, stock_quantity, track_inventory, low_stock_threshold')
+      .select('id, slug, title_fr, title_en, title_ar, price, compare_at_price, currency, stock_quantity, track_inventory, low_stock_threshold, total_orders')
       .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -299,3 +299,85 @@ export const getWhyUsItems = unstable_cache(
   ['why-us-items'],
   { revalidate: 300, tags: ['why-us-items'] }
 );
+
+export const getHeroImages = unstable_cache(
+  async () => {
+    const supabase = createStaticClient();
+    const { data } = await supabase
+      .from('hero_images')
+      .select('id, url, alt_text, display_order')
+      .eq('is_active', true)
+      .order('display_order', { ascending: true })
+      .limit(4);
+    return data || [];
+  },
+  ['hero-images'],
+  { revalidate: 300, tags: ['hero-images'] }
+);
+
+export const getProductRows = unstable_cache(
+  async () => {
+    const supabase = createStaticClient();
+    const { data } = await supabase
+      .from('product_rows')
+      .select('id, slug, title_fr, title_en, title_ar, subtitle_fr, subtitle_en, subtitle_ar, display_order')
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
+    return data || [];
+  },
+  ['product-rows'],
+  { revalidate: 300, tags: ['product-rows'] }
+);
+
+export const getBestSellers = unstable_cache(
+  async (limit = 8) => {
+    const supabase = createStaticClient();
+    const { data } = await supabase
+      .from('products')
+      .select('id, slug, title_fr, title_en, title_ar, price, compare_at_price, currency, track_inventory, stock_quantity, low_stock_threshold, bulk_discount_threshold, bulk_discount_percent')
+      .eq('is_active', true)
+      .is('product_row_id', null)
+      .order('total_orders', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    return data || [];
+  },
+  ['best-sellers'],
+  { revalidate: 120, tags: ['products'] }
+);
+
+export const getProductsByRow = unstable_cache(
+  async (rowId: string, limit = 8) => {
+    const supabase = createStaticClient();
+    const { data } = await supabase
+      .from('products')
+      .select('id, slug, title_fr, title_en, title_ar, price, compare_at_price, currency, track_inventory, stock_quantity, low_stock_threshold, bulk_discount_threshold, bulk_discount_percent')
+      .eq('is_active', true)
+      .eq('product_row_id', rowId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    return data || [];
+  },
+  ['products-by-row'],
+  { revalidate: 120, tags: ['products', 'product-rows'] }
+);
+
+export async function searchProducts(query: string, limit = 24) {
+  const supabase = createStaticClient();
+  // Escape PostgREST-reserved characters in the search term
+  const sanitized = query.replace(/[%_,]/g, ' ');
+  const q = `%${sanitized}%`;
+  const { data, error } = await supabase
+    .from('products')
+    .select('id, slug, title_fr, title_en, title_ar, price, compare_at_price, currency, stock_quantity, track_inventory, low_stock_threshold, product_images(url, is_primary)')
+    .eq('is_active', true)
+    .or(`title_fr.ilike.${q},title_en.ilike.${q},title_ar.ilike.${q},short_description_fr.ilike.${q},short_description_en.ilike.${q},short_description_ar.ilike.${q}`)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('[searchProducts] error:', error.message, '| code:', error.code);
+    return [];
+  }
+  return data || [];
+}

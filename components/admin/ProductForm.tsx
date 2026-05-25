@@ -31,6 +31,7 @@ import {
 
 interface ProductFormProps {
   categories: Array<{ id: string; name_fr: string }>;
+  productRows: Array<{ id: string; title_fr: string }>;
   initialData?: Record<string, unknown>;
   productId?: string;
 }
@@ -87,7 +88,7 @@ function generateSku(text: string): string {
   return `${base || 'PRD'}-${suffix}`;
 }
 
-export function ProductForm({ categories, initialData, productId }: ProductFormProps) {
+export function ProductForm({ categories, productRows, initialData, productId }: ProductFormProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const isEditing = !!productId;
@@ -117,6 +118,7 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
         : undefined,
       currency: (initialData?.currency as string) || 'MAD',
       category_id: (initialData?.category_id as string) || '',
+      product_row_id: (initialData?.product_row_id as string) || '',
       sku: (initialData?.sku as string) || '',
       stock_quantity: (initialData?.stock_quantity as number) || 0,
       track_inventory: (initialData?.track_inventory as boolean) ?? true,
@@ -244,7 +246,7 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, onValidationErrors)} className="max-w-5xl space-y-3 lg:space-y-6">
+    <form id="product-form" onSubmit={handleSubmit(onSubmit, onValidationErrors)} className="max-w-5xl space-y-3 lg:space-y-6">
       <AdminAccordion
         title="Informations de base"
         description="Titre, slug, SKU, catégorie"
@@ -290,16 +292,29 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
           helperText={!isEditing && titleFr ? `Suggestion: ${generateSku(titleFr)}` : ''}
         />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Catégorie</label>
-          <select {...register('category_id')} className="w-full rounded-lg border px-3 py-2">
-            <option value="">Aucune</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name_fr}
-              </option>
-            ))}
-          </select>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Catégorie</label>
+            <select {...register('category_id')} className="w-full rounded-lg border px-3 py-2">
+              <option value="">Aucune</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name_fr}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Section produit</label>
+            <select {...register('product_row_id')} className="w-full rounded-lg border px-3 py-2">
+              <option value="">Aucune (Meilleures ventes)</option>
+              {productRows.map((row) => (
+                <option key={row.id} value={row.id}>
+                  {row.title_fr}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </AdminAccordion>
 
@@ -585,16 +600,16 @@ export function ProductForm({ categories, initialData, productId }: ProductFormP
       </div>
 
       <StickySaveBar
-        visible={isDirty}
+        dirty={isDirty}
         saving={saving}
         saveLabel={isEditing ? 'Mettre à jour' : 'Créer'}
-        onSave={() => handleSubmit(onSubmit, onValidationErrors)()}
         onDiscard={() => {
           if (!isDirty || confirm('Modifications non sauvegardées. Quitter quand même ?')) {
             router.push('/admin/products');
           }
         }}
         discardLabel="Annuler"
+        formId="product-form"
       />
 
       <div className="h-20 lg:hidden" aria-hidden="true" />

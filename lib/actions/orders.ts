@@ -10,6 +10,11 @@ import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { detectSource } from '@/lib/utils/attribution';
 import { reservationServerSchema, type ReservationServerInput } from '@/lib/validation/reservation';
 
+// Helper to normalize Moroccan phone numbers
+function normalizePhone(phone: string): string {
+  return phone.replace(/\s/g, '');
+}
+
 export async function createReservation(formData: ReservationServerInput) {
   const parsed = reservationServerSchema.safeParse(formData);
   if (!parsed.success) {
@@ -35,15 +40,20 @@ export async function createReservation(formData: ReservationServerInput) {
     return { error: 'Trop de commandes depuis cette adresse. Veuillez réessayer dans une heure.' };
   }
 
-  // Verify Turnstile token (skip if the secret key is not configured, e.g. local dev).
-  // Also skip if the client explicitly sent the no-turnstile placeholder.
+  // Verify Turnstile token (skip if the client explicitly sent the no-turnstile placeholder).
+  // In development, use Cloudflare's public test secret so verification works on localhost.
   const turnstileToken = reservation.turnstile_token;
-  if (turnstileToken && turnstileToken !== '__no_turnstile__' && process.env.TURNSTILE_SECRET_KEY) {
+  const turnstileSecret =
+    process.env.NODE_ENV === 'development'
+      ? '1x0000000000000000000000000000000AA'
+      : process.env.TURNSTILE_SECRET_KEY;
+
+  if (turnstileToken && turnstileToken !== '__no_turnstile__' && turnstileSecret) {
     const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        secret: process.env.TURNSTILE_SECRET_KEY,
+        secret: turnstileSecret,
         response: turnstileToken,
         // remoteip intentionally omitted: Facebook/Instagram in-app browsers
         // route through Meta proxies, causing IP mismatches that fail
@@ -69,31 +79,19 @@ export async function createReservation(formData: ReservationServerInput) {
   // client the insert no longer depends on the visitor's auth state.
   const supabase = createAdminClient();
 
-  const [{ data: product, error: productError }, { data: city, error: cityError }] = await Promise.all([
-    supabase
-      .from('products')
-      .select('title_fr, slug, price, currency, track_inventory, stock_quantity, product_images(url, is_primary)')
-      .eq('id', reservation.product_id)
-      .eq('is_active', true)
-      .single(),
-    supabase
-      .from('cities')
-      .select('name_fr, shipping_fee')
-      .eq('id', reservation.customer_city_id)
-      .eq('is_active', true)
-      .single(),
-  ]);
+  const { data: product, error: productError } = await supabase
+    .from('products')
+    .select('title_fr, slug, price, currency, track_inventory, stock_quantity, product_images(url, is_primary)')
+    .eq('id', reservation.product_id)
+    .eq('is_active', true)
+    .single();
 
   if (productError || !product) {
     return { error: 'Produit introuvable ou indisponible' };
   }
 
-  if (cityError || !city) {
-    return { error: 'Ville de livraison invalide' };
-  }
-
   const unitPrice = Number(product.price);
-  const shippingFee = 0; // Free shipping for all cities
+  const shippingFee = 0; // Free shipping
   const stockQuantity = Number(product.stock_quantity ?? 0);
   const trackInventory = Boolean(product.track_inventory);
 
@@ -123,8 +121,8 @@ export async function createReservation(formData: ReservationServerInput) {
     typeof product.currency === 'string' && product.currency.trim().length > 0
       ? product.currency
       : 'MAD';
-  const customerCityName = city.name_fr;
-  const normalizedPhone = reservation.customer_phone.replace(/\s/g, '');
+  const customerCityName = reservation.customer_city_name;
+  const normalizedPhone = normalizePhone(reservation.customer_phone);
   const productTitle = product.title_fr || 'Produit';
   const productSlug = product.slug || '';
   const productImages = Array.isArray(product.product_images) ? product.product_images : [];
@@ -140,10 +138,9 @@ export async function createReservation(formData: ReservationServerInput) {
     .insert({
       customer_name: reservation.customer_name,
       customer_phone: normalizedPhone,
-      customer_city_id: reservation.customer_city_id,
+      customer_city_id: null,
       customer_city_name: customerCityName,
       customer_address: reservation.customer_address || null,
-      customer_notes: reservation.customer_notes || null,
       subtotal,
       shipping_fee: shippingFee,
       total,
@@ -192,7 +189,6 @@ export async function createReservation(formData: ReservationServerInput) {
     customer_phone: normalizedPhone,
     customer_city: customerCityName,
     customer_address: reservation.customer_address || null,
-    customer_notes: reservation.customer_notes || null,
     product_id: reservation.product_id,
     product_title: productTitle,
     product_slug: productSlug,
@@ -374,9 +370,8 @@ interface CartOrderInput {
   items: CartOrderItemInput[];
   customer_name: string;
   customer_phone: string;
-  customer_city_id: string;
+  customer_city_name: string;
   customer_address?: string;
-  customer_notes?: string;
 }
 
 export async function createOrderFromCart(input: CartOrderInput) {
@@ -388,7 +383,7 @@ export async function createOrderFromCart(input: CartOrderInput) {
   if (!input.items?.length) return { error: 'Panier vide' };
   if (!input.customer_name?.trim()) return { error: 'Nom requis' };
   if (!input.customer_phone?.trim()) return { error: 'Téléphone requis' };
-  if (!input.customer_city_id) return { error: 'Ville requise' };
+  if (!input.customer_city_name?.trim()) return { error: 'Ville requise' };
 
   // Rate limit by phone
   const headersList = await headers();
@@ -400,17 +395,6 @@ export async function createOrderFromCart(input: CartOrderInput) {
   const limitResult = rateLimit(`order:${ip}`, 5, 60 * 60 * 1000);
   if (!limitResult.success) {
     return { error: 'Trop de commandes depuis cette adresse. Veuillez réessayer dans une heure.' };
-  }
-
-  // Fetch city
-  const { data: city, error: cityError } = await supabase
-    .from('cities')
-    .select('name_fr')
-    .eq('id', input.customer_city_id)
-    .single();
-
-  if (cityError || !city) {
-    return { error: 'Ville de livraison invalide' };
   }
 
   // Fetch all products
@@ -492,8 +476,8 @@ export async function createOrderFromCart(input: CartOrderInput) {
   const shippingFee = 0; // Free shipping
   const total = subtotal - totalDiscount + shippingFee;
   const currency = (products[0]?.currency as string) || 'MAD';
-  const customerCityName = city.name_fr;
-  const normalizedPhone = input.customer_phone.replace(/\s/g, '');
+  const customerCityName = input.customer_city_name;
+  const normalizedPhone = normalizePhone(input.customer_phone);
 
   // Create order
   const { data: order, error: orderError } = await supabase
@@ -501,10 +485,9 @@ export async function createOrderFromCart(input: CartOrderInput) {
     .insert({
       customer_name: input.customer_name,
       customer_phone: normalizedPhone,
-      customer_city_id: input.customer_city_id,
+      customer_city_id: null,
       customer_city_name: customerCityName,
       customer_address: input.customer_address || null,
-      customer_notes: input.customer_notes || null,
       subtotal,
       shipping_fee: shippingFee,
       total,
@@ -549,7 +532,6 @@ export async function createOrderFromCart(input: CartOrderInput) {
     customer_phone: normalizedPhone,
     customer_city: customerCityName,
     customer_address: input.customer_address || null,
-    customer_notes: input.customer_notes || null,
     items: orderItems.map((item) => ({
       product_title: item.product_title_snapshot,
       product_image: item.product_image_snapshot,

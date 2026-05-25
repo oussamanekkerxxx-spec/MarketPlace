@@ -11,7 +11,19 @@
     "contact": "Contact",
     "admin": "Admin",
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "search": "Search"
+  },
+  "category": {
+    "search": "Search",
+    "resultsFor": "Results for",
+    "product": "product",
+    "products": "products",
+    "noResults": "No results found",
+    "noResultsDesc": "Try a different term or browse our categories.",
+    "browseAll": "Browse all products",
+    "startSearching": "Start your search",
+    "searchDesc": "Type a keyword in the search bar at the top of the page."
   },
   "localeSwitcher": {
     "label": "Language",
@@ -62,13 +74,24 @@
   "reservation": {
     "title": "Confirm My Order",
     "fullName": "Full Name",
+    "fullNamePlaceholder": "Your full name",
     "phone": "Phone",
     "phonePlaceholder": "06 12 34 56 78",
+    "phoneFormat": "Format: 06 12 34 56 78",
     "city": "City",
-    "selectCity": "Select your city",
+    "cityPlaceholder": "Your city",
     "address": "Address (optional)",
-    "notes": "Notes (optional)",
+    "addressPlaceholder": "Your address",
+    "quantity": "Quantity",
+    "decreaseQuantity": "Decrease quantity",
+    "increaseQuantity": "Increase quantity",
+    "product": "Product",
+    "discountLabel": "Discount ({percent}%)",
+    "total": "Total",
+    "processing": "Processing...",
     "submit": "Confirm My Order",
+    "confirmationText": "By confirming, you agree to be contacted by phone to validate your order.",
+    "orderDirectly": "Or order directly:",
     "successTitle": "Thank you for your order!",
     "successMessage": "We will call you shortly to confirm your order.",
     "orderNumber": "Order Number",
@@ -76,7 +99,25 @@
     "defaultThankYou": "Thank you for your order! We will call you shortly to confirm.",
     "callUs": "Call us",
     "continueShopping": "Continue shopping",
-    "codTrustLine": "Cash on delivery — no online payment required"
+    "codTrustLine": "Cash on delivery — no online payment required",
+    "cartTitle": "Your Cart",
+    "cartEmpty": "Your cart is empty",
+    "cartEmptyDesc": "Add products to get started",
+    "deliveryInfo": "Delivery Information",
+    "back": "Back",
+    "orderSuccess": "Order sent successfully!",
+    "error": "An error occurred",
+    "fillRequiredFields": "Please fill in all required fields",
+    "subtotal": "Subtotal",
+    "delivery": "Delivery",
+    "free": "Free",
+    "order": "Order",
+    "validation": {
+      "required": "This field is required",
+      "phoneInvalid": "Invalid phone number",
+      "nameTooShort": "Name must be at least 2 characters",
+      "cityRequired": "Please enter your city"
+    }
   },
   "admin": {
     "dashboard": "Dashboard",
@@ -117,6 +158,11 @@
   "footer": {
     "description": "Free delivery and cash on delivery all over Morocco.",
     "shop": "Shop",
+    "services": "Our Services",
+    "fastDelivery": "Fast delivery 24-48h — all over Morocco",
+    "cod": "Cash on delivery — no online payment required",
+    "satisfaction": "Satisfied or refunded — 7 days to change your mind",
+    "freeDelivery": "Free delivery — on all orders",
     "help": "Help",
     "followUs": "Follow us",
     "rights": "All rights reserved."

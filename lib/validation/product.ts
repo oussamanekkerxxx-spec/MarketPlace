@@ -37,6 +37,7 @@ export const productSchema = z.object({
   compare_at_price: z.number().min(0).optional(),
   currency: z.string().optional(),
   category_id: z.string().uuid().optional().or(z.literal('')),
+  product_row_id: z.string().uuid().optional().or(z.literal('')),
   sku: z.string().optional(),
   stock_quantity: z.number().min(0).optional(),
   track_inventory: z.boolean().optional(),

@@ -55,7 +55,6 @@ export const settingsSchema = z.object({
   hero_subtitle_fr: z.string().optional(),
   hero_subtitle_en: z.string().optional(),
   hero_subtitle_ar: z.string().optional(),
-  hero_image_url: z.string().optional(),
   // Trust strip
   trust_1_title_fr: z.string().optional(),
   trust_1_title_en: z.string().optional(),

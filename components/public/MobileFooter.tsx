@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Link } from '@/lib/i18n/navigation';
 import Image from 'next/image';
-import { ChevronDown, Phone, Mail, MapPin, ArrowUp, ShieldCheck } from 'lucide-react';
+import { ChevronDown, Phone, Mail, MapPin, ArrowUp, ShieldCheck, Truck, RotateCcw, Package } from 'lucide-react';
 import { getWhatsAppHref } from '@/lib/utils/contact';
 
 interface Category {
@@ -19,7 +19,6 @@ interface MobileFooterProps {
   siteTagline?: string;
   logoUrl: string | null;
   footerDescription: string;
-  categories: Category[];
   contactPhone?: string;
   contactEmail?: string;
   whatsappNumber?: string;
@@ -30,10 +29,13 @@ interface MobileFooterProps {
   tiktokUrl?: string;
   telegramUrl?: string;
   youtubeUrl?: string;
-  shopLabel: string;
+  servicesLabel: string;
+  fastDeliveryLabel: string;
+  codLabel: string;
+  satisfactionLabel: string;
+  freeDeliveryLabel: string;
   helpLabel: string;
   rightsLabel: string;
-  productsLabel: string;
   aboutLabel: string;
   contactLabel: string;
 }
@@ -44,7 +46,6 @@ export function MobileFooter({
   siteTagline,
   logoUrl,
   footerDescription,
-  categories,
   contactPhone,
   contactEmail,
   whatsappNumber,
@@ -55,10 +56,13 @@ export function MobileFooter({
   tiktokUrl,
   telegramUrl,
   youtubeUrl,
-  shopLabel,
+  servicesLabel,
+  fastDeliveryLabel,
+  codLabel,
+  satisfactionLabel,
+  freeDeliveryLabel,
   helpLabel,
   rightsLabel,
-  productsLabel,
   aboutLabel,
   contactLabel,
 }: MobileFooterProps) {
@@ -68,9 +72,6 @@ export function MobileFooter({
   const scrollTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  const categoryName = (cat: Category): string =>
-    (cat[`name_${locale}`] as string | undefined) || cat.name_fr;
 
   const privacyLabel =
     locale === 'fr' ? 'Confidentialité' : locale === 'en' ? 'Privacy' : 'الخصوصية';
@@ -165,28 +166,29 @@ export function MobileFooter({
       {/* Accordion sections */}
       <div className="px-5">
         <AccordionSection
-          id="shop"
-          title={shopLabel}
-          open={openSection === 'shop'}
-          onToggle={() => toggle('shop')}
+          id="services"
+          title={servicesLabel}
+          open={openSection === 'services'}
+          onToggle={() => toggle('services')}
         >
-          <Link
-            href="/category/all"
-            className="block py-2.5 text-sm font-medium border-b"
-            style={{ color: '#0c0818', borderColor: 'rgba(0,0,0,0.04)' }}
-          >
-            {productsLabel}
-          </Link>
-          {categories.slice(0, 6).map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/category/${cat.slug}` as '/category/[slug]'}
-              className="block py-2.5 text-sm border-b last:border-0"
-              style={{ color: '#6B7280', borderColor: 'rgba(0,0,0,0.04)' }}
-            >
-              {categoryName(cat)}
-            </Link>
-          ))}
+          <div className="space-y-2 py-1">
+            <div className="flex items-start gap-2 py-2">
+              <Truck className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--color-primary)' }} />
+              <p className="text-sm" style={{ color: '#6B7280' }}>{fastDeliveryLabel}</p>
+            </div>
+            <div className="flex items-start gap-2 py-2">
+              <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--color-primary)' }} />
+              <p className="text-sm" style={{ color: '#6B7280' }}>{codLabel}</p>
+            </div>
+            <div className="flex items-start gap-2 py-2">
+              <RotateCcw className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--color-primary)' }} />
+              <p className="text-sm" style={{ color: '#6B7280' }}>{satisfactionLabel}</p>
+            </div>
+            <div className="flex items-start gap-2 py-2">
+              <Package className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--color-primary)' }} />
+              <p className="text-sm" style={{ color: '#6B7280' }}>{freeDeliveryLabel}</p>
+            </div>
+          </div>
         </AccordionSection>
 
         <AccordionSection

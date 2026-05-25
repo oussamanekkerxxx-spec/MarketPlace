@@ -3,12 +3,17 @@ import { Link } from '@/lib/i18n/navigation';
 import { getTranslations } from 'next-intl/server';
 import {
   getSiteSettings,
-  getFeaturedProducts,
   getCategories,
   getWhyUsItems,
+  getHeroImages,
+  getProductRows,
+  getBestSellers,
+  getProductsByRow,
 } from '@/lib/cache/queries';
 import { createClient } from '@/lib/supabase/server';
 import { ScrollReveal } from '@/components/public/ScrollReveal';
+import { HeroSlider } from '@/components/public/HeroSlider';
+import { ProductRowSection } from '@/components/public/ProductRowSection';
 import {
   Truck,
   Banknote,
@@ -28,7 +33,7 @@ import {
   CheckCircle2,
   Hammer,
   Leaf,
-  ArrowRight,
+
 } from 'lucide-react';
 
 export const revalidate = 60;
@@ -66,21 +71,35 @@ export default async function HomePage({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'home' });
 
-  const [settings, featuredProducts, categories, whyUsItems] = await Promise.all([
+  const [settings, categories, whyUsItems, heroImages, productRows, bestSellers] = await Promise.all([
     getSiteSettings(),
-    getFeaturedProducts(8),
     getCategories(6),
     getWhyUsItems(),
+    getHeroImages(),
+    getProductRows(),
+    getBestSellers(8),
   ]);
 
-  // Fetch images ONLY for the featured products (bounded)
+  // Fetch products for each row
+  const rowProductsResults = await Promise.all(
+    productRows.map((row) => getProductsByRow(row.id, 8))
+  );
+
+  // Collect all product IDs that need images
+  const allProductIds = new Set<string>();
+  for (const p of bestSellers) allProductIds.add(p.id);
+  for (const rowProds of rowProductsResults) {
+    for (const p of rowProds) allProductIds.add(p.id);
+  }
+
+  // Fetch images for ALL displayed products in one query
   let productImages: { product_id: string; url: string; is_primary: boolean }[] = [];
-  if (featuredProducts.length > 0) {
+  if (allProductIds.size > 0) {
     const supabase = await createClient();
     const { data } = await supabase
       .from('product_images')
       .select('product_id, url, is_primary')
-      .in('product_id', featuredProducts.map((p) => p.id));
+      .in('product_id', Array.from(allProductIds));
     productImages = data || [];
   }
 
@@ -92,7 +111,6 @@ export default async function HomePage({
       productImageMap.set(img.product_id, img.url);
     }
   }
-  const getProductImage = (productId: string) => productImageMap.get(productId);
 
   const primaryColor = (settings?.primary_color as string) || '#FF6B35';
   const siteName = (settings?.site_name as string) || 'Boutique';
@@ -105,15 +123,12 @@ export default async function HomePage({
 
   const codBadge = getLocalizedSetting('cod_badge') || 'Paiement à la livraison';
 
-  const isRTL = locale === 'ar';
-
-  const heroEyebrow = getLocalizedSetting('hero_eyebrow');
   const heroTitleAccent = getLocalizedSetting('hero_title_accent');
-  const heroTitleMain = getLocalizedSetting('hero_title_main');
-  const heroSubtitle = getLocalizedSetting('hero_subtitle');
-  const heroImageUrl = settings?.hero_image_url as string | undefined;
-  const featuredSectionTitle = getLocalizedSetting('featured_section_title');
-  const featuredSectionSubtitle = getLocalizedSetting('featured_section_subtitle');
+  const heroEyebrow = getLocalizedSetting('hero_eyebrow');
+
+  const heroSliderImages = heroImages.map((img) => ({ url: img.url, alt_text: img.alt_text }));
+  const bestSellersTitle = locale === 'fr' ? 'Nos meilleures ventes' : locale === 'en' ? 'Best Sellers' : 'الأكثر مبيعاً';
+  const bestSellersSubtitle = locale === 'fr' ? 'Les produits les plus populaires' : locale === 'en' ? 'Our most popular products' : 'منتجاتنا الأكثر شعبية';
   const whyUsTitle = getLocalizedSetting('why_us_title');
   const whyUsSub = getLocalizedSetting('why_us_sub');
   const showWhyUs = !!(whyUsTitle && whyUsSub);
@@ -136,72 +151,14 @@ export default async function HomePage({
           HERO — Full-width image + dark text band
           ============================================ */}
       <section className="relative bg-secondary">
-        {/* Full-width hero image */}
-        <div className="relative w-full h-[45vh] sm:h-[50vh] lg:h-[55vh]">
-          {heroImageUrl ? (
-            <Image
-              src={heroImageUrl}
-              alt={heroTitleAccent || siteName}
-              fill
-              className="object-cover"
-              priority
-              sizes="100vw"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary via-secondary to-secondary/70" />
-          )}
-          {/* Subtle bottom gradient for smooth transition to text band */}
-          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-secondary to-transparent" />
-        </div>
+        {/* Full-width hero image slider */}
+        <HeroSlider
+          images={heroSliderImages}
+          fallbackAlt={heroTitleAccent || siteName}
+          eyebrow={heroEyebrow}
+        />
 
-        {/* Dark text band */}
-        <div className="relative">
-          {/* Moroccan pattern overlay (subtle) */}
-          <div className="absolute inset-0 moroccan-pattern opacity-20" />
 
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
-            <div className="max-w-2xl">
-              {heroEyebrow && (
-                <div className={`flex items-center gap-3 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                  <span className="w-8 h-px bg-accent" />
-                  <span className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-                    {heroEyebrow}
-                  </span>
-                </div>
-              )}
-              <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-bold leading-[1.1] tracking-tight text-white mb-5">
-                {heroTitleAccent && (
-                  <span className="text-primary">{heroTitleAccent}</span>
-                )}
-                {heroTitleAccent && heroTitleMain && ' '}
-                {heroTitleMain && (
-                  <span className="text-white/90">{heroTitleMain}</span>
-                )}
-              </h1>
-              {heroSubtitle && (
-                <p className="text-base lg:text-lg text-white/70 max-w-md mb-8 leading-relaxed whitespace-pre-line">
-                  {heroSubtitle}
-                </p>
-              )}
-              <div className="flex flex-wrap items-center gap-3">
-                <Link
-                  href="/category/all"
-                  className="inline-flex items-center gap-2 px-6 py-3.5 text-white text-sm font-semibold rounded-full transition-all hover:scale-[1.02] active:scale-[0.98]"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  {t('shopNow')}
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  href="/category/all"
-                  className="inline-flex items-center px-6 py-3.5 text-sm font-semibold text-white border border-white/30 rounded-full hover:bg-white/10 transition-colors"
-                >
-                  {t('seeProducts')}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* ============================================
@@ -295,114 +252,51 @@ export default async function HomePage({
       )}
 
       {/* ============================================
-          FEATURED PRODUCTS
+          PRODUCT SECTIONS — Unified block
           ============================================ */}
-      <ScrollReveal>
-        <section className="py-10 lg:py-14 bg-surface">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-end justify-between mb-6">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary mb-2">
-                  {t('featuredEyebrow')}
-                </p>
-                <h2 className="text-xl lg:text-2xl font-bold text-secondary">
-                  {featuredSectionTitle || t('featuredTitle')}
-                </h2>
-                {featuredSectionSubtitle && (
-                  <p className="text-sm text-text-muted mt-1">{featuredSectionSubtitle}</p>
-                )}
-              </div>
-              <Link
-                href="/category/all"
-                className="text-sm font-medium hover:opacity-80 transition-opacity"
-                style={{ color: primaryColor }}
-              >
-                {t('viewAll')}
-              </Link>
-            </div>
+      <section className="bg-surface">
+        <ScrollReveal>
+          <ProductRowSection
+            title={bestSellersTitle}
+            subtitle={bestSellersSubtitle}
+            locale={locale}
+            products={bestSellers}
+            productImages={productImageMap}
+            primaryColor={primaryColor}
+            codBadge={codBadge}
+            eyebrow={t('featuredEyebrow')}
+            viewAllHref="/category/all?sort=bestsellers"
+            viewAllLabel={t('viewAll')}
+          />
+        </ScrollReveal>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-5 stagger-children">
-              {featuredProducts.map((product, index) => {
-                const imageUrl = getProductImage(product.id);
-                const title =
-                  (product[`title_${locale}` as keyof typeof product] as string | null) ||
-                  product.title_fr;
-                const hasDiscount =
-                  product.compare_at_price && product.compare_at_price > product.price;
-                const savings = hasDiscount
-                  ? Math.round(
-                      ((product.compare_at_price - product.price) / product.compare_at_price) * 100,
-                    )
-                  : 0;
-                const isLowStock =
-                  product.track_inventory &&
-                  product.stock_quantity > 0 &&
-                  product.stock_quantity <= product.low_stock_threshold;
+        {productRows.map((row, rowIndex) => {
+          const products = rowProductsResults[rowIndex] || [];
+          const title =
+            (row[`title_${locale}` as keyof typeof row] as string | null) || row.title_fr;
+          const subtitle =
+            (row[`subtitle_${locale}` as keyof typeof row] as string | null) || row.subtitle_fr;
 
-                return (
-                  <Link
-                    key={product.id}
-                    href={`/product/${product.slug}` as '/product/[slug]'}
-                    className="group block"
-                  >
-                    <div className="relative rounded-xl overflow-hidden bg-surface-2 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="relative aspect-[4/5]">
-                        {imageUrl ? (
-                          <Image
-                            src={imageUrl}
-                            alt={title}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-500"
-                            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                            priority={index < 2}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-text-muted">
-                            {title.charAt(0)}
-                          </div>
-                        )}
-                        {hasDiscount && (
-                          <span className="absolute top-2.5 left-2.5 bg-accent text-secondary text-[11px] font-bold px-2 py-1 rounded-full">
-                            -{savings}%
-                          </span>
-                        )}
-                        {isLowStock && (
-                          <span className="absolute bottom-2.5 left-2.5 bg-accent/90 text-white text-[11px] font-semibold px-2 py-1 rounded-full">
-                            {t('lowStockOverlay', { count: product.stock_quantity })}
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-3 lg:p-4">
-                        <h3 className="text-sm font-semibold text-secondary line-clamp-2 mb-1">
-                          {title}
-                        </h3>
-                        <div className="flex items-baseline gap-2 flex-wrap">
-                          <span className="text-base font-bold" style={{ color: primaryColor }}>
-                            {product.price} {product.currency}
-                          </span>
-                          {hasDiscount && (
-                            <span className="text-xs text-text-muted line-through">
-                              {product.compare_at_price} {product.currency}
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-1.5 inline-flex items-center gap-1 text-xs text-success font-medium">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          {codBadge}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+          if (products.length === 0) return null;
 
-            {featuredProducts.length === 0 && (
-              <div className="text-center py-12 text-text-muted">{t('noFeaturedProducts')}</div>
-            )}
-          </div>
-        </section>
-      </ScrollReveal>
+          return (
+            <ScrollReveal key={row.id}>
+              <ProductRowSection
+                title={title}
+                subtitle={subtitle}
+                locale={locale}
+                products={products}
+                productImages={productImageMap}
+                primaryColor={primaryColor}
+                codBadge={codBadge}
+                viewAllHref={`/row/${row.slug}`}
+                viewAllLabel={t('viewAll')}
+                showDivider
+              />
+            </ScrollReveal>
+          );
+        })}
+      </section>
 
       {/* ============================================
           WHY US
@@ -491,7 +385,7 @@ function TrustCard({
       >
         <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
       </div>
-      <div>
+      <div className="min-w-0">
         <p className="text-[11px] sm:text-sm font-semibold text-secondary leading-tight line-clamp-2">{title}</p>
         {subtitle && <p className="hidden sm:block text-xs text-text-muted mt-0.5">{subtitle}</p>}
       </div>

@@ -4,14 +4,17 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { whyUsItemSchema, type WhyUsItemFormData } from '@/lib/validation/whyUsItem';
 
-async function checkAuth() {
+async function checkAuth(): Promise<{ error: string } | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Non authentifié');
+  if (!user) return { error: 'Non authentifié' };
+  return null;
 }
 
 export async function createWhyUsItem(data: WhyUsItemFormData) {
-  await checkAuth();
+  const authError = await checkAuth();
+  if (authError) return authError;
+
   const supabase = await createClient();
 
   const result = whyUsItemSchema.safeParse(data);
@@ -29,7 +32,9 @@ export async function createWhyUsItem(data: WhyUsItemFormData) {
 }
 
 export async function updateWhyUsItem(id: string, data: WhyUsItemFormData) {
-  await checkAuth();
+  const authError = await checkAuth();
+  if (authError) return authError;
+
   const supabase = await createClient();
 
   const result = whyUsItemSchema.safeParse(data);
@@ -47,7 +52,9 @@ export async function updateWhyUsItem(id: string, data: WhyUsItemFormData) {
 }
 
 export async function deleteWhyUsItem(id: string) {
-  await checkAuth();
+  const authError = await checkAuth();
+  if (authError) return authError;
+
   const supabase = await createClient();
 
   const { error } = await supabase.from('why_us_items').delete().eq('id', id);
@@ -60,7 +67,9 @@ export async function deleteWhyUsItem(id: string) {
 }
 
 export async function toggleWhyUsItemActive(id: string, isActive: boolean) {
-  await checkAuth();
+  const authError = await checkAuth();
+  if (authError) return authError;
+
   const supabase = await createClient();
 
   const { error } = await supabase.from('why_us_items').update({ is_active: isActive }).eq('id', id);

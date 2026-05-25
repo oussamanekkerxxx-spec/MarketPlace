@@ -1,17 +1,18 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/lib/i18n/navigation';
 import { LanguageSwitcher } from '@/components/public/LanguageSwitcher';
+import { ProductSearch } from '@/components/public/ProductSearch';
 import { MarketingConsentWrapper } from '@/components/public/MarketingConsentWrapper';
-import { CookieConsentBanner } from '@/components/public/CookieConsent';
+
 import { AnnouncementBar } from '@/components/public/AnnouncementBar';
 import { MobileDrawer } from '@/components/public/MobileDrawer';
 import { MobileFooter } from '@/components/public/MobileFooter';
 import { ScrollRevealHeader } from '@/components/public/ScrollRevealHeader';
 import { CartShell } from '@/components/public/CartShell';
-import { getSiteSettings, getCategories, getCities } from '@/lib/cache/queries';
+import { getSiteSettings, getCategories } from '@/lib/cache/queries';
 import { getWhatsAppHref } from '@/lib/utils/contact';
 
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Truck, ShieldCheck, RotateCcw, Package } from 'lucide-react';
 
 export async function generateMetadata({
   params,
@@ -45,7 +46,6 @@ export default async function PublicLayout({
   const tFooter = await getTranslations({ locale, namespace: 'footer' });
   const settings = await getSiteSettings();
   const categories = await getCategories();
-  const cities = await getCities();
 
   const siteName = (settings?.site_name as string) || 'Boutique';
   const logoUrl = settings?.logo_url as string | null;
@@ -80,7 +80,7 @@ export default async function PublicLayout({
   const announcementText = localeAnnouncement || frAnnouncement || '';
 
   return (
-    <CartShell cities={cities}>
+    <CartShell>
     <div className="min-h-screen flex flex-col bg-background">
       <MarketingConsentWrapper
         pixelId={pixelId}
@@ -180,6 +180,9 @@ export default async function PublicLayout({
 
             {/* Right actions */}
             <div className="flex items-center gap-2">
+              <ProductSearch />
+
+              {/* Language flags */}
               <LanguageSwitcher />
 
               {/* Scroll-reveal CTA */}
@@ -214,7 +217,6 @@ export default async function PublicLayout({
         siteTagline={siteTagline}
         logoUrl={logoUrl}
         footerDescription={footerDescription}
-        categories={categories}
         contactPhone={contactPhone}
         contactEmail={contactEmail}
         whatsappNumber={whatsappNumber ?? undefined}
@@ -225,10 +227,13 @@ export default async function PublicLayout({
         tiktokUrl={tiktokUrl}
         telegramUrl={telegramUrl}
         youtubeUrl={youtubeUrl}
-        shopLabel={tFooter('shop')}
+        servicesLabel={tFooter('services')}
+        fastDeliveryLabel={tFooter('fastDelivery')}
+        codLabel={tFooter('cod')}
+        satisfactionLabel={tFooter('satisfaction')}
+        freeDeliveryLabel={tFooter('freeDelivery')}
         helpLabel={tFooter('help')}
         rightsLabel={tFooter('rights')}
-        productsLabel={t('products')}
         aboutLabel={t('about')}
         contactLabel={t('contact')}
       />
@@ -236,9 +241,9 @@ export default async function PublicLayout({
       {/* Desktop footer — tablets and up */}
       <footer className="hidden md:block bg-background border-t border-border-warm py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-y-10 gap-x-6">
             {/* Brand */}
-            <div>
+            <div className="lg:col-span-3">
               <h3 className="text-lg font-bold text-secondary mb-1">{siteName}</h3>
               {siteTagline && (
                 <p className="text-sm font-medium mb-2" style={{ color: primaryColor }}>{siteTagline}</p>
@@ -273,29 +278,33 @@ export default async function PublicLayout({
               </div>
             </div>
 
-            {/* Shop */}
-            <div>
+            {/* Services */}
+            <div className="lg:col-span-4">
               <h4 className="text-xs font-semibold text-secondary uppercase tracking-wider mb-4">
-                {tFooter('shop')}
+                {tFooter('services')}
               </h4>
-              <div className="space-y-2.5">
-                <Link href="/category/all" className="block text-sm text-text-muted hover:text-primary transition-colors">
-                  {t('products')}
-                </Link>
-                {categories.slice(0, 5).map((cat) => (
-                  <Link
-                    key={cat.id}
-                    href={`/category/${cat.slug}` as '/category/[slug]'}
-                    className="block text-sm text-text-muted hover:text-primary transition-colors"
-                  >
-                    {(cat[`name_${locale}` as keyof typeof cat] as string | null) || cat.name_fr}
-                  </Link>
-                ))}
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <Truck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-sm text-text-muted leading-snug">{tFooter('fastDelivery')}</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <ShieldCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-sm text-text-muted leading-snug">{tFooter('cod')}</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <RotateCcw className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-sm text-text-muted leading-snug">{tFooter('satisfaction')}</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Package className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-sm text-text-muted leading-snug">{tFooter('freeDelivery')}</p>
+                </div>
               </div>
             </div>
 
             {/* Help */}
-            <div>
+            <div className="lg:col-span-2">
               <h4 className="text-xs font-semibold text-secondary uppercase tracking-wider mb-4">
                 {tFooter('help')}
               </h4>
@@ -316,7 +325,7 @@ export default async function PublicLayout({
             </div>
 
             {/* Contact */}
-            <div>
+            <div className="lg:col-span-3">
               <h4 className="text-xs font-semibold text-secondary uppercase tracking-wider mb-4">
                 Contact
               </h4>
@@ -377,7 +386,7 @@ export default async function PublicLayout({
           </svg>
         </a>
       )}
-      <CookieConsentBanner />
+
     </div>
     </CartShell>
   );

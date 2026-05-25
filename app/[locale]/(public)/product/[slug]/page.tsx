@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { ReservationForm } from '@/components/public/ReservationForm';
-import { AddToCartButton } from '@/components/public/AddToCartButton';
+import { FloatingAddToCartButton } from '@/components/public/FloatingAddToCartButton';
 import { PixelEvent } from '@/components/public/PixelEvent';
 import { ProductGallery } from '@/components/public/ProductGallery';
 import { ScrollReveal } from '@/components/public/ScrollReveal';
@@ -15,7 +15,6 @@ import {
   getProductBySlug,
   getProductImages,
   getSimilarProducts,
-  getCities,
   getSiteSettings,
   getAdjacentProducts,
 } from '@/lib/cache/queries';
@@ -34,7 +33,7 @@ import {
 } from 'lucide-react';
 import type { Metadata } from 'next';
 
-export const revalidate = 60;
+// export const revalidate = 60; // temporarily disabled to rule out caching issues
 
 function getLocalized(
   product: Record<string, unknown>,
@@ -103,9 +102,8 @@ export default async function ProductPage({
     }
 
     // Parallelize all independent data fetches
-    const [productImages, cities, settings] = await Promise.all([
+    const [productImages, settings] = await Promise.all([
       getProductImages(product.id as string),
-      getCities(),
       getSiteSettings(),
     ]);
 
@@ -201,32 +199,29 @@ export default async function ProductPage({
         }}
       />
       {/* JSON-LD structured data for Google rich results */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Product',
-            name: title,
-            description: shortDescription || description,
-            image: images.length > 0 ? images : undefined,
-            sku: (product.sku as string) || undefined,
-            brand: {
-              '@type': 'Brand',
-              name: (settings?.site_name as string) || 'Boutique',
-            },
-            offers: {
-              '@type': 'Offer',
-              url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://localhost:3000'}/${locale}/product/${slug}`,
-              priceCurrency: currency,
-              price: price.toString(),
-              availability: isInStock
-                ? 'https://schema.org/InStock'
-                : 'https://schema.org/OutOfStock',
-            },
-          }),
-        }}
-      />
+      <script type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: title,
+          description: shortDescription || description,
+          image: images.length > 0 ? images : undefined,
+          sku: (product.sku as string) || undefined,
+          brand: {
+            '@type': 'Brand',
+            name: (settings?.site_name as string) || 'Boutique',
+          },
+          offers: {
+            '@type': 'Offer',
+            url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://localhost:3000'}/${locale}/product/${slug}`,
+            priceCurrency: currency,
+            price: price.toString(),
+            availability: isInStock
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
+          },
+        })}
+      </script>
 
       <GoogleProductView
         productId={product.id as string}
@@ -382,25 +377,11 @@ export default async function ProductPage({
                   <h2 className="text-lg font-bold text-secondary mb-4">
                     Commander ce produit
                   </h2>
-                  <div className="mb-4">
-                    <AddToCartButton
-                      productId={product.id as string}
-                      slug={slug}
-                      title={title}
-                      price={price}
-                      currency={currency}
-                      image={images[0] || null}
-                      bulkDiscountThreshold={product.bulk_discount_threshold as number | undefined}
-                      bulkDiscountPercent={product.bulk_discount_percent as number | undefined}
-                    />
-                  </div>
                   <div className="border-t border-border-warm pt-4">
-                    <p className="text-xs text-text-muted mb-3">Ou commandez directement :</p>
                     <ReservationForm
                       productId={product.id as string}
                       productPrice={price}
                       productCurrency={currency}
-                      cities={cities}
                       trustLine={codBadge}
                       bulkDiscountThreshold={product.bulk_discount_threshold as number | undefined}
                       bulkDiscountPercent={product.bulk_discount_percent as number | undefined}
@@ -545,6 +526,17 @@ export default async function ProductPage({
         </div>
       </div>
 
+      <FloatingAddToCartButton
+        productId={product.id as string}
+        slug={slug}
+        title={title}
+        price={price}
+        currency={currency}
+        image={images[0] || null}
+        bulkDiscountThreshold={product.bulk_discount_threshold as number | undefined}
+        bulkDiscountPercent={product.bulk_discount_percent as number | undefined}
+      />
+
       <MobileStickyOrderBar
         price={price}
         compareAtPrice={compareAtPrice}
@@ -556,8 +548,6 @@ export default async function ProductPage({
         whatsappNumber={whatsappNumber}
         whatsappMessage={whatsappMessage}
       />
-
-      {/* WhatsApp button is now only in MobileStickyOrderBar */}
     </ProductSwipeNav>
   );
   } catch (err) {

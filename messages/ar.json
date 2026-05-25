@@ -11,7 +11,19 @@
     "contact": "اتصل بنا",
     "admin": "الإدارة",
     "login": "تسجيل الدخول",
-    "logout": "تسجيل الخروج"
+    "logout": "تسجيل الخروج",
+    "search": "بحث"
+  },
+  "category": {
+    "search": "بحث",
+    "resultsFor": "نتائج البحث عن",
+    "product": "منتج",
+    "products": "منتجات",
+    "noResults": "لم يتم العثور على نتائج",
+    "noResultsDesc": "جرب مصطلحًا آخر أو تصفح فئاتنا.",
+    "browseAll": "عرض جميع المنتجات",
+    "startSearching": "ابدأ بحثك",
+    "searchDesc": "اكتب كلمة مفتاحية في شريط البحث أعلى الصفحة."
   },
   "localeSwitcher": {
     "label": "اللغة",
@@ -62,13 +74,24 @@
   "reservation": {
     "title": "تأكيد طلبي",
     "fullName": "الاسم الكامل",
+    "fullNamePlaceholder": "اسمك الكامل",
     "phone": "الهاتف",
     "phonePlaceholder": "06 12 34 56 78",
+    "phoneFormat": "الصيغة: 06 12 34 56 78",
     "city": "المدينة",
-    "selectCity": "اختر مدينتك",
+    "cityPlaceholder": "مدينتك",
     "address": "العنوان (اختياري)",
-    "notes": "ملاحظات (اختياري)",
+    "addressPlaceholder": "عنوانك",
+    "quantity": "الكمية",
+    "decreaseQuantity": "تقليل الكمية",
+    "increaseQuantity": "زيادة الكمية",
+    "product": "المنتج",
+    "discountLabel": "خصم ({percent}%)",
+    "total": "المجموع",
+    "processing": "جاري المعالجة...",
     "submit": "تأكيد طلبي",
+    "confirmationText": "بتأكيدك، فإنك توافق على الاتصال بك هاتفياً للتحقق من طلبك.",
+    "orderDirectly": "أو قم بالطلب مباشرة:",
     "successTitle": "شكرا لطلبك!",
     "successMessage": "سنتصل بك قريبا لتأكيد طلبك.",
     "orderNumber": "رقم الطلب",
@@ -76,7 +99,25 @@
     "defaultThankYou": "شكرا لطلبك! سنتصل بك قريبا للتأكيد.",
     "callUs": "اتصل بنا",
     "continueShopping": "مواصلة التسوق",
-    "codTrustLine": "الدفع عند الاستلام — لا حاجة للدفع عبر الإنترنت"
+    "codTrustLine": "الدفع عند الاستلام — لا حاجة للدفع عبر الإنترنت",
+    "cartTitle": "سلة التسوق",
+    "cartEmpty": "سلة التسوق فارغة",
+    "cartEmptyDesc": "أضف منتجات للبدء",
+    "deliveryInfo": "معلومات التوصيل",
+    "back": "رجوع",
+    "orderSuccess": "تم إرسال الطلب بنجاح!",
+    "error": "حدث خطأ",
+    "fillRequiredFields": "يرجى ملء جميع الحقول المطلوبة",
+    "subtotal": "المجموع الفرعي",
+    "delivery": "التوصيل",
+    "free": "مجاني",
+    "order": "اطلب",
+    "validation": {
+      "required": "هذا الحقل مطلوب",
+      "phoneInvalid": "رقم الهاتف غير صالح",
+      "nameTooShort": "الاسم يجب أن يحتوي على حرفين على الأقل",
+      "cityRequired": "يرجى إدخال مدينتك"
+    }
   },
   "admin": {
     "dashboard": "لوحة التحكم",
@@ -117,6 +158,11 @@
   "footer": {
     "description": "توصيل مجاني والدفع عند الاستلام في جميع أنحاء المغرب.",
     "shop": "المتجر",
+    "services": "خدماتنا",
+    "fastDelivery": "توصيل سريع 24-48 ساعة — في جميع أنحاء المغرب",
+    "cod": "الدفع عند الاستلام — لا حاجة للدفع عبر الإنترنت",
+    "satisfaction": "رضاكم مضمون — 7 أيام لتغيير رأيكم",
+    "freeDelivery": "توصيل مجاني — على جميع الطلبات",
     "help": "المساعدة",
     "followUs": "تابعنا",
     "rights": "جميع الحقوق محفوظة."

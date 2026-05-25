@@ -66,6 +66,7 @@ export default async function CategoryPage({
     stock_quantity: number;
     track_inventory: boolean;
     low_stock_threshold: number;
+    total_orders: number;
   }[] = [];
 
   if (slug === 'all') {
@@ -82,6 +83,8 @@ export default async function CategoryPage({
     sortedProducts.sort((a, b) => a.price - b.price);
   } else if (sort === 'price-desc') {
     sortedProducts.sort((a, b) => b.price - a.price);
+  } else if (sort === 'bestsellers') {
+    sortedProducts.sort((a, b) => (b.total_orders || 0) - (a.total_orders || 0));
   }
   // default 'newest' is already ordered by created_at from the DB
 

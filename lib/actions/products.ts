@@ -73,6 +73,7 @@ export async function createProduct(data: ProductFormData) {
   const insertData = {
     ...productData,
     category_id: productData.category_id || null,
+    product_row_id: productData.product_row_id || null,
     compare_at_price: productData.compare_at_price ?? null,
     bulk_discount_threshold: productData.bulk_discount_threshold ?? null,
     bulk_discount_percent: productData.bulk_discount_percent ?? null,
@@ -132,6 +133,7 @@ export async function updateProduct(id: string, data: ProductFormData) {
   const updateData = {
     ...productData,
     category_id: productData.category_id || null,
+    product_row_id: productData.product_row_id || null,
     compare_at_price: productData.compare_at_price ?? null,
     bulk_discount_threshold: productData.bulk_discount_threshold ?? null,
     bulk_discount_percent: productData.bulk_discount_percent ?? null,

@@ -34,6 +34,7 @@ export default async function LocaleLayout({
       lang={locale}
       dir={isRTL ? 'rtl' : 'ltr'}
       data-scroll-behavior="smooth"
+      suppressHydrationWarning
       style={{
         ['--color-primary' as string]: primaryColor,
         ['--color-secondary' as string]: secondaryColor,

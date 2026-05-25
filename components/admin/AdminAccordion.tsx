@@ -47,118 +47,115 @@ export function AdminAccordion({
   const open = hasError || userOpen;
 
   return (
-    <section className="bg-white rounded-lg lg:rounded-xl border border-gray-200 overflow-hidden">
-      {/* Mobile/tablet — collapsible */}
-      <div
-        className={`lg:hidden ${
-          hasError ? 'ring-2 ring-red-300 ring-inset rounded-lg' : ''
-        }`}
+    <section
+      className={`bg-white rounded-lg lg:rounded-xl border border-gray-200 overflow-hidden ${
+        hasError ? 'ring-2 ring-red-300 ring-inset' : ''
+      }`}
+    >
+      {/* Mobile header — tap to collapse/expand */}
+      <button
+        type="button"
+        onClick={() => {
+          // While there's an error, the section is locked open
+          if (hasError) return;
+          setUserOpen((v) => !v);
+        }}
+        className="lg:hidden w-full flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 transition-colors text-left"
+        aria-expanded={open}
+        aria-invalid={hasError || undefined}
       >
-        <button
-          type="button"
-          onClick={() => {
-            // While there's an error, the section is locked open
-            if (hasError) return;
-            setUserOpen((v) => !v);
-          }}
-          className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-gray-50 transition-colors text-left"
-          aria-expanded={open}
-          aria-invalid={hasError || undefined}
-        >
-          {icon && (
-            <span
-              className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-                hasError
-                  ? 'bg-red-50 text-red-600'
-                  : 'bg-orange-50 text-orange-600'
-              }`}
-            >
-              {icon}
-            </span>
-          )}
-          <span className="flex-1 min-w-0">
-            <span
-              className={`block text-sm font-semibold truncate ${
-                hasError ? 'text-red-700' : 'text-gray-900'
-              }`}
-            >
-              {title}
-            </span>
-            {description && (
-              <span className="block text-xs text-gray-500 truncate mt-0.5">
-                {hasError ? 'Veuillez corriger les erreurs ci-dessous' : description}
-              </span>
-            )}
+        {icon && (
+          <span
+            className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+              hasError
+                ? 'bg-red-50 text-red-600'
+                : 'bg-orange-50 text-orange-600'
+            }`}
+          >
+            {icon}
           </span>
-          {hasError && (
-            <span className="shrink-0 w-2 h-2 rounded-full bg-red-500" aria-label="Erreur" />
+        )}
+        <span className="flex-1 min-w-0">
+          <span
+            className={`block text-sm font-semibold truncate ${
+              hasError ? 'text-red-700' : 'text-gray-900'
+            }`}
+          >
+            {title}
+          </span>
+          {description && (
+            <span className="block text-xs text-gray-500 truncate mt-0.5">
+              {hasError ? 'Veuillez corriger les erreurs ci-dessous' : description}
+            </span>
           )}
-          {badge && <span className="shrink-0">{badge}</span>}
-          {!hasError && (
-            <ChevronDown
-              className={`shrink-0 w-4 h-4 text-gray-400 transition-transform duration-200 ${
-                open ? 'rotate-180' : 'rotate-0'
-              }`}
-            />
-          )}
-        </button>
-        {/* Content area — collapsible via max-height */}
-        <div
-          className="overflow-hidden transition-[max-height,opacity] duration-300 ease-out"
-          style={{
-            maxHeight: open ? '5000px' : '0px',
-            opacity: open ? 1 : 0,
-          }}
-          aria-hidden={!open}
-        >
-          {(open || keepMounted) && (
-            <div className="px-4 pb-4 pt-1 space-y-4 border-t border-gray-100">
-              {children}
-            </div>
+        </span>
+        {hasError && (
+          <span className="shrink-0 w-2 h-2 rounded-full bg-red-500" aria-label="Erreur" />
+        )}
+        {badge && <span className="shrink-0">{badge}</span>}
+        {!hasError && (
+          <ChevronDown
+            className={`shrink-0 w-4 h-4 text-gray-400 transition-transform duration-200 ${
+              open ? 'rotate-180' : 'rotate-0'
+            }`}
+          />
+        )}
+      </button>
+
+      {/* Desktop header — static, always shown */}
+      <div className="hidden lg:flex items-start gap-3 border-b border-gray-100 px-6 pt-6 pb-3">
+        {icon && (
+          <span
+            className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+              hasError ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'
+            }`}
+          >
+            {icon}
+          </span>
+        )}
+        <div className="flex-1">
+          <h2
+            className={`text-lg font-semibold ${
+              hasError ? 'text-red-700' : 'text-gray-900'
+            }`}
+          >
+            {title}
+          </h2>
+          {description && (
+            <p className="text-xs text-gray-500 mt-0.5">
+              {hasError ? 'Veuillez corriger les erreurs ci-dessous' : description}
+            </p>
           )}
         </div>
+        {hasError && (
+          <span
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700"
+          >
+            Erreur
+          </span>
+        )}
+        {badge}
       </div>
 
-      {/* Desktop — always expanded, normal card layout */}
+      {/*
+        Single content area — children rendered ONCE.
+        On mobile (<lg), the inline maxHeight/opacity drive the collapse animation.
+        On lg+, the `lg:!` overrides force the section permanently open so the
+        inline styles don't hide content on desktop.
+      */}
       <div
-        className={`hidden lg:block p-6 space-y-4 ${
-          hasError ? 'ring-2 ring-red-300 ring-inset rounded-xl' : ''
-        }`}
+        className="overflow-hidden transition-[max-height,opacity] duration-300 ease-out lg:max-h-none! lg:opacity-100! lg:overflow-visible!"
+        style={{
+          maxHeight: open ? '5000px' : '0px',
+          opacity: open ? 1 : 0,
+        }}
+        aria-hidden={!open ? true : undefined}
       >
-        <div className="flex items-start gap-3 border-b border-gray-100 pb-3">
-          {icon && (
-            <span
-              className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-                hasError ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'
-              }`}
-            >
-              {icon}
-            </span>
-          )}
-          <div className="flex-1">
-            <h2
-              className={`text-lg font-semibold ${
-                hasError ? 'text-red-700' : 'text-gray-900'
-              }`}
-            >
-              {title}
-            </h2>
-            {description && (
-              <p className="text-xs text-gray-500 mt-0.5">
-                {hasError ? 'Veuillez corriger les erreurs ci-dessous' : description}
-              </p>
-            )}
+        {(open || keepMounted) && (
+          <div className="px-4 pb-4 pt-1 space-y-4 border-t border-gray-100 lg:px-6 lg:pb-6 lg:pt-4 lg:border-t-0">
+            {children}
           </div>
-          {hasError && (
-            <span
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700"
-            >
-              Erreur
-            </span>
-          )}
-          {badge}
-        </div>
-        <div className="space-y-4">{children}</div>
+        )}
       </div>
     </section>
   );

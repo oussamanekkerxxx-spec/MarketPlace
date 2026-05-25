@@ -3,6 +3,7 @@ import { PageHero } from '@/components/public/PageHero';
 import { Phone, Mail, MapPin, MessageCircle } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
+import { getWhatsAppHref } from '@/lib/utils/contact';
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -71,6 +72,13 @@ export default async function ContactPage({
   const whatsapp = settings?.whatsapp_number as string | null;
   const address = settings?.business_address as string | null;
 
+  // Pull the admin-configured WhatsApp prefill (locale-aware, falls back to FR)
+  const localizedWhatsAppMessage =
+    (settings?.[`whatsapp_default_message_${locale}` as keyof typeof settings] as string | undefined) ||
+    (settings?.whatsapp_default_message_fr as string | undefined) ||
+    '';
+  const whatsappHref = getWhatsAppHref(whatsapp, localizedWhatsAppMessage);
+
   const facebookUrl = settings?.facebook_url as string | null;
   const instagramUrl = settings?.instagram_url as string | null;
   const tiktokUrl = settings?.tiktok_url as string | null;
@@ -137,8 +145,8 @@ export default async function ContactPage({
       value: phone,
       note: labels.phoneHours,
     },
-    whatsapp && {
-      href: `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=Bonjour,%20j'ai%20une%20question`,
+    whatsapp && whatsappHref && {
+      href: whatsappHref,
       icon: MessageCircle,
       title: labels.whatsapp,
       value: whatsapp,

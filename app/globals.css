@@ -24,6 +24,7 @@ body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 /* Hide scrollbar for category strip */
@@ -168,6 +169,16 @@ body {
   font-size: 0.95em;
 }
 
+.rich-text-content img,
+.rich-text-content video,
+.rich-text-content table,
+.rich-text-editor .ProseMirror img,
+.rich-text-editor .ProseMirror video,
+.rich-text-editor .ProseMirror table {
+  max-width: 100%;
+  height: auto;
+}
+
 /* ============================================
    SCROLL REVEAL ANIMATIONS
    ============================================ */
@@ -246,6 +257,7 @@ body {
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* ============================================

@@ -6,21 +6,15 @@ import { ShieldCheck, Minus, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { Turnstile } from 'react-turnstile';
+import { useTranslations } from 'next-intl';
 import { createReservation } from '@/lib/actions/orders';
 import { reservationSchema, type ReservationInput } from '@/lib/validation/reservation';
-import { gtagEvent, gtagConversion } from '@/components/public/GoogleTracking';
-
-interface City {
-  id: string;
-  name_fr: string;
-  shipping_fee: number;
-}
+import { gtagEvent } from '@/components/public/GoogleTracking';
 
 interface ReservationFormProps {
   productId: string;
   productPrice: number;
   productCurrency: string;
-  cities: City[];
   trustLine?: string;
   bulkDiscountThreshold?: number;
   bulkDiscountPercent?: number;
@@ -30,12 +24,12 @@ export function ReservationForm({
   productId,
   productPrice,
   productCurrency,
-  cities,
   trustLine,
   bulkDiscountThreshold,
   bulkDiscountPercent,
 }: ReservationFormProps) {
   const router = useRouter();
+  const t = useTranslations('reservation');
   const [serverError, setServerError] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [turnstileError, setTurnstileError] = useState(false);
@@ -44,7 +38,6 @@ export function ReservationForm({
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<ReservationInput>({
@@ -52,9 +45,8 @@ export function ReservationForm({
     defaultValues: {
       customer_name: '',
       customer_phone: '',
-      customer_city_id: '',
+      customer_city_name: '',
       customer_address: '',
-      customer_notes: '',
       turnstileToken: '',
       website: '',
       utm_source: '',
@@ -66,7 +58,10 @@ export function ReservationForm({
     },
   });
 
-  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
+  const turnstileSiteKey =
+    process.env.NODE_ENV === 'development'
+      ? null
+      : (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '');
 
   useEffect(() => {
     if (!turnstileSiteKey) {
@@ -93,9 +88,7 @@ export function ReservationForm({
     }
   }, [setValue]);
 
-  const selectedCityId = watch('customer_city_id');
-  const selectedCity = cities.find((city) => city.id === selectedCityId);
-  const shippingFee = 0; // Free shipping for all cities
+  const shippingFee = 0; // Free shipping
 
   const hasBulkDiscount =
     bulkDiscountThreshold && bulkDiscountPercent && quantity >= bulkDiscountThreshold;
@@ -104,9 +97,7 @@ export function ReservationForm({
     ? productPrice * (1 - discountRate)
     : productPrice;
   const subtotal = discountedUnitPrice * quantity;
-  const discountAmount = hasBulkDiscount
-    ? productPrice * quantity - subtotal
-    : 0;
+  const discountAmount = hasBulkDiscount ? productPrice * quantity - subtotal : 0;
   const total = subtotal + shippingFee;
 
   const onSubmit = async (data: ReservationInput) => {
@@ -116,9 +107,8 @@ export function ReservationForm({
       product_id: productId,
       customer_name: data.customer_name,
       customer_phone: data.customer_phone,
-      customer_city_id: data.customer_city_id,
+      customer_city_name: data.customer_city_name,
       customer_address: data.customer_address,
-      customer_notes: data.customer_notes,
       quantity,
       discount_percent: hasBulkDiscount ? bulkDiscountPercent : undefined,
       discount_amount: hasBulkDiscount ? Number(discountAmount.toFixed(2)) : undefined,
@@ -172,24 +162,24 @@ export function ReservationForm({
 
       <div>
         <label className="mb-1 block text-sm font-medium text-secondary">
-          Nom complet <span className="text-red-500">*</span>
+          {t('fullName')} <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           {...register('customer_name')}
           className="w-full rounded-lg border border-border-warm bg-surface px-3 py-2.5 outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30"
-          placeholder="Votre nom complet"
+          placeholder={t('fullNamePlaceholder')}
         />
         {errors.customer_name && (
-          <p className="mt-1 text-xs text-red-600">{errors.customer_name.message}</p>
+          <p className="mt-1 text-xs text-red-600">{t('validation.nameTooShort')}</p>
         )}
       </div>
 
       <div>
         <label className="mb-1 block text-sm font-medium text-secondary">
-          Téléphone <span className="text-red-500">*</span>
+          {t('phone')} <span className="text-red-500">*</span>
         </label>
-        <div className="flex">
+        <div className="flex" dir="ltr">
           <span className="inline-flex items-center rounded-l-lg border border-r-0 bg-surface-2 px-3 py-2.5 text-sm text-text-muted">
             +212
           </span>
@@ -197,63 +187,49 @@ export function ReservationForm({
             type="tel"
             {...register('customer_phone')}
             className="flex-1 rounded-r-lg border border-border-warm bg-surface px-3 py-2.5 outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30"
-            placeholder="6 12 34 56 78"
+            placeholder={t('phonePlaceholder')}
           />
         </div>
         {errors.customer_phone && (
-          <p className="mt-1 text-xs text-red-600">{errors.customer_phone.message}</p>
+          <p className="mt-1 text-xs text-red-600">{t('validation.phoneInvalid')}</p>
         )}
-        <p className="mt-1 text-xs text-text-muted">Format: 06 12 34 56 78</p>
+        <p className="mt-1 text-xs text-text-muted">{t('phoneFormat')}</p>
       </div>
 
       <div>
         <label className="mb-1 block text-sm font-medium text-secondary">
-          Ville <span className="text-red-500">*</span>
+          {t('city')} <span className="text-red-500">*</span>
         </label>
-        <select
-          {...register('customer_city_id')}
+        <input
+          type="text"
+          {...register('customer_city_name')}
           className="w-full rounded-lg border border-border-warm bg-surface px-3 py-2.5 outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30"
-        >
-          <option value="">Sélectionnez votre ville</option>
-          {cities.map((city) => (
-            <option key={city.id} value={city.id}>
-              {city.name_fr}
-            </option>
-          ))}
-        </select>
-        {errors.customer_city_id && (
-          <p className="mt-1 text-xs text-red-600">{errors.customer_city_id.message}</p>
+          placeholder={t('cityPlaceholder')}
+        />
+        {errors.customer_city_name && (
+          <p className="mt-1 text-xs text-red-600">{t('validation.cityRequired')}</p>
         )}
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-secondary">Adresse (optionnel)</label>
+        <label className="mb-1 block text-sm font-medium text-secondary">{t('address')}</label>
         <input
           type="text"
           {...register('customer_address')}
           className="w-full rounded-lg border border-border-warm bg-surface px-3 py-2.5 outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30"
-          placeholder="Votre adresse"
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium text-secondary">Notes (optionnel)</label>
-        <textarea
-          {...register('customer_notes')}
-          className="min-h-[80px] w-full resize-y rounded-lg border border-border-warm bg-surface px-3 py-2.5 outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30"
-          placeholder="Instructions spéciales..."
+          placeholder={t('addressPlaceholder')}
         />
       </div>
 
       <div className="space-y-3 rounded-xl border border-border-warm bg-surface-2 p-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-secondary">Quantité</span>
+          <span className="text-sm font-medium text-secondary">{t('quantity')}</span>
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => setQuantity((current) => Math.max(1, current - 1))}
               disabled={quantity <= 1}
-              aria-label="Diminuer la quantité"
+              aria-label={t('decreaseQuantity')}
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-warm bg-surface transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Minus className="h-4 w-4" />
@@ -262,7 +238,7 @@ export function ReservationForm({
             <button
               type="button"
               onClick={() => setQuantity((current) => Math.min(99, current + 1))}
-              aria-label="Augmenter la quantité"
+              aria-label={t('increaseQuantity')}
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-warm bg-surface transition-colors hover:bg-surface-2"
             >
               <Plus className="h-4 w-4" />
@@ -273,7 +249,7 @@ export function ReservationForm({
         <div className="space-y-2 border-t border-border-warm pt-3">
           <div className="flex justify-between text-sm">
             <span className="text-text-muted">
-              Produit {quantity > 1 && <span className="text-text-muted">× {quantity}</span>}
+              {t('product')} {quantity > 1 && <span className="text-text-muted">× {quantity}</span>}
             </span>
             <span className="font-medium text-secondary">
               {hasBulkDiscount ? (
@@ -290,14 +266,14 @@ export function ReservationForm({
           </div>
           {hasBulkDiscount && (
             <div className="flex justify-between text-sm">
-              <span className="text-green-600">Remise ({bulkDiscountPercent}%)</span>
+              <span className="text-green-600">{t('discountLabel', { percent: bulkDiscountPercent })}</span>
               <span className="font-medium text-green-600">
                 -{discountAmount.toFixed(2)} {productCurrency}
               </span>
             </div>
           )}
           <div className="flex justify-between border-t border-border-warm pt-2 text-lg font-bold">
-            <span className="text-secondary">Total</span>
+            <span className="text-secondary">{t('total')}</span>
             <span className="text-primary">
               {total.toFixed(2)} {productCurrency}
             </span>
@@ -337,14 +313,16 @@ export function ReservationForm({
         <p className="text-center text-xs text-red-600">{errors.turnstileToken.message}</p>
       )}
 
-      <div className="absolute left-[-9999px]" aria-hidden="true">
-        <input
-          type="text"
-          {...register('website')}
-          tabIndex={-1}
-          autoComplete="off"
-          aria-hidden="true"
-        />
+      <div className="relative overflow-hidden" aria-hidden="true">
+        <div className="absolute left-[-9999px]">
+          <input
+            type="text"
+            {...register('website')}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+          />
+        </div>
       </div>
 
       <button
@@ -353,7 +331,7 @@ export function ReservationForm({
         className="w-full rounded-lg py-3.5 text-lg font-bold text-white transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
         style={{ backgroundColor: 'var(--color-primary)' }}
       >
-        {isSubmitting ? 'Traitement...' : 'Confirmer ma commande'}
+        {isSubmitting ? t('processing') : t('submit')}
       </button>
 
       {trustLine && (
@@ -364,8 +342,7 @@ export function ReservationForm({
       )}
 
       <p className="text-center text-xs text-text-muted">
-        En confirmant, vous acceptez d&apos;être contacté par téléphone pour la validation de votre
-        commande.
+        {t('confirmationText')}
       </p>
     </form>
   );

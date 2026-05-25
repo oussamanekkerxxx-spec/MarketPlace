@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface MobileStickyOrderBarProps {
   price: number;
@@ -27,6 +28,7 @@ export function MobileStickyOrderBar({
   whatsappNumber,
   whatsappMessage,
 }: MobileStickyOrderBarProps) {
+  const t = useTranslations('product');
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -120,7 +122,7 @@ export function MobileStickyOrderBar({
                     className="text-[10px] font-semibold uppercase tracking-wider"
                     style={{ color: '#6B7280' }}
                   >
-                    Paiement a la livraison
+                    {t('codBadge')}
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1.5">
@@ -168,7 +170,7 @@ export function MobileStickyOrderBar({
                   }}
                 />
                 <span className="relative inline-flex items-center justify-center gap-1.5 py-4">
-                  <span>{inStock ? 'Commander' : 'Rupture'}</span>
+                  <span>{inStock ? t('addToCart') : t('outOfStock')}</span>
                   {inStock && (
                     <ArrowRight className="h-4 w-4 transition-transform group-active:translate-x-0.5" />
                   )}
