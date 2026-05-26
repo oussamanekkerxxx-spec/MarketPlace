@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from '@/lib/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Menu, X, Home, ShoppingBag, Mail, HelpCircle, FileText, Shield, User } from 'lucide-react';
@@ -39,6 +39,17 @@ export function MobileDrawer({
   const tf = useTranslations('footer');
 
   const close = () => setIsOpen(false);
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [isOpen]);
 
   const categoryName = (cat: Category) =>
     (cat[`name_${locale}` as keyof Category] as string | undefined) || cat.name_fr;
