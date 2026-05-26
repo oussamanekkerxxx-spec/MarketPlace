@@ -177,6 +177,22 @@
     "reject": "Decline",
     "accept": "Accept"
   },
+  "login": {
+    "title": "Admin Login",
+    "subtitle": "Staff access only",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "admin@example.com",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "forgotPassword": "Forgot password?",
+    "backToSite": "← Back to site",
+    "error": {
+      "invalidCredentials": "Invalid email or password",
+      "enterEmail": "Please enter your email"
+    },
+    "resetSent": "A reset link has been sent to your email."
+  },
   "errors": {
     "generic": "An error occurred. Please try again.",
     "notFound": "Page not found",

@@ -177,6 +177,22 @@
     "reject": "Refuser",
     "accept": "Accepter"
   },
+  "login": {
+    "title": "Connexion Admin",
+    "subtitle": "Accès réservé au personnel",
+    "email": "Email",
+    "password": "Mot de passe",
+    "emailPlaceholder": "admin@example.com",
+    "submit": "Se connecter",
+    "submitting": "Connexion...",
+    "forgotPassword": "Mot de passe oublié ?",
+    "backToSite": "← Retour au site",
+    "error": {
+      "invalidCredentials": "Email ou mot de passe incorrect",
+      "enterEmail": "Veuillez entrer votre email"
+    },
+    "resetSent": "Un lien de réinitialisation a été envoyé à votre email."
+  },
   "errors": {
     "generic": "Une erreur s'est produite. Veuillez réessayer.",
     "notFound": "Page non trouvée",

@@ -327,6 +327,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
             <FormInput label="Nom du site" {...register('site_name')} error={errors.site_name?.message} />
             <FormInput
               label={`Slogan (${langTab.toUpperCase()})`}
+              value={String(watch(`site_tagline_${langTab}` as keyof SettingsFormData) ?? '')}
               {...register(`site_tagline_${langTab}` as keyof SettingsFormData)}
               placeholder={langTab === 'fr' ? 'Slogan français' : langTab === 'en' ? 'English tagline' : 'الشعار بالعربية'}
             />
@@ -438,6 +439,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
             </label>
             <FormInput
               label={`Texte (${langTab.toUpperCase()})`}
+              value={String(watch(`announcement_text_${langTab}` as keyof SettingsFormData) ?? '')}
               {...register(`announcement_text_${langTab}` as keyof SettingsFormData)}
               placeholder={
                 langTab === 'fr' ? 'Ex: Livraison gratuite partout au Maroc' :
@@ -458,6 +460,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
           >
             <FormInput
               label="Surtitre"
+              value={String(watch(`hero_eyebrow_${langTab}` as keyof SettingsFormData) ?? '')}
               {...register(`hero_eyebrow_${langTab}` as keyof SettingsFormData)}
               placeholder={
                 langTab === 'fr' ? 'Ex: Édition Limitée · Fait main à Fès' :
@@ -472,33 +475,6 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
                 Les images du hero se gèrent depuis <strong>Contenu → Images du hero</strong>.
               </p>
             </div>
-          </AdminAccordion>
-
-          <AdminAccordion
-            title="Produits en vedette"
-            description="Titre de la section sur la page d'accueil"
-            icon={<span className="text-base">⭐</span>}
-            badge={
-              isAnyDirty(
-                'featured_section_title_fr', 'featured_section_title_en', 'featured_section_title_ar',
-                'featured_section_subtitle_fr', 'featured_section_subtitle_en', 'featured_section_subtitle_ar',
-              ) && <ModifiedDot />
-            }
-          >
-            <FormInput
-              label="Titre de la section"
-              {...register(`featured_section_title_${langTab}` as keyof SettingsFormData)}
-              placeholder={
-                langTab === 'fr' ? "Ex: Pièces phares de l'atelier" :
-                langTab === 'en' ? 'e.g. Workshop Highlights' :
-                'مثال: أبرز قطع الورشة'
-              }
-            />
-            <FormTextarea
-              label="Sous-titre"
-              {...register(`featured_section_subtitle_${langTab}` as keyof SettingsFormData)}
-            />
-            <p className="text-xs text-gray-400">Laissez vide pour utiliser les textes par défaut.</p>
           </AdminAccordion>
 
           <AdminAccordion
@@ -521,6 +497,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
                 <h3 className="text-sm font-medium text-orange-700">Élément {n}</h3>
                 <FormInput
                   label="Titre"
+                  value={String(watch(`trust_${n}_title_${langTab}` as keyof SettingsFormData) ?? '')}
                   {...register(`trust_${n}_title_${langTab}` as keyof SettingsFormData)}
                   placeholder={
                     n === 1 ? (langTab === 'fr' ? 'Ex: Livraison rapide 24-48h' : langTab === 'en' ? 'e.g. Fast Delivery 24-48h' : 'مثال: توصيل سريع 24-48 ساعة') :
@@ -530,6 +507,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
                 />
                 <FormInput
                   label="Sous-titre"
+                  value={String(watch(`trust_${n}_sub_${langTab}` as keyof SettingsFormData) ?? '')}
                   {...register(`trust_${n}_sub_${langTab}` as keyof SettingsFormData)}
                   placeholder={
                     n === 1 ? (langTab === 'fr' ? 'Ex: Partout au Maroc, suivi inclus' : langTab === 'en' ? 'e.g. All over Morocco, tracking included' : 'مثال: في جميع أنحاء المغرب، مع التتبع') :
@@ -650,11 +628,13 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
           >
             <FormTextarea
               label="Message de remerciement"
+              value={String(watch(`thank_you_message_${langTab}` as keyof SettingsFormData) ?? '')}
               {...register(`thank_you_message_${langTab}` as keyof SettingsFormData)}
               placeholder={langTab === 'fr' ? 'Ex: Merci pour votre commande ! Nous vous contacterons bientôt.' : langTab === 'en' ? 'e.g. Thank you for your order! We will contact you soon.' : 'مثال: شكراً لطلبك! سنتواصل معك قريباً.'}
             />
             <FormInput
               label="Badge paiement à la livraison"
+              value={String(watch(`cod_badge_${langTab}` as keyof SettingsFormData) ?? '')}
               {...register(`cod_badge_${langTab}` as keyof SettingsFormData)}
               placeholder={langTab === 'fr' ? 'Ex: Paiement à la livraison' : langTab === 'en' ? 'e.g. Cash on Delivery' : 'مثال: الدفع عند الاستلام'}
             />
@@ -669,6 +649,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
           >
             <FormTextarea
               label="Description de la marque"
+              value={String(watch(`footer_description_${langTab}` as keyof SettingsFormData) ?? '')}
               {...register(`footer_description_${langTab}` as keyof SettingsFormData)}
               placeholder={langTab === 'fr' ? 'Ex: Votre boutique de confiance au Maroc.' : langTab === 'en' ? 'e.g. Your trusted store in Morocco.' : 'مثال: متجركم الموثوق في المغرب.'}
             />
@@ -682,6 +663,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
           >
             <FormInput
               label="Message pré-rempli"
+              value={String(watch(`whatsapp_default_message_${langTab}` as keyof SettingsFormData) ?? '')}
               {...register(`whatsapp_default_message_${langTab}` as keyof SettingsFormData)}
               placeholder={langTab === 'fr' ? "Ex: Bonjour, j'ai une question sur vos produits" : langTab === 'en' ? 'e.g. Hello, I have a question about your products' : 'مثال: مرحبا، لدي سؤال حول منتجاتكم'}
             />

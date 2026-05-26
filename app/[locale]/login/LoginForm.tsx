@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Link } from '@/lib/i18n/navigation';
 
@@ -14,6 +15,7 @@ export default function LoginForm() {
   const router = useRouter();
   const params = useParams();
   const locale = (params?.locale as string) || 'fr';
+  const t = useTranslations('login');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +30,7 @@ export default function LoginForm() {
 
     if (error) {
       console.error('Login error:', error);
-      setError(error.message || 'Email ou mot de passe incorrect');
+      setError(error.message || t('error.invalidCredentials'));
       setLoading(false);
       return;
     }
@@ -40,7 +42,7 @@ export default function LoginForm() {
 
   const handleReset = async () => {
     if (!email) {
-      setError('Veuillez entrer votre email');
+      setError(t('error.enterEmail'));
       return;
     }
     const supabase = createClient();
@@ -64,8 +66,8 @@ export default function LoginForm() {
           >
             A
           </div>
-          <h1 className="text-2xl font-bold text-secondary">Connexion Admin</h1>
-          <p className="text-sm text-text-muted mt-1">Accès réservé au personnel</p>
+          <h1 className="text-2xl font-bold text-secondary">{t('title')}</h1>
+          <p className="text-sm text-text-muted mt-1">{t('subtitle')}</p>
         </div>
 
         {error && (
@@ -76,14 +78,14 @@ export default function LoginForm() {
 
         {resetSent && (
           <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm">
-            Un lien de réinitialisation a été envoyé à votre email.
+            {t('resetSent')}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-secondary mb-1">
-              Email
+              {t('email')}
             </label>
             <input
               type="email"
@@ -91,12 +93,12 @@ export default function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-3 py-2.5 border border-border-warm rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none bg-surface transition-colors"
-              placeholder="admin@example.com"
+              placeholder={t('emailPlaceholder')}
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-secondary mb-1">
-              Mot de passe
+              {t('password')}
             </label>
             <input
               type="password"
@@ -112,7 +114,7 @@ export default function LoginForm() {
             className="w-full py-2.5 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
             style={{ backgroundColor: 'var(--color-primary)' }}
           >
-            {loading ? 'Connexion...' : 'Se connecter'}
+            {loading ? t('submitting') : t('submit')}
           </button>
         </form>
 
@@ -121,7 +123,7 @@ export default function LoginForm() {
             onClick={handleReset}
             className="text-sm text-text-muted hover:text-primary transition-colors"
           >
-            Mot de passe oublié ?
+            {t('forgotPassword')}
           </button>
         </div>
 
@@ -130,7 +132,7 @@ export default function LoginForm() {
             href="/"
             className="text-sm text-text-muted hover:text-primary transition-colors"
           >
-            ← Retour au site
+            {t('backToSite')}
           </Link>
         </div>
       </div>

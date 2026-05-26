@@ -125,10 +125,14 @@ export default async function HomePage({
 
   const heroTitleAccent = getLocalizedSetting('hero_title_accent');
   const heroEyebrow = getLocalizedSetting('hero_eyebrow');
+  const heroTitleMain = getLocalizedSetting('hero_title_main');
+  const heroSubtitle = getLocalizedSetting('hero_subtitle');
 
   const heroSliderImages = heroImages.map((img) => ({ url: img.url, alt_text: img.alt_text }));
-  const bestSellersTitle = locale === 'fr' ? 'Nos meilleures ventes' : locale === 'en' ? 'Best Sellers' : 'الأكثر مبيعاً';
-  const bestSellersSubtitle = locale === 'fr' ? 'Les produits les plus populaires' : locale === 'en' ? 'Our most popular products' : 'منتجاتنا الأكثر شعبية';
+  const featuredTitle = getLocalizedSetting('featured_section_title');
+  const featuredSubtitle = getLocalizedSetting('featured_section_subtitle');
+  const bestSellersTitle = featuredTitle || (locale === 'fr' ? 'Nos meilleures ventes' : locale === 'en' ? 'Best Sellers' : 'الأكثر مبيعاً');
+  const bestSellersSubtitle = featuredSubtitle || (locale === 'fr' ? 'Les produits les plus populaires' : locale === 'en' ? 'Our most popular products' : 'منتجاتنا الأكثر شعبية');
   const whyUsTitle = getLocalizedSetting('why_us_title');
   const whyUsSub = getLocalizedSetting('why_us_sub');
   const showWhyUs = !!(whyUsTitle && whyUsSub);
@@ -158,7 +162,28 @@ export default async function HomePage({
           eyebrow={heroEyebrow}
         />
 
-
+        {/* Hero text band */}
+        {(heroTitleAccent || heroTitleMain || heroSubtitle) && (
+          <div className="relative z-10 bg-secondary">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 text-center">
+              {heroTitleAccent && (
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary mb-3">
+                  {heroTitleAccent}
+                </p>
+              )}
+              {heroTitleMain && (
+                <h1 className="text-2xl lg:text-4xl font-bold text-white mb-3">
+                  {heroTitleMain}
+                </h1>
+              )}
+              {heroSubtitle && (
+                <p className="text-sm lg:text-base text-white/70 max-w-xl mx-auto">
+                  {heroSubtitle}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ============================================
