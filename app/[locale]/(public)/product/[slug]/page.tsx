@@ -617,8 +617,6 @@ export default async function ProductPage({
         inStock={isInStock}
         productImage={images[0] || null}
         productTitle={title}
-        whatsappNumber={whatsappNumber}
-        whatsappMessage={whatsappMessage}
       />
     </ProductSwipeNav>
   );

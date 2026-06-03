@@ -209,7 +209,21 @@
     "backToTop": "Haut de page"
   },
   "whatsapp": {
-    "defaultMessage": "Bonjour, j'ai une question sur vos produits"
+    "defaultMessage": "Bonjour, j'ai une question sur vos produits",
+    "faqTitle": "Questions fréquentes",
+    "faqSubtitle": "Comment pouvons-nous vous aider ?",
+    "q1": "Comment passer commande ?",
+    "a1": "Choisissez un produit, remplissez le formulaire et nous vous contacterons pour confirmer.",
+    "q2": "Délai de livraison ?",
+    "a2": "Livraison en 24-48h partout au Maroc.",
+    "q3": "Modes de paiement ?",
+    "a3": "Paiement à la livraison uniquement. Payez en espèces à la réception.",
+    "q4": "Politique de retour ?",
+    "a4": "7 jours pour changer d'avis. Contactez-nous par téléphone ou WhatsApp.",
+    "q5": "Suivre ma commande ?",
+    "a5": "Appelez-nous ou écrivez-nous sur WhatsApp avec votre numéro de commande.",
+    "sendMessage": "Envoyer sur WhatsApp",
+    "customMessagePlaceholder": "Écrivez votre message..."
   },
   "cookies": {
     "title": "Ce site utilise des cookies",

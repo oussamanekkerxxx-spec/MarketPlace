@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ArrowRight, ShieldCheck, MessageCircle } from 'lucide-react';
-import { getWhatsAppHref } from '@/lib/utils/contact';
+import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 interface MobileStickyOrderBarProps {
@@ -14,8 +13,6 @@ interface MobileStickyOrderBarProps {
   inStock: boolean;
   productImage?: string | null;
   productTitle?: string;
-  whatsappNumber?: string | null;
-  whatsappMessage?: string;
 }
 
 export function MobileStickyOrderBar({
@@ -26,8 +23,7 @@ export function MobileStickyOrderBar({
   inStock,
   productImage,
   productTitle,
-  whatsappNumber,
-  whatsappMessage,
+
 }: MobileStickyOrderBarProps) {
   const t = useTranslations('product');
   const [visible, setVisible] = useState(false);
@@ -66,9 +62,6 @@ export function MobileStickyOrderBar({
     ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
     : 0;
 
-  const whatsappHref = whatsappNumber
-    ? getWhatsAppHref(whatsappNumber, whatsappMessage || undefined)
-    : null;
   return (
     <div
       className={`lg:hidden fixed bottom-0 inset-x-0 z-40 pointer-events-none transition-all duration-400 ${
@@ -155,17 +148,6 @@ export function MobileStickyOrderBar({
               </div>
 
               <div className="flex items-stretch gap-2 shrink-0">
-                {whatsappHref && (
-                  <a
-                    href={whatsappHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center w-11 rounded-xl bg-green-500 text-white shadow-md transition-all active:scale-[0.97] hover:bg-green-600"
-                    aria-label="WhatsApp"
-                  >
-                    <MessageCircle className="h-5 w-5" />
-                  </a>
-                )}
                 <button
                   type="button"
                   onClick={handleClick}
