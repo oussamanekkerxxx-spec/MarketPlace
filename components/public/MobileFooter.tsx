@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Link } from '@/lib/i18n/navigation';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { ChevronDown, Phone, Mail, MapPin, ArrowUp, ShieldCheck, Truck, RotateCcw, Package } from 'lucide-react';
 import { getWhatsAppHref } from '@/lib/utils/contact';
 
@@ -66,16 +67,13 @@ export function MobileFooter({
   aboutLabel,
   contactLabel,
 }: MobileFooterProps) {
+  const t = useTranslations('footer');
   const [openSection, setOpenSection] = useState<string | null>(null);
   const toggle = (id: string) => setOpenSection((cur) => (cur === id ? null : id));
 
   const scrollTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  const privacyLabel =
-    locale === 'fr' ? 'Confidentialité' : locale === 'en' ? 'Privacy' : 'الخصوصية';
-  const termsLabel = locale === 'fr' ? 'CGV' : locale === 'en' ? 'Terms' : 'الشروط';
 
   return (
     <footer
@@ -144,10 +142,10 @@ export function MobileFooter({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold leading-tight" style={{ color: '#0c0818' }}>
-            Paiement à la livraison
+            {t('cod')}
           </p>
           <p className="text-[11px] leading-tight mt-0.5" style={{ color: '#6B7280' }}>
-            Inspectez avant de payer
+            {t('inspectBeforePay')}
           </p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
@@ -216,14 +214,14 @@ export function MobileFooter({
             className="block py-2.5 text-sm border-b"
             style={{ color: '#0c0818', borderColor: 'rgba(0,0,0,0.04)' }}
           >
-            {privacyLabel}
+            {t('privacy')}
           </Link>
           <Link
             href="/terms"
             className="block py-2.5 text-sm"
             style={{ color: '#0c0818' }}
           >
-            {termsLabel}
+            {t('terms')}
           </Link>
         </AccordionSection>
       </div>
@@ -251,7 +249,7 @@ export function MobileFooter({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] leading-tight" style={{ color: '#6B7280' }}>
-                  Téléphone
+                  {t('phone')}
                 </p>
                 <p className="text-sm font-semibold leading-tight mt-0.5" style={{ color: '#0c0818' }}>
                   {contactPhone}
@@ -281,7 +279,7 @@ export function MobileFooter({
                   WhatsApp
                 </p>
                 <p className="text-sm font-semibold leading-tight mt-0.5" style={{ color: '#0c0818' }}>
-                  Discuter maintenant
+                  {t('chatNow')}
                 </p>
               </div>
             </a>
@@ -323,7 +321,7 @@ export function MobileFooter({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] leading-tight" style={{ color: '#6B7280' }}>
-                  Adresse
+                  {t('address')}
                 </p>
                 <p className="text-sm font-semibold leading-tight mt-0.5" style={{ color: '#0c0818' }}>
                   {contactAddress}
@@ -350,14 +348,14 @@ export function MobileFooter({
           }}
         >
           <ArrowUp className="w-3.5 h-3.5" />
-          Haut de page
+          {t('backToTop')}
         </button>
 
         <p className="text-[11px] text-center" style={{ color: '#9CA3AF' }}>
           © {new Date().getFullYear()} {siteName}. {rightsLabel}
         </p>
         <p className="text-[10px] text-center mt-1" style={{ color: '#9CA3AF' }}>
-          Made by Zellige
+          Made by TourisManager
         </p>
       </div>
     </footer>

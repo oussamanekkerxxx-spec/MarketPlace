@@ -53,10 +53,22 @@ export async function generateMetadata({
   params: Promise<{ slug: string; locale: string }>;
 }): Promise<Metadata> {
   const { slug, locale } = await params;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shahdmall.com';
   const product = await getProductBySlug(slug);
 
   if (!product) {
-    return { title: 'Produit non trouvé' };
+    const tMeta = await getTranslations({ locale, namespace: 'metadata' });
+    return {
+      title: tMeta('productNotFound'),
+      alternates: {
+        canonical: `${siteUrl}/${locale}/product/${slug}`,
+        languages: {
+          fr: `${siteUrl}/fr/product/${slug}`,
+          en: `${siteUrl}/en/product/${slug}`,
+          ar: `${siteUrl}/ar/product/${slug}`,
+        },
+      },
+    };
   }
 
   const title = getLocalized(product, 'meta_title', locale) || getLocalized(product, 'title', locale);
@@ -64,7 +76,6 @@ export async function generateMetadata({
 
   const images = await getProductImages(product.id as string);
   const primaryImage = images.find((i) => i.is_primary)?.url || images[0]?.url;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://localhost:3000';
 
   return {
     title,
@@ -131,9 +142,11 @@ export default async function ProductPage({
     return localized || fallback || '';
   };
 
-  const codBadge = getLocalizedSetting('cod_badge') || 'Paiement à la livraison';
-  const whatsappMessage = getLocalizedSetting('whatsapp_default_message') || 'Bonjour, j\'ai une question sur ce produit';
   const t = await getTranslations({ locale, namespace: 'product' });
+  const tNav = await getTranslations({ locale, namespace: 'navigation' });
+  const tRes = await getTranslations({ locale, namespace: 'reservation' });
+  const codBadge = getLocalizedSetting('cod_badge') || t('codBadge');
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shahdmall.com';
 
   const title = getLocalized(product, 'title', locale);
   const shortDescription = getLocalized(product, 'short_description', locale);
@@ -159,6 +172,17 @@ export default async function ProductPage({
   const currency = product.currency as string;
   const hasDiscount = compareAtPrice && compareAtPrice > price;
   const savings = hasDiscount ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100) : 0;
+
+  // Product-aware WhatsApp message for the sticky bar
+  const productUrl = `${siteUrl}/${locale}/product/${slug}`;
+  const defaultMsg = getLocalizedSetting('whatsapp_default_message');
+  const whatsappMessage = defaultMsg || (() => {
+    switch (locale) {
+      case 'en': return `Hello, I am interested in this product:\n\n${title}\nPrice: ${price} ${currency}\n\n${productUrl}`;
+      case 'ar': return `مرحباً، أنا مهتم بهذا المنتج:\n\n${title}\nالسعر: ${price} ${currency}\n\n${productUrl}`;
+      default: return `Bonjour, je suis intéressé(e) par ce produit :\n\n${title}\nPrix : ${price} ${currency}\n\n${productUrl}`;
+    }
+  })();
 
   const stockQty = product.stock_quantity as number;
   const trackInventory = product.track_inventory as boolean;
@@ -202,24 +226,62 @@ export default async function ProductPage({
       <script type="application/ld+json">
         {JSON.stringify({
           '@context': 'https://schema.org',
-          '@type': 'Product',
-          name: title,
-          description: shortDescription || description,
-          image: images.length > 0 ? images : undefined,
-          sku: (product.sku as string) || undefined,
-          brand: {
-            '@type': 'Brand',
-            name: (settings?.site_name as string) || 'Boutique',
-          },
-          offers: {
-            '@type': 'Offer',
-            url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://localhost:3000'}/${locale}/product/${slug}`,
-            priceCurrency: currency,
-            price: price.toString(),
-            availability: isInStock
-              ? 'https://schema.org/InStock'
-              : 'https://schema.org/OutOfStock',
-          },
+          '@graph': [
+            {
+              '@type': 'Product',
+              name: title,
+              description: shortDescription || description,
+              image: images.length > 0 ? images : undefined,
+              sku: (product.sku as string) || undefined,
+              brand: {
+                '@type': 'Brand',
+                name: (settings?.site_name as string) || 'Boutique',
+              },
+              offers: {
+                '@type': 'Offer',
+                url: `${siteUrl}/${locale}/product/${slug}`,
+                priceCurrency: currency,
+                price: price.toString(),
+                availability: isInStock
+                  ? 'https://schema.org/InStock'
+                  : 'https://schema.org/OutOfStock',
+              },
+            },
+            {
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                {
+                  '@type': 'ListItem',
+                  position: 1,
+                  name: tNav('home'),
+                  item: `${siteUrl}/${locale}`,
+                },
+                ...(categorySlug && categoryName
+                  ? [{
+                      '@type': 'ListItem',
+                      position: 2,
+                      name: categoryName,
+                      item: `${siteUrl}/${locale}/category/${categorySlug}`,
+                    }, {
+                      '@type': 'ListItem',
+                      position: 3,
+                      name: title,
+                      item: `${siteUrl}/${locale}/product/${slug}`,
+                    }]
+                  : [{
+                      '@type': 'ListItem',
+                      position: 2,
+                      name: tNav('products'),
+                      item: `${siteUrl}/${locale}/category/all`,
+                    }, {
+                      '@type': 'ListItem',
+                      position: 3,
+                      name: title,
+                      item: `${siteUrl}/${locale}/product/${slug}`,
+                    }]),
+              ],
+            },
+          ],
         })}
       </script>
 
@@ -229,6 +291,16 @@ export default async function ProductPage({
         price={price}
         currency={currency}
       />
+      {/* Hidden product data for SmartWhatsAppButton */}
+      <div
+        id="product-whatsapp-data"
+        data-title={title}
+        data-price={price}
+        data-currency={currency}
+        data-url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shahdmall.com'}/${locale}/product/${slug}`}
+        style={{ display: 'none' }}
+        aria-hidden="true"
+      />
       <div className="bg-background min-h-screen">
         {/* ============================================
             BREADCRUMB
@@ -236,7 +308,7 @@ export default async function ProductPage({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
           <nav className="flex items-center gap-2 text-sm text-text-muted">
             <Link href="/" className="hover:text-primary transition-colors">
-              Accueil
+              {tNav('home')}
             </Link>
             <ChevronRight className="w-3.5 h-3.5" />
             {categorySlug && categoryName ? (
@@ -249,7 +321,7 @@ export default async function ProductPage({
             ) : (
               <>
                 <Link href="/category/all" className="hover:text-primary transition-colors">
-                  Produits
+                  {tNav('products')}
                 </Link>
                 <ChevronRight className="w-3.5 h-3.5" />
               </>
@@ -291,7 +363,7 @@ export default async function ProductPage({
                 {/* SKU */}
                 {Boolean(product.sku) && (
                   <p className="text-xs text-text-muted mt-1">
-                    Réf: {product.sku as string}
+                    {t('sku', { sku: product.sku as string })}
                   </p>
                 )}
 
@@ -318,7 +390,7 @@ export default async function ProductPage({
                   <div className="pt-1">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-sm font-semibold">
                       <Tag className="w-3.5 h-3.5" />
-                      -{product.bulk_discount_percent as number}% à partir de {product.bulk_discount_threshold as number} unités
+                      {t('bulkDiscount', { percent: product.bulk_discount_percent as number, threshold: product.bulk_discount_threshold as number })}
                     </span>
                   </div>
                 )}
@@ -375,7 +447,7 @@ export default async function ProductPage({
               <ScrollReveal delay={150}>
                 <div id="reservation-form" className="bg-surface rounded-2xl border border-border-warm p-5 sm:p-6 shadow-sm scroll-mt-24">
                   <h2 className="text-lg font-bold text-secondary mb-4">
-                    Commander ce produit
+                    {tRes('title')}
                   </h2>
                   <div className="border-t border-border-warm pt-4">
                     <ReservationForm
@@ -432,14 +504,14 @@ export default async function ProductPage({
                 <div>
                   <div className="flex items-end justify-between mb-6">
                     <h2 className="text-xl lg:text-2xl font-bold text-secondary">
-                      Vous aimerez aussi
+                      {t('youMayAlsoLike')}
                     </h2>
                     <Link
                       href={categorySlug ? `/category/${categorySlug}` as '/category/[slug]' : '/category/all'}
                       className="text-sm font-medium hover:opacity-80 transition-opacity"
                       style={{ color: primaryColor }}
                     >
-                      Voir plus →
+                      {t('seeMore')}
                     </Link>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">

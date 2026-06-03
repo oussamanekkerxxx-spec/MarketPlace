@@ -5,8 +5,8 @@ const phoneSchema = z
   .trim()
   .min(1, 'Le numero de telephone est requis')
   .refine(
-    (value) => /^(0[5-7]\d{8}|\+212[5-7]\d{8})$/.test(value.replace(/\s/g, '')),
-    'Format invalide. Ex: 0612345678 ou +212612345678'
+    (value) => /^(0[5-7]\d{8}|\+212[5-7]\d{8}|[5-7]\d{8})$/.test(value.replace(/\s/g, '')),
+    'Format invalide. Ex: 0612345678, +212612345678, ou 612345678'
   );
 
 const optionalShortText = z.string().trim().max(255, 'Valeur trop longue').optional();

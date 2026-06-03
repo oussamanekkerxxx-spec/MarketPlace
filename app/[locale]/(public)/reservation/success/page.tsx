@@ -15,6 +15,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'reservation' });
+  const tNav = await getTranslations({ locale, namespace: 'navigation' });
   return { title: t('successTitle') };
 }
 
@@ -28,6 +29,7 @@ export default async function ReservationSuccessPage({
   const { locale } = await params;
   const { order: orderNumber } = await searchParams;
   const t = await getTranslations({ locale, namespace: 'reservation' });
+  const tNav = await getTranslations({ locale, namespace: 'navigation' });
 
   const settingsRaw = await getSiteSettings();
   const supabase = await createClient();
@@ -80,9 +82,14 @@ export default async function ReservationSuccessPage({
       }
     : undefined;
 
-  const whatsappMessage = encodeURIComponent(
-    `Bonjour, j'ai passé la commande ${orderNumber || ''}`
-  );
+  const whatsappMsgText = (() => {
+    switch (locale) {
+      case 'en': return `Hello, I placed order ${orderNumber || ''}`;
+      case 'ar': return `مرحباً، لقد قمت بطلبية رقم ${orderNumber || ''}`;
+      default: return `Bonjour, j'ai passé la commande ${orderNumber || ''}`;
+    }
+  })();
+  const whatsappMessage = encodeURIComponent(whatsappMsgText);
 
   return (
     <>
@@ -107,7 +114,7 @@ export default async function ReservationSuccessPage({
         {/* Breadcrumb */}
         <div className="max-w-xl mx-auto px-4 pt-6 pb-2">
           <nav className="flex items-center gap-2 text-sm text-text-muted">
-            <Link href="/" className="hover:text-primary transition-colors">Accueil</Link>
+            <Link href="/" className="hover:text-primary transition-colors">{tNav('home')}</Link>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-secondary font-medium">{t('successTitle')}</span>
           </nav>

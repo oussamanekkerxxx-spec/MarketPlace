@@ -1,7 +1,21 @@
 {
   "metadata": {
-    "title": "Boutique en ligne - Livraison à domicile",
-    "description": "Découvrez nos produits avec livraison gratuite et paiement à la livraison partout au Maroc."
+    "title": "Boutique en ligne au Maroc — Achat en ligne & Livraison 24-48h",
+    "description": "Achat en ligne au Maroc sur notre marketplace. Découvrez des milliers de produits avec paiement à la livraison et livraison gratuite partout au Maroc. Vente en ligne simple et rapide.",
+    "categoryTitle": "Tous les produits — Achat en ligne Maroc",
+    "categoryDescription": "Découvrez notre catalogue de produits en ligne au Maroc. Large choix avec paiement à la livraison et livraison gratuite.",
+    "aboutTitle": "Qui sommes-nous — Marketplace en ligne Maroc",
+    "aboutDescription": "Votre marketplace en ligne de confiance au Maroc. Découvrez notre histoire et notre mission pour un shopping en ligne meilleur.",
+    "contactTitle": "Contact — Service Client Achat en ligne Maroc",
+    "contactDescription": "Contactez notre service client pour toute question sur votre commande. Disponible du lundi au samedi.",
+    "searchTitle": "Recherche — Trouvez vos produits en ligne Maroc",
+    "searchDescription": "Recherchez parmi des milliers de produits disponibles en ligne au Maroc. Paiement à la livraison et livraison gratuite.",
+    "termsTitle": "Conditions générales de vente — Achat en ligne Maroc",
+    "termsDescription": "Consultez nos conditions générales de vente pour vos achats en ligne au Maroc. Paiement à la livraison et livraison gratuite.",
+    "privacyTitle": "Politique de confidentialité — Protection données Maroc",
+    "privacyDescription": "Notre politique de confidentialité garantit la protection de vos données personnelles lors de vos achats en ligne au Maroc.",
+    "productNotFound": "Produit indisponible — Achat en ligne Maroc",
+    "rowNotFound": "Collection introuvable — Achat en ligne Maroc"
   },
   "navigation": {
     "home": "Accueil",
@@ -12,10 +26,19 @@
     "admin": "Administration",
     "login": "Connexion",
     "logout": "Déconnexion",
-    "search": "Rechercher"
+    "search": "Rechercher",
+    "orderNow": "Commander"
   },
   "category": {
     "search": "Recherche",
+    "categoryLabel": "Catégorie",
+    "catalogLabel": "Catalogue",
+    "collectionLabel": "Collection",
+    "sortBy": "Trier par",
+    "sortNewest": "Nouveautés",
+    "sortBestsellers": "Meilleures ventes",
+    "sortPriceAsc": "Prix croissant",
+    "sortPriceDesc": "Prix décroissant",
     "resultsFor": "Résultats pour",
     "product": "produit",
     "products": "produits",
@@ -68,8 +91,15 @@
     "freeDelivery": "Livraison gratuite",
     "warranty": "Garantie satisfait ou remboursé",
     "save": "Économisez",
+    "added": "Ajouté",
     "lowStock": "Plus que {count} en stock",
-    "features": "Caractéristiques"
+    "features": "Caractéristiques",
+    "sku": "Réf : {sku}",
+    "bulkDiscount": "-{percent}% à partir de {threshold} unités",
+    "youMayAlsoLike": "Vous aimerez aussi",
+    "seeMore": "Voir plus →",
+    "seeMorePhotos": "Voir plus de photos ({count})",
+    "zoomHint": "Cliquer pour zoomer"
   },
   "reservation": {
     "title": "Confirmer ma commande",
@@ -77,7 +107,7 @@
     "fullNamePlaceholder": "Votre nom complet",
     "phone": "Téléphone",
     "phonePlaceholder": "06 12 34 56 78",
-    "phoneFormat": "Format: 06 12 34 56 78",
+    "phoneFormat": "Format : 06 12 34 56 78",
     "city": "Ville",
     "cityPlaceholder": "Votre ville",
     "address": "Adresse (optionnel)",
@@ -87,6 +117,7 @@
     "increaseQuantity": "Augmenter la quantité",
     "product": "Produit",
     "discountLabel": "Remise ({percent}%)",
+    "discount": "Remise",
     "total": "Total",
     "processing": "Traitement...",
     "submit": "Confirmer ma commande",
@@ -115,6 +146,7 @@
     "validation": {
       "required": "Ce champ est requis",
       "phoneInvalid": "Numéro de téléphone invalide",
+      "phoneFormat": "Format invalide. Ex : 0612345678, +212612345678 ou 612345678",
       "nameTooShort": "Le nom doit contenir au moins 2 caractères",
       "cityRequired": "Veuillez entrer votre ville"
     }
@@ -165,7 +197,16 @@
     "freeDelivery": "Livraison gratuite — sur toutes les commandes",
     "help": "Aide",
     "followUs": "Suivez-nous",
-    "rights": "Tous droits réservés."
+    "rights": "Tous droits réservés.",
+    "privacy": "Confidentialité",
+    "terms": "CGV",
+    "payment": "Paiement :",
+    "cash": "Espèces",
+    "inspectBeforePay": "Inspectez avant de payer",
+    "phone": "Téléphone",
+    "chatNow": "Discuter maintenant",
+    "address": "Adresse",
+    "backToTop": "Haut de page"
   },
   "whatsapp": {
     "defaultMessage": "Bonjour, j'ai une question sur vos produits"
@@ -194,6 +235,26 @@
     "resetSent": "Un lien de réinitialisation a été envoyé à votre email."
   },
   "errors": {
+    "401": {
+      "title": "Connexion requise",
+      "body": "Vous devez être connecté pour accéder à cette page."
+    },
+    "403": {
+      "title": "Accès interdit",
+      "body": "Vous n'avez pas les droits nécessaires pour voir cette page."
+    },
+    "404": {
+      "title": "Page introuvable",
+      "body": "La page que vous recherchez n'existe pas, a été déplacée, ou l'URL est incorrecte."
+    },
+    "429": {
+      "title": "Trop de tentatives",
+      "body": "Vous avez fait trop de requêtes en peu de temps. Veuillez patienter avant de réessayer."
+    },
+    "500": {
+      "title": "Oups, quelque chose s'est cassé",
+      "body": "Nos équipes ont été notifiées et travaillent à résoudre le problème. Veuillez réessayer dans un instant."
+    },
     "generic": "Une erreur s'est produite. Veuillez réessayer.",
     "notFound": "Page non trouvée",
     "unauthorized": "Accès non autorisé",
@@ -207,33 +268,13 @@
       "contact": "Nous contacter",
       "reload": "Recharger la page"
     },
-    "500": {
-      "title": "Oups, quelque chose s'est cassé",
-      "body": "Nos équipes ont été notifiées et travaillent à résoudre le problème. Veuillez réessayer dans un instant."
-    },
     "global": {
       "title": "Service temporairement indisponible",
       "body": "Le site rencontre un problème majeur. Veuillez recharger la page dans un instant."
     },
-    "404": {
-      "title": "Page introuvable",
-      "body": "La page que vous recherchez n'existe pas, a été déplacée, ou l'URL est incorrecte."
-    },
     "productNotFound": {
       "title": "Produit indisponible",
       "body": "Ce produit n'est plus disponible ou l'URL est incorrecte."
-    },
-    "401": {
-      "title": "Connexion requise",
-      "body": "Vous devez être connecté pour accéder à cette page."
-    },
-    "403": {
-      "title": "Accès interdit",
-      "body": "Vous n'avez pas les droits nécessaires pour voir cette page."
-    },
-    "429": {
-      "title": "Trop de tentatives",
-      "body": "Vous avez fait trop de requêtes en peu de temps. Veuillez patienter avant de réessayer."
     },
     "admin": {
       "title": "Erreur dans le panneau d'administration",

@@ -31,6 +31,12 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       return;
     }
 
+    const phoneClean = customerPhone.replace(/\s/g, '');
+    if (!/^(0[5-7]\d{8}|\+212[5-7]\d{8}|[5-7]\d{8})$/.test(phoneClean)) {
+      toast.error(t('validation.phoneFormat'));
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const result = await createOrderFromCart({
@@ -192,12 +198,12 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   <div className="space-y-1.5 mb-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-text-muted">{t('subtotal')}</span>
-                      <span className="font-medium">{cartSubtotal.toFixed(2)} MAD</span>
+                      <span className="font-medium">{cartSubtotal.toFixed(2)} {items[0]?.currency || 'MAD'}</span>
                     </div>
                     {cartDiscount > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-green-600">Remise</span>
-                        <span className="font-medium text-green-600">-{cartDiscount.toFixed(2)} MAD</span>
+                        <span className="text-green-600">{t('discount')}</span>
+                        <span className="font-medium text-green-600">-{cartDiscount.toFixed(2)} {items[0]?.currency || 'MAD'}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
@@ -206,7 +212,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     </div>
                     <div className="flex justify-between text-base font-bold pt-2 border-t border-border-warm">
                       <span>{t('total')}</span>
-                      <span className="text-primary">{cartTotal.toFixed(2)} MAD</span>
+                      <span className="text-primary">{cartTotal.toFixed(2)} {items[0]?.currency || 'MAD'}</span>
                     </div>
                   </div>
 

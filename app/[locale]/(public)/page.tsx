@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { Link } from '@/lib/i18n/navigation';
 import { getTranslations } from 'next-intl/server';
+import type { Metadata } from 'next';
 import {
   getSiteSettings,
   getCategories,
@@ -11,6 +12,49 @@ import {
   getProductsByRow,
 } from '@/lib/cache/queries';
 import { createClient } from '@/lib/supabase/server';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shahdmall.com';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'metadata' });
+  const settings = await getSiteSettings();
+  const siteName = (settings?.site_name as string) || 'Shahd Mall';
+  const logoUrl = settings?.logo_url as string | null;
+  const title = t('title');
+  const description = t('description');
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} | ${siteName}`,
+      description,
+      url: `${SITE_URL}/${locale}`,
+      images: logoUrl ? [{ url: logoUrl, width: 1200, height: 630 }] : undefined,
+      locale,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} | ${siteName}`,
+      description,
+      images: logoUrl ? [logoUrl] : undefined,
+    },
+    alternates: {
+      canonical: `${SITE_URL}/${locale}`,
+      languages: {
+        fr: `${SITE_URL}/fr`,
+        en: `${SITE_URL}/en`,
+        ar: `${SITE_URL}/ar`,
+      },
+    },
+  };
+}
 import { ScrollReveal } from '@/components/public/ScrollReveal';
 import { HeroSlider } from '@/components/public/HeroSlider';
 import { ProductRowSection } from '@/components/public/ProductRowSection';
@@ -70,6 +114,7 @@ export default async function HomePage({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'home' });
+  const tProduct = await getTranslations({ locale, namespace: 'product' });
 
   const [settings, categories, whyUsItems, heroImages, productRows, bestSellers] = await Promise.all([
     getSiteSettings(),
@@ -121,7 +166,7 @@ export default async function HomePage({
     return localized || fallback || '';
   };
 
-  const codBadge = getLocalizedSetting('cod_badge') || 'Paiement à la livraison';
+  const codBadge = getLocalizedSetting('cod_badge') || tProduct('codBadge');
 
   const heroTitleAccent = getLocalizedSetting('hero_title_accent');
   const heroEyebrow = getLocalizedSetting('hero_eyebrow');
@@ -131,8 +176,8 @@ export default async function HomePage({
   const heroSliderImages = heroImages.map((img) => ({ url: img.url, alt_text: img.alt_text }));
   const featuredTitle = getLocalizedSetting('featured_section_title');
   const featuredSubtitle = getLocalizedSetting('featured_section_subtitle');
-  const bestSellersTitle = featuredTitle || (locale === 'fr' ? 'Nos meilleures ventes' : locale === 'en' ? 'Best Sellers' : 'الأكثر مبيعاً');
-  const bestSellersSubtitle = featuredSubtitle || (locale === 'fr' ? 'Les produits les plus populaires' : locale === 'en' ? 'Our most popular products' : 'منتجاتنا الأكثر شعبية');
+  const bestSellersTitle = featuredTitle || t('featuredTitle');
+  const bestSellersSubtitle = featuredSubtitle || t('featuredSubtitle');
   const whyUsTitle = getLocalizedSetting('why_us_title');
   const whyUsSub = getLocalizedSetting('why_us_sub');
   const showWhyUs = !!(whyUsTitle && whyUsSub);

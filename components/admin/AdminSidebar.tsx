@@ -15,6 +15,8 @@ import {
   X,
   ImageIcon,
   Rows3,
+  MapPin,
+  Info,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -24,10 +26,12 @@ const navItems = [
   { href: '/admin/orders', label: 'Commandes', icon: ShoppingCart },
   { href: '/admin/products', label: 'Produits', icon: Package },
   { href: '/admin/categories', label: 'Categories', icon: FolderTree },
+  { href: '/admin/cities', label: 'Villes', icon: MapPin },
   { href: '/admin/reports', label: 'Rapports', icon: BarChart3 },
   { href: '/admin/content/hero-images', label: 'Images du hero', icon: ImageIcon },
   { href: '/admin/content/product-rows', label: 'Sections produits', icon: Rows3 },
   { href: '/admin/content/why-us', label: 'Pourquoi nous', icon: HelpCircle },
+  { href: '/admin/content/about', label: 'A propos', icon: Info },
   { href: '/admin/settings', label: 'Parametres', icon: Settings },
 ];
 

@@ -7,18 +7,27 @@ import type { Metadata } from 'next';
 
 export const revalidate = 60;
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shahdmall.com';
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const labels = {
-    fr: 'Politique de confidentialité',
-    en: 'Privacy Policy',
-    ar: 'سياسة الخصوصية',
+  const t = await getTranslations({ locale, namespace: 'metadata' });
+  const title = t('privacyTitle');
+  const description = t('privacyDescription');
+  return {
+    title,
+    description,
+    openGraph: { title, description, url: `${SITE_URL}/${locale}/privacy`, locale },
+    twitter: { card: 'summary_large_image', title, description },
+    alternates: {
+      canonical: `${SITE_URL}/${locale}/privacy`,
+      languages: { fr: `${SITE_URL}/fr/privacy`, en: `${SITE_URL}/en/privacy`, ar: `${SITE_URL}/ar/privacy` },
+    },
   };
-  return { title: labels[locale as keyof typeof labels] || labels.fr };
 }
 
 export default async function PrivacyPage({

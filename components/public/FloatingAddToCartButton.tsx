@@ -2,6 +2,7 @@
 
 import { Plus, Check } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useCart } from '@/lib/cart/context';
 
 interface FloatingAddToCartButtonProps {
@@ -25,6 +26,7 @@ export function FloatingAddToCartButton({
   bulkDiscountThreshold,
   bulkDiscountPercent,
 }: FloatingAddToCartButtonProps) {
+  const t = useTranslations('product');
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
@@ -49,7 +51,7 @@ export function FloatingAddToCartButton({
       onClick={handleClick}
       className="fixed left-6 z-50 w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-all bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white"
       style={{ bottom: 'calc(6rem + var(--sticky-bar-offset, 0px))' }}
-      aria-label="Ajouter au panier"
+      aria-label={t('addToCart')}
     >
       {added ? (
         <Check className="w-5 h-5" />

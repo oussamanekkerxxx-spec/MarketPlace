@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-
+import { useTranslations } from 'next-intl';
 import { ChevronDown } from 'lucide-react';
 
 interface ProductDetailPhotosProps {
@@ -10,6 +10,7 @@ interface ProductDetailPhotosProps {
 }
 
 export function ProductDetailPhotos({ images: rawImages, alt }: ProductDetailPhotosProps) {
+  const t = useTranslations('product');
   const images = (rawImages || []).filter(Boolean);
   const [expanded, setExpanded] = useState(false);
 
@@ -60,7 +61,7 @@ export function ProductDetailPhotos({ images: rawImages, alt }: ProductDetailPho
               onClick={() => setExpanded(true)}
               className="absolute left-1/2 -translate-x-1/2 bottom-2 inline-flex items-center gap-1.5 px-5 py-2.5 bg-surface border border-border-warm rounded-full shadow-md text-sm font-semibold text-secondary active:scale-95 transition-transform"
             >
-              Voir plus de photos ({remainingCount})
+              {t('seeMorePhotos', { count: remainingCount })}
               <ChevronDown className="w-4 h-4" />
             </button>
           )}

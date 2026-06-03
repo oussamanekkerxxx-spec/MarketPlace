@@ -5,15 +5,26 @@ import { Search, PackageX, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import type { Metadata } from 'next';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shahdmall.com';
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'category' });
+  const t = await getTranslations({ locale, namespace: 'metadata' });
+  const title = t('searchTitle');
+  const description = t('searchDescription');
   return {
-    title: t('search'),
+    title,
+    description,
+    openGraph: { title, description, url: `${SITE_URL}/${locale}/search`, locale },
+    twitter: { card: 'summary_large_image', title, description },
+    alternates: {
+      canonical: `${SITE_URL}/${locale}/search`,
+      languages: { fr: `${SITE_URL}/fr/search`, en: `${SITE_URL}/en/search`, ar: `${SITE_URL}/ar/search` },
+    },
   };
 }
 

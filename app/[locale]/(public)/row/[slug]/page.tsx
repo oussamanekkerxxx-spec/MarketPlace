@@ -3,6 +3,7 @@ import { Link } from '@/lib/i18n/navigation';
 import { notFound } from 'next/navigation';
 import { getSiteSettings } from '@/lib/cache/queries';
 import { createClient } from '@/lib/supabase/server';
+import { getTranslations } from 'next-intl/server';
 import { ScrollReveal } from '@/components/public/ScrollReveal';
 import { SortDropdown } from '@/components/public/SortDropdown';
 import { ChevronRight, CheckCircle2, LayoutGrid } from 'lucide-react';
@@ -11,12 +12,15 @@ import type { Metadata } from 'next';
 
 export const revalidate = 60;
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shahdmall.com';
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string; locale: string }>;
 }): Promise<Metadata> {
   const { slug, locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'metadata' });
 
   const supabase = await createClient();
   const { data: row } = await supabase
@@ -27,14 +31,28 @@ export async function generateMetadata({
     .single();
 
   if (!row) {
-    return { title: 'Section introuvable' };
+    return {
+      title: t('rowNotFound'),
+      alternates: {
+        canonical: `${SITE_URL}/${locale}/row/${slug}`,
+        languages: { fr: `${SITE_URL}/fr/row/${slug}`, en: `${SITE_URL}/en/row/${slug}`, ar: `${SITE_URL}/ar/row/${slug}` },
+      },
+    };
   }
 
   const title =
     (row[`title_${locale}` as keyof typeof row] as string | undefined) ||
     row.title_fr;
 
-  return { title };
+  return {
+    title: `${title} — ${t('categoryTitle')}`,
+    openGraph: { title, url: `${SITE_URL}/${locale}/row/${slug}`, locale },
+    twitter: { card: 'summary_large_image', title },
+    alternates: {
+      canonical: `${SITE_URL}/${locale}/row/${slug}`,
+      languages: { fr: `${SITE_URL}/fr/row/${slug}`, en: `${SITE_URL}/en/row/${slug}`, ar: `${SITE_URL}/ar/row/${slug}` },
+    },
+  };
 }
 
 export default async function RowPage({
@@ -116,7 +134,11 @@ export default async function RowPage({
 
   const settings = await getSiteSettings();
   const primaryColor = (settings?.primary_color as string) || '#FF6B35';
-  const codBadge = (settings?.[`cod_badge_${locale}` as keyof typeof settings] as string | undefined) || 'Paiement à la livraison';
+
+  const t = await getTranslations({ locale, namespace: 'category' });
+  const tNav = await getTranslations({ locale, namespace: 'navigation' });
+  const tProduct = await getTranslations({ locale, namespace: 'product' });
+  const codBadge = (settings?.[`cod_badge_${locale}` as keyof typeof settings] as string | undefined) || tProduct('codBadge');
 
   const rowTitle =
     (row[`title_${locale}` as keyof typeof row] as string | undefined) ||
@@ -135,7 +157,7 @@ export default async function RowPage({
             <div className="flex items-center gap-3 mb-4">
               <LayoutGrid className="w-5 h-5 text-accent" />
               <span className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-                {locale === 'fr' ? 'Collection' : locale === 'en' ? 'Collection' : 'مجموعة'}
+                {t('collectionLabel')}
               </span>
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-bold leading-[1.1] tracking-tight text-white">
@@ -155,7 +177,7 @@ export default async function RowPage({
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-text-muted pt-6 pb-2">
           <Link href="/" className="hover:text-primary transition-colors">
-            {locale === 'fr' ? 'Accueil' : locale === 'en' ? 'Home' : 'الرئيسية'}
+            {tNav('home')}
           </Link>
           <ChevronRight className="w-3.5 h-3.5" />
           <span className="text-secondary font-medium line-clamp-1">{rowTitle}</span>
@@ -164,11 +186,7 @@ export default async function RowPage({
         {/* Toolbar */}
         <div className="flex items-center justify-between py-4 mb-4">
           <p className="text-sm text-text-muted">
-            {sortedProducts.length} {locale === 'fr'
-              ? `produit${sortedProducts.length !== 1 ? 's' : ''}`
-              : locale === 'en'
-                ? `product${sortedProducts.length !== 1 ? 's' : ''}`
-                : 'منتج'}
+            {sortedProducts.length} {sortedProducts.length === 1 ? t('product') : t('products')}
           </p>
           <Suspense fallback={null}>
             <SortDropdown />
@@ -223,11 +241,7 @@ export default async function RowPage({
                         )}
                         {isLowStock && (
                           <span className="absolute bottom-2.5 left-2.5 bg-accent/90 text-white text-[11px] font-semibold px-2 py-1 rounded-full">
-                            {locale === 'fr'
-                              ? `Plus que ${product.stock_quantity} en stock`
-                              : locale === 'en'
-                                ? `Only ${product.stock_quantity} left in stock`
-                                : `تبقت ${product.stock_quantity} فقط`}
+                            {tProduct('lowStock', { count: product.stock_quantity })}
                           </span>
                         )}
                       </div>
@@ -264,22 +278,14 @@ export default async function RowPage({
               <LayoutGrid className="w-8 h-8 text-text-muted" />
             </div>
             <p className="text-text-muted text-lg">
-              {locale === 'fr'
-                ? 'Aucun produit dans cette section'
-                : locale === 'en'
-                  ? 'No products in this collection'
-                  : 'لا توجد منتجات في هذه المجموعة'}
+              {t('noResults')}
             </p>
             <Link
               href="/category/all"
               className="inline-block mt-4 font-semibold hover:opacity-80 transition-opacity"
               style={{ color: primaryColor }}
             >
-              {locale === 'fr'
-                ? 'Voir tous les produits'
-                : locale === 'en'
-                  ? 'View all products'
-                  : 'عرض جميع المنتجات'}
+              {t('browseAll')}
             </Link>
           </div>
         </div>

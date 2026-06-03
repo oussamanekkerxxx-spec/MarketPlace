@@ -7,18 +7,27 @@ import type { Metadata } from 'next';
 
 export const revalidate = 60;
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shahdmall.com';
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const labels = {
-    fr: 'Conditions générales de vente',
-    en: 'General Terms and Conditions of Sale',
-    ar: 'الشروط العامة للبيع',
+  const t = await getTranslations({ locale, namespace: 'metadata' });
+  const title = t('termsTitle');
+  const description = t('termsDescription');
+  return {
+    title,
+    description,
+    openGraph: { title, description, url: `${SITE_URL}/${locale}/terms`, locale },
+    twitter: { card: 'summary_large_image', title, description },
+    alternates: {
+      canonical: `${SITE_URL}/${locale}/terms`,
+      languages: { fr: `${SITE_URL}/fr/terms`, en: `${SITE_URL}/en/terms`, ar: `${SITE_URL}/ar/terms` },
+    },
   };
-  return { title: labels[locale as keyof typeof labels] || labels.fr };
 }
 
 export default async function TermsPage({

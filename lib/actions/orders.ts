@@ -10,9 +10,32 @@ import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { detectSource } from '@/lib/utils/attribution';
 import { reservationServerSchema, type ReservationServerInput } from '@/lib/validation/reservation';
 
-// Helper to normalize Moroccan phone numbers
+// Helper to normalize Moroccan phone numbers to +212XXXXXXXXX format
 function normalizePhone(phone: string): string {
-  return phone.replace(/\s/g, '');
+  const cleaned = phone.replace(/\s/g, '');
+  const digits = cleaned.replace(/\D/g, '');
+
+  // 10 digits starting with 0 → local format: 0612345678
+  if (digits.length === 10 && digits.startsWith('0')) {
+    return '+212' + digits.slice(1);
+  }
+
+  // 9 digits starting with 5-7 → no-prefix format: 612345678
+  if (digits.length === 9 && /^[5-7]/.test(digits)) {
+    return '+212' + digits;
+  }
+
+  // Already has +212 prefix
+  if (cleaned.startsWith('+212')) {
+    return cleaned;
+  }
+
+  // 12 digits starting with 212
+  if (digits.length === 12 && digits.startsWith('212')) {
+    return '+' + digits;
+  }
+
+  return cleaned;
 }
 
 export async function createReservation(formData: ReservationServerInput) {

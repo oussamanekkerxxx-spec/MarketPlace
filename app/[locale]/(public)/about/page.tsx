@@ -4,8 +4,11 @@ import { getSiteSettings } from '@/lib/cache/queries';
 import { PageHero } from '@/components/public/PageHero';
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
+import { createClient } from '@/lib/supabase/server';
 
 export const revalidate = 60;
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shahdmall.com';
 
 export async function generateMetadata({
   params,
@@ -13,8 +16,58 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'navigation' });
-  return { title: t('about') };
+  const t = await getTranslations({ locale, namespace: 'metadata' });
+  const title = t('aboutTitle');
+  const description = t('aboutDescription');
+  return {
+    title,
+    description,
+    openGraph: { title, description, url: `${SITE_URL}/${locale}/about`, locale },
+    twitter: { card: 'summary_large_image', title, description },
+    alternates: {
+      canonical: `${SITE_URL}/${locale}/about`,
+      languages: { fr: `${SITE_URL}/fr/about`, en: `${SITE_URL}/en/about`, ar: `${SITE_URL}/ar/about` },
+    },
+  };
+}
+
+type AboutRow = {
+  section: string;
+  key: string;
+  order_index: number;
+  content_fr: string;
+  content_en: string | null;
+  content_ar: string | null;
+};
+
+async function getAboutContent(locale: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('about_page_content')
+    .select('section, key, order_index, content_fr, content_en, content_ar')
+    .eq('active', true)
+    .order('order_index', { ascending: true });
+
+  const items = (data as AboutRow[] | null) || [];
+
+  const story = items
+    .filter((i) => i.section === 'story')
+    .sort((a, b) => a.order_index - b.order_index)
+    .map((i) => (i[`content_${locale}` as keyof AboutRow] as string | null) || i.content_fr);
+
+  const values = items
+    .filter((i) => i.section === 'values')
+    .sort((a, b) => a.order_index - b.order_index)
+    .map((i) => (i[`content_${locale}` as keyof AboutRow] as string | null) || i.content_fr);
+
+  const ctaMap = new Map<string, string>();
+  items
+    .filter((i) => i.section === 'cta')
+    .forEach((i) => {
+      ctaMap.set(i.key, (i[`content_${locale}` as keyof AboutRow] as string | null) || i.content_fr);
+    });
+
+  return { story, values, cta: ctaMap };
 }
 
 export default async function AboutPage({
@@ -24,61 +77,91 @@ export default async function AboutPage({
 }) {
   const { locale } = await params;
   const settings = await getSiteSettings();
+  const dynamic = await getAboutContent(locale);
 
-  const siteName = (settings?.site_name as string) || 'Atelier Rif';
+  const siteName = (settings?.site_name as string) || 'Shahd Mall';
   const logoUrl = settings?.logo_url as string | null;
   const primaryColor = (settings?.primary_color as string) || '#FF6B35';
 
-  // Localized story content (hardcoded until CMS fields are added)
-  const stories: Record<string, { paragraphs: string[]; values: string[] }> = {
+  // Fallback hardcoded content if DB is empty
+  const storiesFallback: Record<string, { paragraphs: string[]; values: string[]; cta: Record<string, string> }> = {
     fr: {
       paragraphs: [
-        `Bienvenue chez ${siteName}, une maison de maroquinerie artisanale née au cœur de la médina de Fès. Depuis 2018, nous concevons et fabriquons à la main des sacs et accessoires en cuir véritable, en puisant dans une tradition millénaire de savoir-faire.`,
-        `Notre atelier est installé à deux pas de la célèbre tannerie Chouara, où les peaux sont encore aujourd'hui traitées aux extraits végétaux de mimosa et de chêne — une méthode ancestrale qui donne à notre cuir sa souplesse et sa durabilité exceptionnelles. Chaque pièce qui sort de nos mains est unique, portant les initiales de l'artisan qui l'a confectionnée.`,
-        `Nous croyons fermement au commerce équitable et à la préservation du patrimoine marocain. C'est pourquoi nous travaillons exclusivement avec des artisans locaux, en leur assurant des conditions de travail dignes et un salaire juste. Aucune chaîne de production, aucune sous-traitance : du cuir brut à la couture finale, tout se passe dans nos ateliers de Fès.`,
-        `Notre promesse est simple : vous offrir des pièces intemporelles, fabriquées dans le respect des traditions, avec une qualité qui se ressent au premier toucher. Et parce que nous sommes fiers de notre travail, nous livrons partout au Maroc en 24 à 48 heures, avec la possibilité de payer à la réception.`,
+        `Bienvenue chez ${siteName}, votre marketplace en ligne où vous trouverez tout ce dont vous avez besoin au quotidien. Depuis 2018, nous mettons notre énergie à vous offrir une expérience d'achat simple, rapide et fiable — de la mode aux produits électroniques, en passant par la décoration, les accessoires et bien plus encore.`,
+        `Notre mission est simple : réunir en un seul endroit une large sélection de produits de qualité, aux meilleurs prix, avec une livraison rapide partout au Maroc. Nous travaillons directement avec des vendeurs et des fournisseurs de confiance pour vous garantir des articles soigneusement sélectionnés.`,
+        `Chez ${siteName}, nous croyons que le commerce en ligne doit être accessible à tous. C'est pourquoi nous offrons le paiement à la livraison, une livraison en 24 à 48 heures, et une garantie satisfait ou remboursé de 7 jours. Votre confiance est notre priorité.`,
+        `Notre promesse est simple : vous offrir le meilleur du shopping en ligne au Maroc. Une plateforme fiable, des prix compétitifs, et un service client à votre écoute à chaque étape de votre commande.`,
       ],
       values: [
-        'Cuir 100% véritable, tanné aux plantes',
-        'Fabrication 100% artisanale à Fès',
-        'Soutien direct aux artisans locaux',
-        'Livraison 24-48h & Paiement à la livraison',
+        'Produits soigneusement sélectionnés',
+        'Prix compétitifs sans intermédiaires',
+        'Livraison rapide 24-48h partout au Maroc',
+        'Paiement à la livraison',
         'Garantie satisfait ou remboursé 7 jours',
       ],
+      cta: {
+        title: 'Découvrez nos produits',
+        subtitle: `Parcourez notre catalogue et trouvez tout ce qu'il vous faut, livré rapidement chez vous.`,
+        button: 'Voir la collection',
+      },
     },
     en: {
       paragraphs: [
-        `Welcome to ${siteName}, a handmade leather goods house born in the heart of the Fès medina. Since 2018, we have been designing and handcrafting bags and accessories from genuine leather, drawing on a thousand-year-old tradition of craftsmanship.`,
-        `Our workshop is located steps away from the famous Chouara tannery, where hides are still treated with vegetable extracts of mimosa and oak — an ancestral method that gives our leather its exceptional suppleness and durability. Every piece that leaves our hands is unique, bearing the initials of the artisan who crafted it.`,
-        `We firmly believe in fair trade and the preservation of Moroccan heritage. That is why we work exclusively with local artisans, ensuring them dignified working conditions and fair wages. No production chain, no subcontracting: from raw leather to final stitching, everything happens in our Fès workshops.`,
-        `Our promise is simple: to offer you timeless pieces, made with respect for tradition, with a quality you can feel at first touch. And because we are proud of our work, we deliver everywhere in Morocco within 24 to 48 hours, with the option to pay upon receipt.`,
+        `Welcome to ${siteName}, your online marketplace where you can find everything you need for everyday life. Since 2018, we have been dedicated to offering you a simple, fast, and reliable shopping experience — from fashion and electronics to home décor, accessories, and much more.`,
+        `Our mission is simple: to bring together a wide selection of quality products at the best prices, with fast delivery across Morocco. We work directly with trusted sellers and suppliers to ensure carefully selected items for you.`,
+        `At ${siteName}, we believe online shopping should be accessible to everyone. That is why we offer cash on delivery, 24 to 48 hour delivery, and a 7-day satisfaction or refund guarantee. Your trust is our priority.`,
+        `Our promise is simple: to offer you the best online shopping experience in Morocco. A reliable platform, competitive prices, and customer service that listens to you at every step of your order.`,
       ],
       values: [
-        '100% genuine vegetable-tanned leather',
-        '100% handmade in Fès',
-        'Direct support for local artisans',
-        '24-48h delivery & Cash on delivery',
+        'Carefully selected products',
+        'Competitive prices with no middlemen',
+        'Fast 24-48h delivery across Morocco',
+        'Cash on delivery',
         '7-day satisfaction or refund guarantee',
       ],
+      cta: {
+        title: 'Discover our products',
+        subtitle: `Browse our catalog and find everything you need, delivered quickly to your door.`,
+        button: 'View collection',
+      },
     },
     ar: {
       paragraphs: [
-        `مرحبًا بكم في ${siteName}، دار للمنتجات الجلدية اليدوية ولدت في قلب مدينة فاس العتيقة. منذ عام 2018، نقوم بتصميم وصناعة الحقائب والإكسسوارات يدويًا من الجلد الطبيعي، مستمدين من تقاليد حرفية عمرها آلاف السنين.`,
-        `يقع ورشنا على بعد خطوات من دباغة شوارا الشهيرة، حيث لا تزال الجلود تُعالج بمستخلصات نباتية من الميموزا والبلوط — طريقة أسلافية تمنح جلدنا مرونته ومتانته الاستثنائية. كل قطعة تخرج من أيدينا فريدة من نوعها، تحمل أحرف اسم الحرفي الذي صنعها.`,
-        `نؤمن بإيمان راسخ بالتجارة العادلة والحفاظ على التراث المغربي. لهذا السبب نعمل حصريًا مع الحرفيين المحليين، مضمنين لهم ظروف عمل لائقة وأجورًا عادلة. لا سلسلة إنتاج، لا مقاولة فرعية: من الجلد الخام إلى الغرزة الأخيرة، كل شيء يحدث في ورش فاس.`,
-        `وعدنا بسيط: أن نقدم لك قطعًا خالدة، مصنوعة باحترام للتقاليد، بجودة تشعر بها من أول لمسة. ولأننا فخورون بعملنا، نوصل إلى جميع أنحاء المغرب خلال 24 إلى 48 ساعة، مع إمكانية الدفع عند الاستلام.`,
+        `مرحبًا بكم في ${siteName}، سوقكم الإلكتروني حيث تجدون كل ما تحتاجونه في حياتكم اليومية. منذ عام 2018، نكرس جهودنا لتقديم تجربة تسوق بسيطة وسريعة وموثوقة — من الأزياء والإلكترونيات إلى الديكور والإكسسوارات وغير ذلك الكثير.`,
+        `مهمتنا بسيطة: توفير تشكيلة واسعة من المنتجات عالية الجودة بأفضل الأسعار، مع توصيل سريع إلى جميع أنحاء المغرب. نعمل مباشرة مع بائعين وموردين موثوقين لنضمن لكم منتجات مختارة بعناية.`,
+        `في ${siteName}، نؤمن بأن التسوق عبر الإنترنت يجب أن يكون في متناول الجميع. لهذا السبب نقدم الدفع عند الاستلام، والتوصيل خلال 24 إلى 48 ساعة، وضمان استعادة الأموال خلال 7 أيام. ثقتكم هي أولويتنا.`,
+        `وعدنا بسيط: أن نقدم لكم أفضل تجربة تسوق إلكتروني في المغرب. منصة موثوقة، وأسعار تنافسية، وخدمة عملاء تستمع إليكم في كل خطوة من طلباتكم.`,
       ],
       values: [
-        'جلد طبيعي 100%، مدبوغ بالنباتات',
-        'صناعة يدوية 100% في فاس',
-        'دعم مباشر للحرفيين المحليين',
-        'توصيل 24-48 ساعة والدفع عند الاستلام',
+        'منتجات مختارة بعناية',
+        'أسعار تنافسية بدون وسطاء',
+        'توصيل سريع 24-48 ساعة في جميع أنحاء المغرب',
+        'الدفع عند الاستلام',
         'ضمان استعادة الأموال خلال 7 أيام',
       ],
+      cta: {
+        title: 'اكتشف منتجاتنا',
+        subtitle: `تصفح كتالوجنا واعثر على كل ما تحتاجه، يُوصّل بسرعة إلى باب منزلك.`,
+        button: 'عرض المجموعة',
+      },
     },
   };
 
-  const content = stories[locale] || stories.fr;
+  const fallback = storiesFallback[locale] || storiesFallback.fr;
+
+  const storyParagraphs = dynamic.story.length > 0 ? dynamic.story : fallback.paragraphs;
+  const valuesList = dynamic.values.length > 0 ? dynamic.values : fallback.values;
+  const ctaTitle = dynamic.cta.get('title') || fallback.cta.title;
+  const ctaSubtitle = dynamic.cta.get('subtitle') || fallback.cta.subtitle;
+  const ctaButton = dynamic.cta.get('button') || fallback.cta.button;
+
+  const storyHeading =
+    locale === 'fr'
+      ? `Votre marketplace au Maroc`
+      : locale === 'en'
+        ? `Your marketplace in Morocco`
+        : `سوقكم في المغرب`;
+
   const isRtl = locale === 'ar';
 
   return (
@@ -98,14 +181,10 @@ export default async function AboutPage({
                 </span>
               </div>
               <h2 className="text-2xl lg:text-3xl font-bold text-secondary mb-6 leading-tight">
-                {locale === 'fr'
-                  ? `L'art du cuir, transmis de père en fils dans la médina de Fès`
-                  : locale === 'en'
-                  ? `The art of leather, passed down from father to son in the Fès medina`
-                  : `فن الجلد، يتوارث من الأب إلى الابن في مدينة فاس العتيقة`}
+                {storyHeading}
               </h2>
               <div className="space-y-4 text-text-muted leading-relaxed">
-                {content.paragraphs.map((p, i) => (
+                {storyParagraphs.map((p, i) => (
                   <p key={i}>{p}</p>
                 ))}
               </div>
@@ -159,13 +238,13 @@ export default async function AboutPage({
               {locale === 'fr'
                 ? 'Ce qui nous guide au quotidien'
                 : locale === 'en'
-                ? 'What guides us every day'
-                : 'ما يوجهنا يوميًا'}
+                  ? 'What guides us every day'
+                  : 'ما يوجهنا يوميًا'}
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl mx-auto">
-            {content.values.map((value, i) => (
+            {valuesList.map((value, i) => (
               <div
                 key={i}
                 className="flex items-center gap-3 bg-surface rounded-xl px-5 py-4 border border-border-warm"
@@ -196,26 +275,14 @@ export default async function AboutPage({
       <section className="py-14 lg:py-20 bg-secondary relative overflow-hidden">
         <div className="absolute inset-0 moroccan-pattern opacity-20" />
         <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">
-            {locale === 'fr'
-              ? 'Découvrez nos créations'
-              : locale === 'en'
-              ? 'Discover our creations'
-              : 'اكتشف إبداعاتنا'}
-          </h2>
-          <p className="text-white/70 mb-8 max-w-lg mx-auto">
-            {locale === 'fr'
-              ? 'Parcourez notre collection de sacs et accessoires en cuir fait main, directement depuis nos ateliers de Fès.'
-              : locale === 'en'
-              ? 'Browse our collection of handmade leather bags and accessories, straight from our Fès workshops.'
-              : 'تصفح مجموعتنا من الحقائب والإكسسوارات الجلدية المصنوعة يدويًا، مباشرة من ورش فاس.'}
-          </p>
+          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">{ctaTitle}</h2>
+          <p className="text-white/70 mb-8 max-w-lg mx-auto">{ctaSubtitle}</p>
           <Link
             href="/category/all"
             className="inline-flex items-center gap-2 px-8 py-3.5 text-white text-sm font-semibold rounded-full transition-all hover:scale-[1.02] active:scale-[0.98]"
             style={{ backgroundColor: primaryColor }}
           >
-            {locale === 'fr' ? 'Voir la collection' : locale === 'en' ? 'View collection' : 'عرض المجموعة'}
+            {ctaButton}
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>

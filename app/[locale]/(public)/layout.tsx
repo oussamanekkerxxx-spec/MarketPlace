@@ -10,9 +10,12 @@ import { MobileFooter } from '@/components/public/MobileFooter';
 import { ScrollRevealHeader } from '@/components/public/ScrollRevealHeader';
 import { CartShell } from '@/components/public/CartShell';
 import { getSiteSettings, getCategories } from '@/lib/cache/queries';
+import { SmartWhatsAppButton } from '@/components/public/SmartWhatsAppButton';
 import { getWhatsAppHref } from '@/lib/utils/contact';
 
 import { ChevronDown, Truck, ShieldCheck, RotateCcw, Package } from 'lucide-react';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shahdmall.com';
 
 export async function generateMetadata({
   params,
@@ -24,13 +27,73 @@ export async function generateMetadata({
   const settings = await getSiteSettings();
   const siteName = (settings?.site_name as string) || t('title');
   const faviconUrl = (settings?.favicon_url as string) || null;
+  const logoUrl = settings?.logo_url as string | null;
+  const whatsapp = settings?.whatsapp_number as string | null;
+  const contactPhone = settings?.contact_phone as string | null;
+  const contactEmail = settings?.contact_email as string | null;
+  const businessAddress = settings?.business_address as string | null;
+
   return {
+    metadataBase: new URL(SITE_URL),
     title: {
       default: siteName,
       template: `%s | ${siteName}`,
     },
     description: t('description'),
     icons: faviconUrl ? { icon: faviconUrl } : undefined,
+    openGraph: {
+      type: 'website',
+      siteName,
+      locale,
+    },
+    twitter: {
+      card: 'summary_large_image',
+    },
+    alternates: {
+      canonical: `${SITE_URL}/${locale}`,
+      languages: {
+        fr: `${SITE_URL}/fr`,
+        en: `${SITE_URL}/en`,
+        ar: `${SITE_URL}/ar`,
+      },
+    },
+    other: {
+      'json-ld': JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'Organization',
+            name: siteName,
+            url: SITE_URL,
+            logo: logoUrl || undefined,
+            contactPoint: whatsapp || contactPhone ? {
+              '@type': 'ContactPoint',
+              telephone: contactPhone || whatsapp || undefined,
+              contactType: 'customer service',
+              areaServed: 'MA',
+              availableLanguage: ['French', 'Arabic', 'English'],
+            } : undefined,
+            sameAs: [
+              settings?.facebook_url as string | undefined,
+              settings?.instagram_url as string | undefined,
+              settings?.tiktok_url as string | undefined,
+              settings?.youtube_url as string | undefined,
+              settings?.telegram_url as string | undefined,
+            ].filter(Boolean) as string[],
+          },
+          {
+            '@type': 'WebSite',
+            name: siteName,
+            url: SITE_URL,
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: `${SITE_URL}/${locale}/search?q={search_term_string}`,
+              'query-input': 'required name=search_term_string',
+            },
+          },
+        ],
+      }),
+    },
   };
 }
 
@@ -74,6 +137,12 @@ export default async function PublicLayout({
   const footerDescription = getLocalizedSetting('footer_description') || tFooter('description');
   const whatsappMessage = getLocalizedSetting('whatsapp_default_message');
   const siteTagline = getLocalizedSetting('site_tagline');
+
+  const defaultMessages = {
+    fr: (settings?.whatsapp_default_message_fr as string) || "Bonjour, j'ai une question",
+    en: (settings?.whatsapp_default_message_en as string) || 'Hello, I have a question',
+    ar: (settings?.whatsapp_default_message_ar as string) || 'مرحباً، لدي سؤال',
+  };
   const announcementEnabled = (settings?.announcement_enabled as boolean) || false;
   const localeAnnouncement = settings?.[`announcement_text_${locale}` as keyof typeof settings] as string | undefined;
   const frAnnouncement = settings?.announcement_text_fr as string | undefined;
@@ -190,7 +259,7 @@ export default async function PublicLayout({
                 href="/category/all"
                 className="hidden lg:inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-full transition-colors shadow-sm opacity-0 translate-y-1 pointer-events-none [.is-scrolled_&]:opacity-100 [.is-scrolled_&]:translate-y-0 [.is-scrolled_&]:pointer-events-auto"
               >
-                Commander
+                {t('orderNow')}
               </Link>
 
               {/* Mobile hamburger */}
@@ -316,10 +385,10 @@ export default async function PublicLayout({
                   {t('contact')}
                 </Link>
                 <Link href="/privacy" className="block text-sm text-text-muted hover:text-primary transition-colors">
-                  Confidentialité
+                  {tFooter('privacy')}
                 </Link>
                 <Link href="/terms" className="block text-sm text-text-muted hover:text-primary transition-colors">
-                  CGV
+                  {tFooter('terms')}
                 </Link>
               </div>
             </div>
@@ -327,7 +396,7 @@ export default async function PublicLayout({
             {/* Contact */}
             <div className="lg:col-span-3">
               <h4 className="text-xs font-semibold text-secondary uppercase tracking-wider mb-4">
-                Contact
+                {t('contact')}
               </h4>
               <div className="space-y-2 text-sm text-text-muted">
                 {contactPhone && (
@@ -342,7 +411,7 @@ export default async function PublicLayout({
                     rel="noopener noreferrer"
                     className="block hover:text-primary transition-colors"
                   >
-                    WhatsApp: {whatsappNumber}
+                    WhatsApp · {whatsappNumber}
                   </a>
                 )}
                 {contactEmail && (
@@ -353,12 +422,12 @@ export default async function PublicLayout({
                 {businessAddress && <p>{businessAddress}</p>}
               </div>
               <div className="mt-4 flex items-center gap-2">
-                <span className="text-xs text-text-muted">Paiement :</span>
+                <span className="text-xs text-text-muted">{tFooter('payment')}</span>
                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-2 border border-border-warm text-secondary">
                   COD
                 </span>
                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-2 border border-border-warm text-secondary">
-                  Espèces
+                  {tFooter('cash')}
                 </span>
               </div>
             </div>
@@ -366,25 +435,14 @@ export default async function PublicLayout({
 
           <div className="border-t border-border-warm mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-text-muted">
             <span>© {new Date().getFullYear()} {siteName}. {tFooter('rights')}</span>
-            <span className="text-xs opacity-70">Made by Zellige</span>
+            <span className="text-xs opacity-70">Made by TourisManager</span>
           </div>
         </div>
       </footer>
 
-      {/* Floating WhatsApp Button */}
+      {/* Floating WhatsApp Button — smart product-aware */}
       {whatsappNumber && (
-        <a
-          href={getWhatsAppHref(whatsappNumber, whatsappMessage) || '#'}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed right-6 z-50 w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 hover:scale-105 transition-all transition-[bottom] duration-300"
-          style={{ bottom: 'calc(1.5rem + var(--sticky-bar-offset, 0px))' }}
-          aria-label="Contact WhatsApp"
-        >
-          <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-          </svg>
-        </a>
+        <SmartWhatsAppButton whatsappNumber={whatsappNumber} defaultMessages={defaultMessages} />
       )}
 
     </div>

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ShieldCheck, MessageCircle } from 'lucide-react';
+import { getWhatsAppHref } from '@/lib/utils/contact';
 import { useTranslations } from 'next-intl';
 
 interface MobileStickyOrderBarProps {
@@ -64,6 +65,10 @@ export function MobileStickyOrderBar({
   const savings = hasDiscount
     ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
     : 0;
+
+  const whatsappHref = whatsappNumber
+    ? getWhatsAppHref(whatsappNumber, whatsappMessage || undefined)
+    : null;
   return (
     <div
       className={`lg:hidden fixed bottom-0 inset-x-0 z-40 pointer-events-none transition-all duration-400 ${
@@ -149,33 +154,46 @@ export function MobileStickyOrderBar({
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleClick}
-                disabled={!inStock}
-                className="group relative shrink-0 overflow-hidden rounded-xl px-5 text-sm font-bold text-white shadow-md transition-all active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
-                style={{
-                  background: inStock
-                    ? 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%)'
-                    : '#9CA3AF',
-                  minWidth: '120px',
-                }}
-              >
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-0 -translate-x-full transition-transform duration-500 ease-out group-active:translate-x-full"
+              <div className="flex items-stretch gap-2 shrink-0">
+                {whatsappHref && (
+                  <a
+                    href={whatsappHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center w-11 rounded-xl bg-green-500 text-white shadow-md transition-all active:scale-[0.97] hover:bg-green-600"
+                    aria-label="WhatsApp"
+                  >
+                    <MessageCircle className="h-5 w-5" />
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={handleClick}
+                  disabled={!inStock}
+                  className="group relative shrink-0 overflow-hidden rounded-xl px-5 text-sm font-bold text-white shadow-md transition-all active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
-                    background:
-                      'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%)',
+                    background: inStock
+                      ? 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%)'
+                      : '#9CA3AF',
+                    minWidth: '120px',
                   }}
-                />
-                <span className="relative inline-flex items-center justify-center gap-1.5 py-4">
-                  <span>{inStock ? t('addToCart') : t('outOfStock')}</span>
-                  {inStock && (
-                    <ArrowRight className="h-4 w-4 transition-transform group-active:translate-x-0.5" />
-                  )}
-                </span>
-              </button>
+                >
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-0 -translate-x-full transition-transform duration-500 ease-out group-active:translate-x-full"
+                    style={{
+                      background:
+                        'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%)',
+                    }}
+                  />
+                  <span className="relative inline-flex items-center justify-center gap-1.5 py-4">
+                    <span>{inStock ? t('addToCart') : t('outOfStock')}</span>
+                    {inStock && (
+                      <ArrowRight className="h-4 w-4 transition-transform group-active:translate-x-0.5" />
+                    )}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

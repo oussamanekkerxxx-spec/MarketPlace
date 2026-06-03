@@ -32,7 +32,7 @@ export function ProductSearch() {
           type="button"
           onClick={() => setIsOpen((v) => !v)}
           className="p-2 text-text-muted hover:text-primary hover:bg-surface-2 rounded-lg transition-colors shrink-0"
-          aria-label={t('search') || 'Search'}
+          aria-label={t('search')}
         >
           <Search className="w-5 h-5" />
         </button>
@@ -42,7 +42,7 @@ export function ProductSearch() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsOpen(true)}
-          placeholder={t('search') || 'Rechercher...'}
+          placeholder={t('search')}
           className={`bg-transparent text-sm text-text placeholder:text-text-muted outline-none transition-all duration-200 ${
             isOpen ? 'w-full opacity-100 px-1' : 'w-0 opacity-0 px-0'
           }`}

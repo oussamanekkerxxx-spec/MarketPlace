@@ -71,8 +71,8 @@ export function MobileDrawer({
     about: safeT(t, 'about', locale === 'ar' ? 'من نحن' : locale === 'fr' ? 'À propos' : 'About'),
     contact: safeT(t, 'contact', locale === 'ar' ? 'اتصل بنا' : locale === 'fr' ? 'Contact' : 'Contact'),
     allProducts: locale === 'fr' ? 'Tous les produits' : locale === 'en' ? 'All products' : 'جميع المنتجات',
-    privacy: locale === 'fr' ? 'Confidentialité' : locale === 'en' ? 'Privacy' : 'الخصوصية',
-    terms: locale === 'fr' ? 'CGV' : locale === 'en' ? 'Terms' : 'الشروط',
+    privacy: tf('privacy'),
+    terms: tf('terms'),
   };
 
   const whatsappHref = useMemo(() => {

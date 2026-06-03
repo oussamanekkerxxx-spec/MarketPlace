@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 interface ProductGalleryProps {
   images: string[];
@@ -14,6 +15,7 @@ const DOUBLE_TAP_MS = 300;
 const DOUBLE_CLICK_WINDOW = 220;
 
 export function ProductGallery({ images: rawImages, alt }: ProductGalleryProps) {
+  const t = useTranslations('product');
   const images = rawImages.filter(Boolean);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -276,7 +278,7 @@ export function ProductGallery({ images: rawImages, alt }: ProductGalleryProps) 
             aria-hidden="true"
             className="pointer-events-none absolute bottom-2 right-2 bg-black/40 text-white text-[10px] px-2 py-1 rounded-full backdrop-blur-sm"
           >
-            Cliquer pour zoomer
+            {t('zoomHint')}
           </div>
         )}
       </div>

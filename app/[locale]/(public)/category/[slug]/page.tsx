@@ -3,6 +3,7 @@ import { Link } from '@/lib/i18n/navigation';
 import { notFound } from 'next/navigation';
 import { getCategoryBySlug, getProductsByCategory, getSiteSettings } from '@/lib/cache/queries';
 import { createClient } from '@/lib/supabase/server';
+import { getTranslations } from 'next-intl/server';
 import { ScrollReveal } from '@/components/public/ScrollReveal';
 import { SortDropdown } from '@/components/public/SortDropdown';
 import { ChevronRight, CheckCircle2, LayoutGrid } from 'lucide-react';
@@ -11,36 +12,61 @@ import type { Metadata } from 'next';
 
 export const revalidate = 60;
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shahdmall.com';
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string; locale: string }>;
 }): Promise<Metadata> {
   const { slug, locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'metadata' });
 
   if (slug === 'all') {
-    const allLabels = {
-      fr: 'Tous les produits',
-      en: 'All products',
-      ar: 'جميع المنتجات',
+    const title = t('categoryTitle');
+    const description = t('categoryDescription');
+    return {
+      title,
+      description,
+      openGraph: { title, description, url: `${SITE_URL}/${locale}/category/all`, locale },
+      twitter: { card: 'summary_large_image', title, description },
+      alternates: {
+        canonical: `${SITE_URL}/${locale}/category/all`,
+        languages: { fr: `${SITE_URL}/fr/category/all`, en: `${SITE_URL}/en/category/all`, ar: `${SITE_URL}/ar/category/all` },
+      },
     };
-    return { title: allLabels[locale as keyof typeof allLabels] || allLabels.fr };
   }
 
   const category = await getCategoryBySlug(slug);
   if (!category) {
-    const notFoundLabels = {
-      fr: 'Catégorie introuvable',
-      en: 'Category not found',
-      ar: 'الفئة غير موجودة',
+    const title = t('categoryTitle');
+    return {
+      title,
+      alternates: {
+        canonical: `${SITE_URL}/${locale}/category/${slug}`,
+        languages: { fr: `${SITE_URL}/fr/category/${slug}`, en: `${SITE_URL}/en/category/${slug}`, ar: `${SITE_URL}/ar/category/${slug}` },
+      },
     };
-    return { title: notFoundLabels[locale as keyof typeof notFoundLabels] || notFoundLabels.fr };
   }
 
   const categoryName =
     (category[`name_${locale}` as keyof typeof category] as string | undefined) ||
     (category.name_fr as string);
-  return { title: categoryName };
+  const categoryDesc =
+    (category[`description_${locale}` as keyof typeof category] as string | undefined) ||
+    (category.description_fr as string | undefined);
+  const description = categoryDesc || t('categoryDescription');
+
+  return {
+    title: `${categoryName} — ${t('categoryTitle')}`,
+    description,
+    openGraph: { title: categoryName, description, url: `${SITE_URL}/${locale}/category/${slug}`, locale },
+    twitter: { card: 'summary_large_image', title: categoryName, description },
+    alternates: {
+      canonical: `${SITE_URL}/${locale}/category/${slug}`,
+      languages: { fr: `${SITE_URL}/fr/category/${slug}`, en: `${SITE_URL}/en/category/${slug}`, ar: `${SITE_URL}/ar/category/${slug}` },
+    },
+  };
 }
 
 export default async function CategoryPage({
@@ -110,17 +136,49 @@ export default async function CategoryPage({
     }
   }
   const primaryColor = (settings?.primary_color as string) || '#FF6B35';
-  const codBadge = (settings?.[`cod_badge_${locale}` as keyof typeof settings] as string | undefined) || 'Paiement à la livraison';
+
+  const t = await getTranslations({ locale, namespace: 'category' });
+  const tNav = await getTranslations({ locale, namespace: 'navigation' });
+  const tProduct = await getTranslations({ locale, namespace: 'product' });
+  const codBadge = (settings?.[`cod_badge_${locale}` as keyof typeof settings] as string | undefined) || tProduct('codBadge');
 
   const categoryName = category
     ? ((category[`name_${locale}` as keyof typeof category] as string | undefined) || (category.name_fr as string))
-    : 'Tous les produits';
+    : t('browseAll');
   const categoryDescription = category
     ? (category[`description_${locale}` as keyof typeof category] as string | undefined) || (category.description_fr as string | undefined)
     : undefined;
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shahdmall.com';
+
   return (
     <div className="bg-background min-h-screen">
+      <script type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: tNav('home'),
+              item: `${siteUrl}/${locale}`,
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: tNav('products'),
+              item: `${siteUrl}/${locale}/category/all`,
+            },
+            ...(category ? [{
+              '@type': 'ListItem',
+              position: 3,
+              name: categoryName,
+              item: `${siteUrl}/${locale}/category/${category.slug}`,
+            }] : []),
+          ],
+        })}
+      </script>
       {/* ============================================
           PAGE HERO
           ============================================ */}
@@ -131,9 +189,7 @@ export default async function CategoryPage({
             <div className="flex items-center gap-3 mb-4">
               <LayoutGrid className="w-5 h-5 text-accent" />
               <span className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-                {category
-                  ? locale === 'fr' ? 'Catégorie' : locale === 'en' ? 'Category' : 'الفئة'
-                  : locale === 'fr' ? 'Catalogue' : locale === 'en' ? 'Catalog' : 'الكتالوج'}
+                {category ? t('categoryLabel') : t('catalogLabel')}
               </span>
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-bold leading-[1.1] tracking-tight text-white">
@@ -153,11 +209,11 @@ export default async function CategoryPage({
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-text-muted pt-6 pb-2">
           <Link href="/" className="hover:text-primary transition-colors">
-            {locale === 'fr' ? 'Accueil' : locale === 'en' ? 'Home' : 'الرئيسية'}
+            {tNav('home')}
           </Link>
           <ChevronRight className="w-3.5 h-3.5" />
           <Link href="/category/all" className="hover:text-primary transition-colors">
-            {locale === 'fr' ? 'Produits' : locale === 'en' ? 'Products' : 'المنتجات'}
+            {tNav('products')}
           </Link>
           {category && (
             <>
@@ -170,11 +226,7 @@ export default async function CategoryPage({
         {/* Toolbar */}
         <div className="flex items-center justify-between py-4 mb-4">
           <p className="text-sm text-text-muted">
-            {sortedProducts.length} {locale === 'fr'
-              ? `produit${sortedProducts.length !== 1 ? 's' : ''}`
-              : locale === 'en'
-              ? `product${sortedProducts.length !== 1 ? 's' : ''}`
-              : 'منتج'}
+            {sortedProducts.length} {sortedProducts.length === 1 ? t('product') : t('products')}
           </p>
           <Suspense fallback={null}>
             <SortDropdown />
@@ -234,11 +286,7 @@ export default async function CategoryPage({
                         {/* Low stock overlay */}
                         {isLowStock && (
                           <span className="absolute bottom-2.5 left-2.5 bg-accent/90 text-white text-[11px] font-semibold px-2 py-1 rounded-full">
-                            {locale === 'fr'
-                              ? `Plus que ${product.stock_quantity} en stock`
-                              : locale === 'en'
-                              ? `Only ${product.stock_quantity} left in stock`
-                              : `تبقت ${product.stock_quantity} فقط`}
+                            {tProduct('lowStock', { count: product.stock_quantity })}
                           </span>
                         )}
                       </div>
@@ -277,22 +325,14 @@ export default async function CategoryPage({
               <LayoutGrid className="w-8 h-8 text-text-muted" />
             </div>
             <p className="text-text-muted text-lg">
-              {locale === 'fr'
-                ? 'Aucun produit dans cette catégorie'
-                : locale === 'en'
-                ? 'No products in this category'
-                : 'لا توجد منتجات في هذه الفئة'}
+              {t('noResults')}
             </p>
             <Link
               href="/category/all"
               className="inline-block mt-4 font-semibold hover:opacity-80 transition-opacity"
               style={{ color: primaryColor }}
             >
-              {locale === 'fr'
-                ? 'Voir tous les produits'
-                : locale === 'en'
-                ? 'View all products'
-                : 'عرض جميع المنتجات'}
+              {t('browseAll')}
             </Link>
           </div>
         </div>

@@ -1,7 +1,21 @@
 {
   "metadata": {
-    "title": "Online Shop - Home Delivery",
-    "description": "Discover our products with free delivery and cash on delivery all over Morocco."
+    "title": "Online Shopping Morocco — Buy Online & Free Delivery 24-48h",
+    "description": "Online shopping in Morocco on our marketplace. Shop thousands of products with cash on delivery and free shipping across Morocco. Easy online marketplace.",
+    "categoryTitle": "All Products — Online Shopping Morocco",
+    "categoryDescription": "Browse our online product catalog in Morocco. Wide selection with cash on delivery and free shipping.",
+    "aboutTitle": "About Us — Online Marketplace Morocco",
+    "aboutDescription": "Your trusted online marketplace in Morocco. Discover our story and mission for better online shopping.",
+    "contactTitle": "Contact — Customer Service Online Shopping Morocco",
+    "contactDescription": "Contact our customer service for any questions about your order. Available Monday to Saturday.",
+    "searchTitle": "Search — Find Products Online Morocco",
+    "searchDescription": "Search through thousands of products available online in Morocco. Cash on delivery and free shipping.",
+    "termsTitle": "Terms and Conditions — Online Shopping Morocco",
+    "termsDescription": "Read our terms and conditions for online shopping in Morocco. Cash on delivery and free shipping.",
+    "privacyTitle": "Privacy Policy — Data Protection Morocco",
+    "privacyDescription": "Our privacy policy guarantees the protection of your personal data during online shopping in Morocco.",
+    "productNotFound": "Product unavailable — Online Shopping Morocco",
+    "rowNotFound": "Collection not found — Online Shopping Morocco"
   },
   "navigation": {
     "home": "Home",
@@ -12,10 +26,19 @@
     "admin": "Admin",
     "login": "Login",
     "logout": "Logout",
-    "search": "Search"
+    "search": "Search",
+    "orderNow": "Order Now"
   },
   "category": {
     "search": "Search",
+    "categoryLabel": "Category",
+    "catalogLabel": "Catalog",
+    "collectionLabel": "Collection",
+    "sortBy": "Sort by",
+    "sortNewest": "Newest",
+    "sortBestsellers": "Bestsellers",
+    "sortPriceAsc": "Price: Low to High",
+    "sortPriceDesc": "Price: High to Low",
     "resultsFor": "Results for",
     "product": "product",
     "products": "products",
@@ -68,8 +91,15 @@
     "freeDelivery": "Free Delivery",
     "warranty": "Satisfaction Guaranteed",
     "save": "Save",
+    "added": "Added",
     "lowStock": "Only {count} left in stock",
-    "features": "Features"
+    "features": "Features",
+    "sku": "Ref: {sku}",
+    "bulkDiscount": "-{percent}% from {threshold} units",
+    "youMayAlsoLike": "You may also like",
+    "seeMore": "See more →",
+    "seeMorePhotos": "See more photos ({count})",
+    "zoomHint": "Click to zoom"
   },
   "reservation": {
     "title": "Confirm My Order",
@@ -87,6 +117,7 @@
     "increaseQuantity": "Increase quantity",
     "product": "Product",
     "discountLabel": "Discount ({percent}%)",
+    "discount": "Discount",
     "total": "Total",
     "processing": "Processing...",
     "submit": "Confirm My Order",
@@ -115,6 +146,7 @@
     "validation": {
       "required": "This field is required",
       "phoneInvalid": "Invalid phone number",
+      "phoneFormat": "Invalid format. Ex: 0612345678, +212612345678 or 612345678",
       "nameTooShort": "Name must be at least 2 characters",
       "cityRequired": "Please enter your city"
     }
@@ -165,7 +197,16 @@
     "freeDelivery": "Free delivery — on all orders",
     "help": "Help",
     "followUs": "Follow us",
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "payment": "Payment:",
+    "cash": "Cash",
+    "inspectBeforePay": "Inspect before paying",
+    "phone": "Phone",
+    "chatNow": "Chat now",
+    "address": "Address",
+    "backToTop": "Back to top"
   },
   "whatsapp": {
     "defaultMessage": "Hello, I have a question about your products"
@@ -194,6 +235,26 @@
     "resetSent": "A reset link has been sent to your email."
   },
   "errors": {
+    "401": {
+      "title": "Sign in required",
+      "body": "You need to be signed in to access this page."
+    },
+    "403": {
+      "title": "Access denied",
+      "body": "You don't have permission to view this page."
+    },
+    "404": {
+      "title": "Page not found",
+      "body": "The page you're looking for doesn't exist, has been moved, or the URL is incorrect."
+    },
+    "429": {
+      "title": "Too many requests",
+      "body": "You've made too many requests in a short time. Please wait before trying again."
+    },
+    "500": {
+      "title": "Something broke",
+      "body": "Our team has been notified and is working on a fix. Please try again in a moment."
+    },
     "generic": "An error occurred. Please try again.",
     "notFound": "Page not found",
     "unauthorized": "Unauthorized access",
@@ -207,33 +268,13 @@
       "contact": "Contact us",
       "reload": "Reload page"
     },
-    "500": {
-      "title": "Something broke",
-      "body": "Our team has been notified and is working on a fix. Please try again in a moment."
-    },
     "global": {
       "title": "Service temporarily unavailable",
       "body": "The site is experiencing a major issue. Please reload the page in a moment."
     },
-    "404": {
-      "title": "Page not found",
-      "body": "The page you're looking for doesn't exist, has been moved, or the URL is incorrect."
-    },
     "productNotFound": {
       "title": "Product unavailable",
       "body": "This product is no longer available or the URL is incorrect."
-    },
-    "401": {
-      "title": "Sign in required",
-      "body": "You need to be signed in to access this page."
-    },
-    "403": {
-      "title": "Access denied",
-      "body": "You don't have permission to view this page."
-    },
-    "429": {
-      "title": "Too many requests",
-      "body": "You've made too many requests in a short time. Please wait before trying again."
     },
     "admin": {
       "title": "Admin panel error",

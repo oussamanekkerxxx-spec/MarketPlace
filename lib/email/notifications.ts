@@ -17,13 +17,11 @@ export interface OrderEmailPayload {
   customer_city: string;
   customer_address?: string | null;
   customer_notes?: string | null;
-  product_id: string;
   product_title: string;
   product_slug?: string | null;
   product_image?: string | null;
   quantity: number;
   unit_price: number;
-  shipping_fee: number;
   subtotal: number;
   total: number;
   currency: string;
@@ -48,7 +46,7 @@ export async function sendOrderNotificationEmail(
 
   const { data: settings } = await supabase
     .from('site_settings')
-    .select('notification_email, site_name, logo_url')
+    .select('notification_email, site_name, logo_url, site_url')
     .eq('id', 1)
     .single();
 
@@ -68,13 +66,11 @@ export async function sendOrderNotificationEmail(
     customer_city,
     customer_address,
     customer_notes,
-    product_id,
     product_title,
     product_slug,
     product_image,
     quantity,
     unit_price,
-    shipping_fee,
     subtotal,
     total,
     currency,
@@ -82,15 +78,19 @@ export async function sendOrderNotificationEmail(
     discount_amount,
   } = payload;
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+  const baseUrl = (settings?.site_url as string) || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
 
   const publicProductUrl = product_slug
     ? `${baseUrl}/fr/product/${product_slug}`
     : `${baseUrl}`;
   const adminOrderUrl = `${baseUrl}/fr/admin/orders/${order_id}`;
-  const adminProductUrl = product_id
-    ? `${baseUrl}/fr/admin/products/${product_id}`
-    : null;
+  // DEBUG: log resolved URLs so we can verify the domain is correct
+  console.log('[sendOrderNotificationEmail] URL debug:', {
+    baseUrl,
+    publicProductUrl,
+    adminOrderUrl,
+    source: settings?.site_url ? 'database site_url' : process.env.NEXT_PUBLIC_SITE_URL ? 'env NEXT_PUBLIC_SITE_URL' : 'fallback',
+  });
 
   // Generate QR code and upload to Supabase Storage for email-safe public URL
   let qrDataUrl: string | null = null;
@@ -133,14 +133,12 @@ export async function sendOrderNotificationEmail(
     product_image: product_image || null,
     quantity,
     unit_price,
-    shipping_fee,
     subtotal,
     total,
     currency,
     discount_percent: discount_percent ?? null,
     discount_amount: discount_amount ?? null,
     adminOrderUrl,
-    adminProductUrl,
     publicProductUrl,
     qrDataUrl,
   });
@@ -208,14 +206,12 @@ interface EmailData {
   product_image: string | null;
   quantity: number;
   unit_price: number;
-  shipping_fee: number;
   subtotal: number;
   total: number;
   currency: string;
   discount_percent: number | null;
   discount_amount: number | null;
   adminOrderUrl: string;
-  adminProductUrl: string | null;
   publicProductUrl: string;
   qrDataUrl: string | null;
 }
@@ -234,14 +230,12 @@ function buildEmailHtml(data: EmailData): string {
     product_image,
     quantity,
     unit_price,
-    shipping_fee,
     subtotal,
     total,
     currency,
     discount_percent,
     discount_amount,
     adminOrderUrl,
-    adminProductUrl,
     publicProductUrl,
     qrDataUrl,
   } = data;
@@ -277,9 +271,7 @@ function buildEmailHtml(data: EmailData): string {
        </div>`
     : '';
 
-  const editProductButton = adminProductUrl
-    ? `<a href="${adminProductUrl}" style="display:inline-block;background:#f8fafc;color:#334155;padding:12px 20px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;border:1px solid #e2e8f0;">Modifier le produit</a>`
-    : '';
+  // Modifier button removed — admin doesn't need to edit product from order email
 
   const qrSection = qrDataUrl
     ? `<div style="text-align:center;margin-top:24px;padding-top:24px;border-top:1px solid #e2e8f0;">
@@ -375,7 +367,6 @@ function buildEmailHtml(data: EmailData): string {
             <td style="padding:0 24px 20px;">
               <div style="text-align:center;">
                 <a href="${adminOrderUrl}" style="display:inline-block;background:#3b82f6;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;margin:4px;">Voir la commande</a>
-                ${editProductButton ? `<a href="${adminProductUrl}" style="display:inline-block;background:#f8fafc;color:#334155;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;border:1px solid #e2e8f0;margin:4px;">Modifier le produit</a>` : ''}
                 <a href="${publicProductUrl}" style="display:inline-block;background:#10b981;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;margin:4px;">Fiche produit</a>
               </div>
             </td>
@@ -437,7 +428,7 @@ export async function sendCartOrderEmail(payload: CartOrderEmailPayload): Promis
 
   const { data: settings } = await supabase
     .from('site_settings')
-    .select('notification_email, site_name, logo_url')
+    .select('notification_email, site_name, logo_url, site_url')
     .eq('id', 1)
     .single();
 
@@ -449,7 +440,7 @@ export async function sendCartOrderEmail(payload: CartOrderEmailPayload): Promis
     return { success: false, error: 'No notification email configured' };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+  const baseUrl = (settings?.site_url as string) || process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
   const adminOrderUrl = `${baseUrl}/fr/admin/orders/${payload.order_id}`;
 
   const fmt = (n: number) =>

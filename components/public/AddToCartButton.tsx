@@ -2,6 +2,7 @@
 
 import { ShoppingCart, Check } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useCart } from '@/lib/cart/context';
 
 interface AddToCartButtonProps {
@@ -27,6 +28,7 @@ export function AddToCartButton({
   bulkDiscountPercent,
   variant = 'button',
 }: AddToCartButtonProps) {
+  const t = useTranslations('product');
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
@@ -51,7 +53,7 @@ export function AddToCartButton({
         type="button"
         onClick={handleClick}
         className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm hover:bg-white transition-colors"
-        aria-label="Ajouter au panier"
+        aria-label={t('addToCart')}
       >
         {added ? (
           <Check className="h-4 w-4 text-green-600" />
@@ -76,12 +78,12 @@ export function AddToCartButton({
       {added ? (
         <>
           <Check className="h-4 w-4" />
-          Ajouté
+          {t('added')}
         </>
       ) : (
         <>
           <ShoppingCart className="h-4 w-4" />
-          Ajouter au panier
+          {t('addToCart')}
         </>
       )}
     </button>

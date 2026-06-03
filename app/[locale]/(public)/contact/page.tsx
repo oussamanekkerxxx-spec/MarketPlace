@@ -47,14 +47,27 @@ function YoutubeIcon({ className }: { className?: string }) {
 
 export const revalidate = 60;
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shahdmall.com';
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'navigation' });
-  return { title: t('contact') };
+  const t = await getTranslations({ locale, namespace: 'metadata' });
+  const title = t('contactTitle');
+  const description = t('contactDescription');
+  return {
+    title,
+    description,
+    openGraph: { title, description, url: `${SITE_URL}/${locale}/contact`, locale },
+    twitter: { card: 'summary_large_image', title, description },
+    alternates: {
+      canonical: `${SITE_URL}/${locale}/contact`,
+      languages: { fr: `${SITE_URL}/fr/contact`, en: `${SITE_URL}/en/contact`, ar: `${SITE_URL}/ar/contact` },
+    },
+  };
 }
 
 export default async function ContactPage({

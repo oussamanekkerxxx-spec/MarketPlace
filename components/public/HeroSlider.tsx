@@ -42,13 +42,13 @@ export function HeroSlider({ images, fallbackAlt, eyebrow }: HeroSliderProps) {
   if (images.length <= 1) {
     const img = images[0];
     return (
-      <div className="relative w-full h-[45vh] sm:h-[50vh] lg:h-[55vh]">
+      <div className="relative w-full h-[45vh] sm:h-[50vh] lg:h-[55vh] bg-secondary">
         {img ? (
           <Image
             src={img.url}
             alt={img.alt_text || fallbackAlt}
             fill
-            className="object-cover"
+            className="object-contain sm:object-cover"
             priority
             sizes="100vw"
           />
@@ -62,7 +62,7 @@ export function HeroSlider({ images, fallbackAlt, eyebrow }: HeroSliderProps) {
   }
 
   return (
-    <div className="relative w-full h-[45vh] sm:h-[50vh] lg:h-[55vh] overflow-hidden">
+    <div className="relative w-full h-[45vh] sm:h-[50vh] lg:h-[55vh] overflow-hidden bg-secondary">
       {/* Slides */}
       {images.map((img, index) => (
         <div
@@ -76,7 +76,7 @@ export function HeroSlider({ images, fallbackAlt, eyebrow }: HeroSliderProps) {
             src={img.url}
             alt={img.alt_text || fallbackAlt}
             fill
-            className="object-cover"
+            className="object-contain sm:object-cover"
             priority={index === 0}
             sizes="100vw"
           />

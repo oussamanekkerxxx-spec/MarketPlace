@@ -11,8 +11,20 @@ export const settingsSchema = z.object({
   secondary_color: z.string().regex(/^#[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/, 'Couleur hex invalide (ex: #0c0818 ou #000)'),
   accent_color: z.string().regex(/^#[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/, 'Couleur hex invalide (ex: #F7931E ou #F90)'),
   contact_email: z.string().email('Email invalide').optional().or(z.literal('')),
-  contact_phone: z.string().optional(),
-  whatsapp_number: z.string().optional(),
+  contact_phone: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || /^(0[5-7]\d{8}|\+212[5-7]\d{8}|[5-7]\d{8})$/.test(val.replace(/\s/g, '')),
+      'Format invalide. Ex: 0612345678, +212612345678, ou 612345678'
+    ),
+  whatsapp_number: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || /^(0[5-7]\d{8}|\+212[5-7]\d{8}|[5-7]\d{8})$/.test(val.replace(/\s/g, '')),
+      'Format invalide. Ex: 0612345678, +212612345678, ou 612345678'
+    ),
   business_address: z.string().optional(),
   facebook_url: z.string().url('URL invalide').optional().or(z.literal('')),
   instagram_url: z.string().url('URL invalide').optional().or(z.literal('')),
@@ -96,6 +108,7 @@ export const settingsSchema = z.object({
   whatsapp_default_message_fr: z.string().optional(),
   whatsapp_default_message_en: z.string().optional(),
   whatsapp_default_message_ar: z.string().optional(),
+  site_url: z.string().url('URL invalide').optional().or(z.literal('')),
 });
 
 export type SettingsFormData = z.infer<typeof settingsSchema>;

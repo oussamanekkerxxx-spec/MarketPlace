@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from '@/lib/i18n/navigation';
 
 /**
  * Root 404 — fires for URLs that don't match any locale prefix.
@@ -77,6 +77,8 @@ export default function RootNotFoundPage() {
           La page que vous recherchez n'existe pas.
           <br />
           <span style={{ opacity: 0.75 }}>The page you're looking for doesn't exist.</span>
+          <br />
+          <span style={{ opacity: 0.6 }}>الصفحة التي تبحث عنها غير موجودة.</span>
         </p>
 
         <Link
@@ -92,7 +94,7 @@ export default function RootNotFoundPage() {
             textDecoration: 'none',
           }}
         >
-          Accueil / Home
+          Accueil / Home / الرئيسية
         </Link>
       </div>
     </div>

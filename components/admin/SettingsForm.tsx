@@ -92,6 +92,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
       site_tagline_fr: (initialData?.site_tagline_fr as string) || '',
       site_tagline_en: (initialData?.site_tagline_en as string) || '',
       site_tagline_ar: (initialData?.site_tagline_ar as string) || '',
+      site_url: (initialData?.site_url as string) || '',
       logo_url: (initialData?.logo_url as string) || '',
       favicon_url: (initialData?.favicon_url as string) || '',
       primary_color: (initialData?.primary_color as string) || '#FF6B35',
@@ -322,7 +323,7 @@ export function SettingsForm({ initialData, secretStatus }: SettingsFormProps) {
             description="Nom, slogan, logo et favicon"
             icon={<span className="text-base">🏪</span>}
             defaultOpen
-            badge={isAnyDirty('site_name', 'site_tagline_fr', 'site_tagline_en', 'site_tagline_ar', 'logo_url', 'favicon_url') && <ModifiedDot />}
+            badge={isAnyDirty('site_name', 'site_tagline_fr', 'site_tagline_en', 'site_tagline_ar', 'site_url', 'logo_url', 'favicon_url') && <ModifiedDot />}
           >
             <FormInput label="Nom du site" {...register('site_name')} error={errors.site_name?.message} />
             <FormInput
