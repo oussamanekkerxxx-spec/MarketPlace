@@ -133,16 +133,12 @@ export function ReservationForm({
     // Meta Pixel Lead event
     if (typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).fbq) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).fbq(
-        'track',
-        'Lead',
-        {
-          content_name: 'Product Reservation',
-          value: eventValue,
-          currency: eventCurrency,
-        },
-        { eventID: `lead-${result.orderNumber}` }
-      );
+      (window as any).fbq('track', 'Lead', {
+        content_name: 'Product Reservation',
+        value: eventValue,
+        currency: eventCurrency,
+      },
+      { eventID: `lead-${result.orderNumber}` });
     }
 
     // Google Analytics / Ads — lead/submit event
