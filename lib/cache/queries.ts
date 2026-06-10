@@ -10,9 +10,15 @@ const PRODUCT_SELECT_WITH_DETAIL_SECTIONS = `${PRODUCT_SELECT_BASE}, detail_sect
 
 export async function getSiteSettings() {
   const supabase = createStaticClient();
-  const { data, error } = await supabase.from('site_settings_public').select('*').single();
+  let { data, error } = await supabase.from('site_settings_public').select('*').single();
   if (error) {
     console.warn('[getSiteSettings] Supabase error:', error.message, '| code:', error.code, '| details:', error.details);
+    // Fallback: the view may not exist locally; query the raw table instead.
+    const fallback = await supabase.from('site_settings').select('*').single();
+    if (fallback.error) {
+      console.warn('[getSiteSettings] Fallback error:', fallback.error.message, '| code:', fallback.error.code);
+    }
+    data = fallback.data ?? null;
   }
   return data as Record<string, unknown> | null;
 }

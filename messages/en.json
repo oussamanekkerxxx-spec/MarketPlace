@@ -208,23 +208,6 @@
     "address": "Address",
     "backToTop": "Back to top"
   },
-  "whatsapp": {
-    "defaultMessage": "Hello, I have a question about your products",
-    "faqTitle": "Frequently Asked Questions",
-    "faqSubtitle": "How can we help you?",
-    "q1": "How do I place an order?",
-    "a1": "Choose a product, fill out the form, and we will contact you to confirm.",
-    "q2": "Delivery time?",
-    "a2": "Delivery in 24-48h throughout Morocco.",
-    "q3": "Payment methods?",
-    "a3": "Cash on delivery only. Pay in cash upon receipt.",
-    "q4": "Return policy?",
-    "a4": "7 days to change your mind. Contact us by phone or WhatsApp.",
-    "q5": "Track my order?",
-    "a5": "Call us or message us on WhatsApp with your order number.",
-    "sendMessage": "Send on WhatsApp",
-    "customMessagePlaceholder": "Write your message..."
-  },
   "cookies": {
     "title": "This site uses cookies",
     "description": "We use essential cookies to run the site, and measurement cookies to understand how our campaigns perform.",
