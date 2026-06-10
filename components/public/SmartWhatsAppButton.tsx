@@ -54,9 +54,10 @@ function buildDefaultMessage(
 }
 
 export function SmartWhatsAppButton({ whatsappNumber, defaultMessages }: SmartWhatsAppButtonProps) {
-  const href = useMemo(() => {
-    if (!whatsappNumber) return null;
+  const FALLBACK_NUMBER = '+212720204777';
+  const effectiveNumber = whatsappNumber || FALLBACK_NUMBER;
 
+  const href = useMemo(() => {
     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
     const locale = detectLocale(pathname);
 
@@ -66,16 +67,14 @@ export function SmartWhatsAppButton({ whatsappNumber, defaultMessages }: SmartWh
         const url = dataEl.getAttribute('data-url') || (typeof window !== 'undefined' ? window.location.href : '');
         const defaultMsg = buildDefaultMessage(locale, defaultMessages);
         const message = buildProductMessage(locale, url, defaultMsg);
-        return getWhatsAppHref(whatsappNumber, message);
+        return getWhatsAppHref(effectiveNumber, message);
       }
     }
 
     // Non-product page: use the locale-specific default message
     const generalMessage = buildDefaultMessage(locale, defaultMessages);
-    return getWhatsAppHref(whatsappNumber, generalMessage);
-  }, [whatsappNumber, defaultMessages]);
-
-  if (!whatsappNumber) return null;
+    return getWhatsAppHref(effectiveNumber, generalMessage);
+  }, [effectiveNumber, defaultMessages]);
 
   return (
     <a
