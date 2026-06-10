@@ -19,7 +19,7 @@ function detectLocale(pathname: string): 'fr' | 'en' | 'ar' {
 }
 
 function isProductPage(pathname: string): boolean {
-  return /^(?:\/(?:fr|en|ar))?\/\/product\/\\[^\\/]+$/.test(pathname);
+  return /^(?:\/(?:fr|en|ar))?\/product\/[^\/]+$/.test(pathname);
 }
 
 function buildProductMessage(
