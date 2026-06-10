@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { getWhatsAppHref } from '@/lib/utils/contact';
 
 interface SmartWhatsAppButtonProps {
@@ -19,7 +19,7 @@ function detectLocale(pathname: string): 'fr' | 'en' | 'ar' {
 }
 
 function isProductPage(pathname: string): boolean {
-  return /^(?:\/(?:fr|en|ar))?\/product\/[^\/]+$/.test(pathname);
+  return /^(?:\/(?:fr|en|ar))?\/\/product\/\\[^\\/]+$/.test(pathname);
 }
 
 function buildProductMessage(
@@ -56,24 +56,39 @@ function buildDefaultMessage(
 export function SmartWhatsAppButton({ whatsappNumber, defaultMessages }: SmartWhatsAppButtonProps) {
   const FALLBACK_NUMBER = '+212720204777';
   const effectiveNumber = whatsappNumber || FALLBACK_NUMBER;
+  const [href, setHref] = useState<string | null>(null);
 
-  const href = useMemo(() => {
-    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    const locale = detectLocale(pathname);
+  useEffect(() => {
+    const buildHref = () => {
+      const pathname = window.location.pathname;
+      const locale = detectLocale(pathname);
 
-    if (isProductPage(pathname)) {
-      const dataEl = document.getElementById('product-whatsapp-data');
-      if (dataEl) {
-        const url = dataEl.getAttribute('data-url') || (typeof window !== 'undefined' ? window.location.href : '');
-        const defaultMsg = buildDefaultMessage(locale, defaultMessages);
-        const message = buildProductMessage(locale, url, defaultMsg);
-        return getWhatsAppHref(effectiveNumber, message);
+      if (isProductPage(pathname)) {
+        const dataEl = document.getElementById('product-whatsapp-data');
+        if (dataEl) {
+          const url = dataEl.getAttribute('data-url') || window.location.href;
+          const defaultMsg = buildDefaultMessage(locale, defaultMessages);
+          const message = buildProductMessage(locale, url, defaultMsg);
+          setHref(getWhatsAppHref(effectiveNumber, message));
+          return;
+        }
       }
-    }
 
-    // Non-product page: use the locale-specific default message
-    const generalMessage = buildDefaultMessage(locale, defaultMessages);
-    return getWhatsAppHref(effectiveNumber, generalMessage);
+      const generalMessage = buildDefaultMessage(locale, defaultMessages);
+      setHref(getWhatsAppHref(effectiveNumber, generalMessage));
+    };
+
+    buildHref();
+
+    const observer = new MutationObserver(buildHref);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    window.addEventListener('popstate', buildHref);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('popstate', buildHref);
+    };
   }, [effectiveNumber, defaultMessages]);
 
   return (
