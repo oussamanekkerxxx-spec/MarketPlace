@@ -24,11 +24,7 @@ function isProductPage(pathname: string): boolean {
 
 function buildProductMessage(
   locale: 'fr' | 'en' | 'ar',
-  title: string,
-  price: string,
-  currency: string,
   url: string,
-  imageUrl: string,
   defaultMsg: string
 ): string {
   const base = defaultMsg || (() => {
@@ -39,18 +35,7 @@ function buildProductMessage(
     }
   })();
 
-  const details = (() => {
-    switch (locale) {
-      case 'en':
-        return `${title}\nPrice: ${price} ${currency}\n\n${url}${imageUrl ? '\n\n' + imageUrl : ''}`;
-      case 'ar':
-        return `${title}\nالسعر: ${price} ${currency}\n\n${url}${imageUrl ? '\n\n' + imageUrl : ''}`;
-      default:
-        return `${title}\nPrix : ${price} ${currency}\n\n${url}${imageUrl ? '\n\n' + imageUrl : ''}`;
-    }
-  })();
-
-  return `${base}\n\n${details}`;
+  return `${base}\n\n${url}`;
 }
 
 function buildDefaultMessage(
@@ -78,13 +63,9 @@ export function SmartWhatsAppButton({ whatsappNumber, defaultMessages }: SmartWh
     if (isProductPage(pathname)) {
       const dataEl = document.getElementById('product-whatsapp-data');
       if (dataEl) {
-        const title = dataEl.getAttribute('data-title') || '';
-        const price = dataEl.getAttribute('data-price') || '';
-        const currency = dataEl.getAttribute('data-currency') || '';
         const url = dataEl.getAttribute('data-url') || (typeof window !== 'undefined' ? window.location.href : '');
-        const imageUrl = dataEl.getAttribute('data-image') || '';
         const defaultMsg = buildDefaultMessage(locale, defaultMessages);
-        const message = buildProductMessage(locale, title, price, currency, url, imageUrl, defaultMsg);
+        const message = buildProductMessage(locale, url, defaultMsg);
         return getWhatsAppHref(whatsappNumber, message);
       }
     }
